@@ -1,14 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-mu = 30e9
-nu = 0.25
-a = 1
-
-x = np.linspace(-5, 5, 100)
-y = np.linspace(-5, 5, 100)
-x, y = np.meshgrid(x, y)
-
 
 def kernel_and_derivatives(x, y, a, mu, nu):
     """ From Starfield and Crouch, pages 49 and 82 """
@@ -55,8 +47,8 @@ def kernel_and_derivatives(x, y, a, mu, nu):
         1
         / (4 * np.pi * (1 - nu))
         * (
-            ((x - a) ** 2 - y ** 2) / ((x - a) ** 2 - y ** 2) ** 2
-            - ((x + a) ** 2 - y ** 2) / ((x + a) ** 2 - y ** 2) ** 2
+            ((x - a) ** 2 - y ** 2) / ((x - a) ** 2 + y ** 2) ** 2
+            - ((x + a) ** 2 - y ** 2) / ((x + a) ** 2 + y ** 2) ** 2
         )
     )
 
@@ -67,8 +59,8 @@ def kernel_and_derivatives(x, y, a, mu, nu):
         * y
         / (4 * np.pi * (1 - nu))
         * (
-            (x - a) / ((x - a) ** 2 - y ** 2) ** 2
-            - (x + a) / ((x + a) ** 2 - y ** 2) ** 2
+            (x - a) / ((x - a) ** 2 + y ** 2) ** 2
+            - (x + a) / ((x + a) ** 2 + y ** 2) ** 2
         )
     )
 
@@ -88,8 +80,9 @@ def constant_traction_element(x, y, a, mu, nu, traction_x, traction_y):
     ) + traction_y / (2 * mu) * (-y * df_dx)
 
     displacement_y = traction_x / (2 * mu) * (-y * df_dx) + traction_y / (2 * mu) * (
-        (3 - 4 * nu) * f + y * df_dy
+        (3 - 4 * nu) * f - y * df_dy
     )
+
     stress_xx = traction_x * ((3 - 2 * nu) * df_dx + y * df_dxy) + traction_y * (
         2 * nu * df_dy + y * df_dyy
     )
@@ -120,85 +113,129 @@ def constant_slip_element(x, y, a, mu, nu, slip_x, slip_y):
         2 * (1 - nu) * df_dy - y * df_dyy
     )
 
-    stress_xx = slip_x * ((3 - 2 * nu) * df_dx + y * df_dxy) + slip_y * (
-        2 * nu * df_dy + y * df_dyy
+    stress_xx = 2 * slip_x * mu * (2 * df_dxy + y * df_dxyy) + 2 * slip_y * mu * (
+        df_dyy + y * df_dyyy
     )
-    stress_yy = slip_x * (-1 * (1 - 2 * nu) * df_dx + y * df_dxy) + slip_y * (
-        2 * (1 - nu) * df_dy - y * df_dyy
+
+    stress_yy = 2 * slip_x * mu * (-y * df_dxyy) + 2 * slip_y * mu * (
+        df_dyy + y * df_dyyy
     )
-    stress_xy = slip_x * (2 * (1 - nu) * df_dy + y * df_dyy) + slip_y * (
-        (1 - 2 * nu) * df_dx - y * df_dxy
+
+    stress_xy = 2 * slip_x * mu * (df_dyy + y * df_dyyy) + 2 * slip_y * mu * (
+        -y * df_dxyy
     )
 
     return displacement_x, displacement_y, stress_xx, stress_yy, stress_xy
 
 
+# def translate_and_rotate_coordinates(x, y)
+
+#     return x_new, y_new
+
+
+mu = 30e9
+nu = 0.25
+x = np.linspace(-5, 5, 21)
+y = np.linspace(-5, 5, 21)
+x, y = np.meshgrid(x, y)
+
+
+# A single source
+source = {}
+source["x1"] = -1
+source["y1"] = 1
+source["x2"] = 1
+source["y2"] = 1
+source["angle"] = np.arctan2(source["y2"] - source["y1"], source["x2"] - source["x1"])
+source["length"] = np.sqrt(
+    (source["x2"] - source["x1"]) ** 2 + (source["y2"] - source["y1"]) ** 2
+)
+source["half_length"] = 0.5 * source["length"]
+source["x_center"] = 0.5 * (source["x2"] + source["x1"])
+source["y_center"] = 0.5 * (source["y2"] + source["y1"])
+x_calc = x - source["x_center"]
+y_calc = y - source["y_center"]
+
+rotation_matrix = np.array(
+    [
+        [np.cos(source["angle"]), -np.sin(source["angle"])],
+        [np.sin(source["angle"]), np.cos(source["angle"])],
+    ]
+)
+# np.matmul #????
+
+
 displacement_x, displacement_y, stress_xx, stress_yy, stress_xy = constant_traction_element(
-    x, y, a, mu, nu, 1, 0
+    x_calc, y_calc, source["half_length"], mu, nu, 1, 0
 )
 
 _displacement_x, _displacement_y, _stress_xx, _stress_yy, _stress_xy = constant_slip_element(
-    x, y, a, mu, nu, 1, 0
+    x_calc, y_calc, source["half_length"], mu, nu, 1, 0
 )
 
 
+def consistent_plots():
+    plt.gca().set_aspect("equal")
+    plt.xticks([-5, 0, 5])
+    plt.yticks([-5, 0, 5])
+    plt.colorbar(fraction=0.046, pad=0.04)
+
+
 plt.close("all")
-plt.figure()
-plt.subplot(2, 3, 1)
-plt.contourf(x, y, displacement_x, 100)
+plt.figure(figsize=(20, 10))
+n_contours = 10
+
+plt.subplot(2, 5, 1)
+plt.contourf(x, y, displacement_x, n_contours)
 plt.title("displacement_x")
-plt.colorbar()
+consistent_plots()
 
-plt.subplot(2, 3, 2)
-plt.contourf(x, y, displacement_y, 100)
+plt.subplot(2, 5, 2)
+plt.contourf(x, y, displacement_y, n_contours)
 plt.title("displacement_y")
-plt.colorbar()
+consistent_plots()
 
-plt.subplot(2, 3, 4)
-plt.contourf(x, y, stress_xx, 100)
+
+plt.subplot(2, 5, 3)
+plt.contourf(x, y, stress_xx, n_contours)
 plt.title("stress_xx")
-plt.colorbar()
+consistent_plots()
 
-plt.subplot(2, 3, 5)
-plt.contourf(x, y, stress_yy, 100)
+plt.subplot(2, 5, 4)
+plt.contourf(x, y, stress_yy, n_contours)
 plt.title("stress_yy")
-plt.colorbar()
+consistent_plots()
 
-plt.subplot(2, 3, 6)
-plt.contourf(x, y, stress_xy, 100)
+plt.subplot(2, 5, 5)
+plt.contourf(x, y, stress_xy, n_contours)
 plt.title("stress_xy")
-plt.colorbar()
-
-plt.tight_layout()
-plt.show(block=False)
-
+consistent_plots()
 
 # Constant displacement
-plt.figure()
-plt.subplot(2, 3, 1)
-plt.contourf(x, y, _displacement_x, 100)
+plt.subplot(2, 5, 6)
+plt.contourf(x, y, _displacement_x, n_contours)
 plt.title("displacement_x")
-plt.colorbar()
+consistent_plots()
 
-plt.subplot(2, 3, 2)
-plt.contourf(x, y, _displacement_y, 100)
+plt.subplot(2, 5, 7)
+plt.contourf(x, y, _displacement_y, n_contours)
 plt.title("displacement_y")
-plt.colorbar()
+consistent_plots()
 
-plt.subplot(2, 3, 4)
-plt.contourf(x, y, _stress_xx, 100)
+plt.subplot(2, 5, 8)
+plt.contourf(x, y, _stress_xx, n_contours)
 plt.title("stress_xx")
-plt.colorbar()
+consistent_plots()
 
-plt.subplot(2, 3, 5)
-plt.contourf(x, y, _stress_yy, 100)
+plt.subplot(2, 5, 9)
+plt.contourf(x, y, _stress_yy, n_contours)
 plt.title("stress_yy")
-plt.colorbar()
+consistent_plots()
 
-plt.subplot(2, 3, 6)
-plt.contourf(x, y, _stress_xy, 100)
+plt.subplot(2, 5, 10)
+plt.contourf(x, y, _stress_xy, n_contours)
 plt.title("stress_xy")
-plt.colorbar()
+consistent_plots()
 
 plt.tight_layout()
 plt.show(block=False)
