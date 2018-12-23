@@ -128,49 +128,56 @@ def constant_slip_element(x, y, a, mu, nu, slip_x, slip_y):
     return displacement_x, displacement_y, stress_xx, stress_yy, stress_xy
 
 
-# def translate_and_rotate_coordinates(x, y)
-
-#     return x_new, y_new
-
-
 mu = 30e9
 nu = 0.25
-x = np.linspace(-5, 5, 21)
-y = np.linspace(-5, 5, 21)
+n_pts = 100
+x = np.linspace(-5, 5, n_pts)
+y = np.linspace(-5, 5, n_pts)
 x, y = np.meshgrid(x, y)
 
 
-# A single source
-source = {}
-source["x1"] = -1
-source["y1"] = 1
-source["x2"] = 1
-source["y2"] = 1
-source["angle"] = np.arctan2(source["y2"] - source["y1"], source["x2"] - source["x1"])
-source["length"] = np.sqrt(
-    (source["x2"] - source["x1"]) ** 2 + (source["y2"] - source["y1"]) ** 2
-)
-source["half_length"] = 0.5 * source["length"]
-source["x_center"] = 0.5 * (source["x2"] + source["x1"])
-source["y_center"] = 0.5 * (source["y2"] + source["y1"])
-x_calc = x - source["x_center"]
-y_calc = y - source["y_center"]
+# A single element
+element = {}
+element["x1"] = -1
+element["y1"] = 0
+element["x2"] = 1
+element["y2"] = 0
 
-rotation_matrix = np.array(
+# element["x1"] = -np.sqrt(2)/2
+# element["y1"] = -np.sqrt(2)/2
+# element["x2"] = np.sqrt(2)/2
+# element["y2"] = np.sqrt(2)/2
+
+
+element["angle"] = np.arctan2(element["y2"] - element["y1"], element["x2"] - element["x1"])
+element["length"] = np.sqrt(
+    (element["x2"] - element["x1"]) ** 2 + (element["y2"] - element["y1"]) ** 2
+)
+element["half_length"] = 0.5 * element["length"]
+element["x_center"] = 0.5 * (element["x2"] + element["x1"])
+element["y_center"] = 0.5 * (element["y2"] + element["y1"])
+element["rotation_matrix"] = np.array(
     [
-        [np.cos(source["angle"]), -np.sin(source["angle"])],
-        [np.sin(source["angle"]), np.cos(source["angle"])],
+        [np.cos(element["angle"]), -np.sin(element["angle"])],
+        [np.sin(element["angle"]), np.cos(element["angle"])],
     ]
 )
-# np.matmul #????
+
+x_calc = x - element["x_center"]
+y_calc = y - element["y_center"]
+rotated_coords = np.matmul(np.vstack((x_calc.flatten(), y_calc.flatten())).T, element["rotation_matrix"])
+x_calc = rotated_coords[:, 0]
+y_calc = rotated_coords[:, 1]
+x_calc = np.reshape(x_calc, (n_pts, n_pts))
+y_calc = np.reshape(y_calc, (n_pts, n_pts))
 
 
 displacement_x, displacement_y, stress_xx, stress_yy, stress_xy = constant_traction_element(
-    x_calc, y_calc, source["half_length"], mu, nu, 1, 0
+    x_calc, y_calc, element["half_length"], mu, nu, 1, 0
 )
 
 _displacement_x, _displacement_y, _stress_xx, _stress_yy, _stress_xy = constant_slip_element(
-    x_calc, y_calc, source["half_length"], mu, nu, 1, 0
+    x_calc, y_calc, element["half_length"], mu, nu, 1, 0
 )
 
 
