@@ -130,7 +130,7 @@ def constant_slip_element(x, y, a, mu, nu, slip_x, slip_y):
 
 mu = 30e9
 nu = 0.25
-n_pts = 100
+n_pts = 50
 x = np.linspace(-5, 5, n_pts)
 y = np.linspace(-5, 5, n_pts)
 x, y = np.meshgrid(x, y)
@@ -147,7 +147,6 @@ element["y2"] = 0
 # element["y1"] = -np.sqrt(2)/2
 # element["x2"] = np.sqrt(2)/2
 # element["y2"] = np.sqrt(2)/2
-
 
 element["angle"] = np.arctan2(element["y2"] - element["y1"], element["x2"] - element["x1"])
 element["length"] = np.sqrt(
@@ -189,60 +188,81 @@ def consistent_plots():
 
 
 plt.close("all")
-plt.figure(figsize=(20, 10))
+plt.figure(figsize=(16, 8))
 n_contours = 10
 
-plt.subplot(2, 5, 1)
+plt.subplot(2, 6, 1)
 plt.contourf(x, y, displacement_x, n_contours)
 plt.title("displacement_x")
 consistent_plots()
 
-plt.subplot(2, 5, 2)
+plt.subplot(2, 6, 2)
 plt.contourf(x, y, displacement_y, n_contours)
 plt.title("displacement_y")
 consistent_plots()
 
+plt.subplot(2, 6, 3)
+plt.quiver(x, y, displacement_x, displacement_y, units='width')
+plt.title("vectors")
+plt.gca().set_aspect("equal")
+plt.xticks([-5, 0, 5])
+plt.yticks([-5, 0, 5])
 
-plt.subplot(2, 5, 3)
+plt.subplot(2, 6, 4)
 plt.contourf(x, y, stress_xx, n_contours)
 plt.title("stress_xx")
 consistent_plots()
 
-plt.subplot(2, 5, 4)
+plt.subplot(2, 6, 5)
 plt.contourf(x, y, stress_yy, n_contours)
 plt.title("stress_yy")
 consistent_plots()
 
-plt.subplot(2, 5, 5)
+plt.subplot(2, 6, 6)
 plt.contourf(x, y, stress_xy, n_contours)
 plt.title("stress_xy")
 consistent_plots()
 
 # Constant displacement
-plt.subplot(2, 5, 6)
+plt.subplot(2, 6, 7)
 plt.contourf(x, y, _displacement_x, n_contours)
 plt.title("displacement_x")
 consistent_plots()
 
-plt.subplot(2, 5, 7)
+plt.subplot(2, 6, 8)
 plt.contourf(x, y, _displacement_y, n_contours)
 plt.title("displacement_y")
 consistent_plots()
 
-plt.subplot(2, 5, 8)
+plt.subplot(2, 6, 9)
+plt.quiver(x, y, _displacement_x, _displacement_y, units='width')
+plt.title("vectors")
+plt.gca().set_aspect("equal")
+plt.xticks([-5, 0, 5])
+plt.yticks([-5, 0, 5])
+
+plt.subplot(2, 6, 10)
 plt.contourf(x, y, _stress_xx, n_contours)
 plt.title("stress_xx")
 consistent_plots()
 
-plt.subplot(2, 5, 9)
+plt.subplot(2, 6, 11)
 plt.contourf(x, y, _stress_yy, n_contours)
 plt.title("stress_yy")
 consistent_plots()
 
-plt.subplot(2, 5, 10)
+plt.subplot(2, 6, 12)
 plt.contourf(x, y, _stress_xy, n_contours)
 plt.title("stress_xy")
 consistent_plots()
 
 plt.tight_layout()
+
+plt.figure(figsize=(10, 10))
+plt.quiver(x, y, 10 * displacement_x, 10 * displacement_y, units="x")
+plt.title("vectors")
+plt.gca().set_aspect("equal")
+plt.xticks([-5, 0, 5])
+plt.yticks([-5, 0, 5])
+
 plt.show(block=False)
