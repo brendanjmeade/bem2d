@@ -824,6 +824,23 @@ elements_fault = []
 element = {}
 L = 10000
 x1, y1, x2, y2 = discretized_line(-L, 0, L, 0, 51)
+
+# Random element sizes
+tx = np.random.rand(49)
+tx = np.sort(tx)
+tx = tx * (2 * 9600)
+tx = tx - 9600
+
+x1[1::1] = tx
+x2[0:-1] = tx
+print(x1)
+print(x2)
+
+# import ipdb; ipdb.set_trace()
+# Modify two elements to be of unequal size
+# x1[10] = -6200
+# x2[9] = -6200
+
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
@@ -1000,4 +1017,4 @@ plt.show(block = False)
 
 # Save as .npz file:
 # TODO: add a UUID to this
-np.savez("model_run_huge.npz", history, time_interval)
+np.savez("model_run_huge_even_linear.npz", history, time_interval)
