@@ -766,7 +766,7 @@ g5_quadratic_phi_3 = (
 )
 
 # g6
-g5_quadratic_phi_1 = (
+g6_quadratic_phi_1 = (
     -3
     / 16
     * (
@@ -858,7 +858,7 @@ g5_quadratic_phi_1 = (
     )
 )
 
-g5_quadratic_phi_1 = (
+g6_quadratic_phi_2 = (
     1
     / 8
     * (
@@ -943,7 +943,7 @@ g5_quadratic_phi_1 = (
     )
 )
 
-g5_quadratic_phi_1 = (
+g6_quadratic_phi_3 = (
     -3
     / 16
     * (
