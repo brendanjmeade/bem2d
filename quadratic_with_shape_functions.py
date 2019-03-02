@@ -1,10 +1,8 @@
-import numpy as np
 
 def quadratic_kernels(x, y, a, nu):
     """ Kernels with quadratic shape functions
         f has diemnsions of (f=7, shapefunctions=3, n_obs)
     """
-
 
     f = np.zeros((7, 3, x.size))
 
