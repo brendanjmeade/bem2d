@@ -476,8 +476,9 @@ def rotate_displacement_stress(displacement, stress, inverse_rotation_matrix):
     return displacement, stress
 
 
-def discretized_circle(radius, n_pts):
+def discretized_circle(radius, n_segments):
     """ Create geometry of discretized circle """
+    n_pts = n_segments + 1
     x1 = np.zeros(n_pts)
     y1 = np.zeros(n_pts)
     for i in range(0, n_pts):
@@ -823,7 +824,7 @@ nu = 0.25
 elements_fault = []
 element = {}
 L = 10000
-x1, y1, x2, y2 = discretized_line(-L, 0, L, 0, 51)
+x1, y1, x2, y2 = discretized_line(-L, 0, L, 0, 50)
 
 # Random element sizes
 tx = np.random.rand(49)
