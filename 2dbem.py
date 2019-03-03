@@ -246,7 +246,6 @@ def linear_kernel(x, y, a, nu):
 
 
 def quadratic_kernel(x, y, a, nu):
-
     """ Kernels with quadratic shape functions
         f has diemnsions of (f=7, shapefunctions=3, n_obs)
     """
@@ -381,7 +380,10 @@ def quadratic_kernel(x, y, a, nu):
             8 * a ** 2
             - 12 * a * x
             - 4
-            * ((a - 3 * x) * np.arctan((a + x) / y) + (a - 3 * x) * np.arctan((a - x) / y))
+            * (
+                (a - 3 * x) * np.arctan((a + x) / y)
+                + (a - 3 * x) * np.arctan((a - x) / y)
+            )
             * y
             - (2 * a * x - 3 * x ** 2 + 3 * y ** 2)
             * np.log(abs(a ** 2 + 2 * a * x + x ** 2 + y ** 2))
@@ -412,7 +414,10 @@ def quadratic_kernel(x, y, a, nu):
             8 * a ** 2
             + 12 * a * x
             - 4
-            * ((a + 3 * x) * np.arctan((a + x) / y) + (a + 3 * x) * np.arctan((a - x) / y))
+            * (
+                (a + 3 * x) * np.arctan((a + x) / y)
+                + (a + 3 * x) * np.arctan((a - x) / y)
+            )
             * y
             - (2 * a * x + 3 * x ** 2 - 3 * y ** 2)
             * np.log(abs(a ** 2 + 2 * a * x + x ** 2 + y ** 2))
@@ -429,11 +434,15 @@ def quadratic_kernel(x, y, a, nu):
         * (
             4 * a ** 2 * y ** 3
             - 2
-            * ((a - 3 * x) * np.arctan((a + x) / y) + (a - 3 * x) * np.arctan((a - x) / y))
+            * (
+                (a - 3 * x) * np.arctan((a + x) / y)
+                + (a - 3 * x) * np.arctan((a - x) / y)
+            )
             * y ** 4
             - 4
             * (
-                (a ** 3 - 3 * a ** 2 * x + a * x ** 2 - 3 * x ** 3) * np.arctan((a + x) / y)
+                (a ** 3 - 3 * a ** 2 * x + a * x ** 2 - 3 * x ** 3)
+                * np.arctan((a + x) / y)
                 + (a ** 3 - 3 * a ** 2 * x + a * x ** 2 - 3 * x ** 3)
                 * np.arctan((a - x) / y)
             )
@@ -541,11 +550,15 @@ def quadratic_kernel(x, y, a, nu):
         * (
             4 * a ** 2 * y ** 3
             - 2
-            * ((a + 3 * x) * np.arctan((a + x) / y) + (a + 3 * x) * np.arctan((a - x) / y))
+            * (
+                (a + 3 * x) * np.arctan((a + x) / y)
+                + (a + 3 * x) * np.arctan((a - x) / y)
+            )
             * y ** 4
             - 4
             * (
-                (a ** 3 + 3 * a ** 2 * x + a * x ** 2 + 3 * x ** 3) * np.arctan((a + x) / y)
+                (a ** 3 + 3 * a ** 2 * x + a * x ** 2 + 3 * x ** 3)
+                * np.arctan((a + x) / y)
                 + (a ** 3 + 3 * a ** 2 * x + a * x ** 2 + 3 * x ** 3)
                 * np.arctan((a - x) / y)
             )
@@ -1033,7 +1046,8 @@ def quadratic_kernel(x, y, a, nu):
             + 6
             * (
                 (3 * a ** 4 + 2 * a ** 2 * x ** 2 + 3 * x ** 4) * np.arctan((a + x) / y)
-                + (3 * a ** 4 + 2 * a ** 2 * x ** 2 + 3 * x ** 4) * np.arctan((a - x) / y)
+                + (3 * a ** 4 + 2 * a ** 2 * x ** 2 + 3 * x ** 4)
+                * np.arctan((a - x) / y)
             )
             * y ** 4
             - 2 * (15 * a ** 5 - 8 * a ** 4 * x + 9 * a * x ** 4) * y ** 3
@@ -1125,7 +1139,8 @@ def quadratic_kernel(x, y, a, nu):
             + 18
             * (
                 (3 * a ** 4 + 2 * a ** 2 * x ** 2 + 3 * x ** 4) * np.arctan((a + x) / y)
-                + (3 * a ** 4 + 2 * a ** 2 * x ** 2 + 3 * x ** 4) * np.arctan((a - x) / y)
+                + (3 * a ** 4 + 2 * a ** 2 * x ** 2 + 3 * x ** 4)
+                * np.arctan((a - x) / y)
             )
             * y ** 4
             - 2 * (37 * a ** 5 + 8 * a ** 3 * x ** 2 + 27 * a * x ** 4) * y ** 3
@@ -1210,7 +1225,8 @@ def quadratic_kernel(x, y, a, nu):
             + 6
             * (
                 (3 * a ** 4 + 2 * a ** 2 * x ** 2 + 3 * x ** 4) * np.arctan((a + x) / y)
-                + (3 * a ** 4 + 2 * a ** 2 * x ** 2 + 3 * x ** 4) * np.arctan((a - x) / y)
+                + (3 * a ** 4 + 2 * a ** 2 * x ** 2 + 3 * x ** 4)
+                * np.arctan((a - x) / y)
             )
             * y ** 4
             - 2 * (15 * a ** 5 + 8 * a ** 4 * x + 9 * a * x ** 4) * y ** 3
@@ -1285,6 +1301,177 @@ def quadratic_kernel(x, y, a, nu):
             * y ** 2
         )
     )
+
+    return f
+
+
+def quadratic_kernel_coincident(a, nu):
+    """ Kernels for coincident integrals 
+        f, shape_function_idx, node_idx """
+    f = np.zeros((7, 3, 3))
+
+    # f0
+    f[0, 0, 0] = g0_quadratic_phi_1_node_1 = (
+        -5 / 144 * a * np.log(25 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        - 17 / 288 * a * np.log(1 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        + 1 / 12 * a / (np.pi - np.pi * nu)
+    )
+    f[0, 1, 0] = (
+        -25 / 288 * a * np.log(25 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        + 7 / 288 * a * np.log(1 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        + 1 / 12 * a / (np.pi - np.pi * nu)
+    )
+    f[0, 2, 0] = (
+        -25 / 288 * a * np.log(25 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        - 1 / 144 * a * np.log(1 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        - 1 / 6 * a / (np.pi - np.pi * nu)
+    )
+    f[0, 0, 1] = -3 / 16 * a * np.log(a) / (np.pi - np.pi * nu) - 1 / 8 * a / (
+        np.pi - np.pi * nu
+    )
+    f[0, 1, 1] = -1 / 8 * a * np.log(a) / (np.pi - np.pi * nu) + 1 / 4 * a / (
+        np.pi - np.pi * nu
+    )
+    f[0, 2, 1] = -3 / 16 * a * np.log(a) / (np.pi - np.pi * nu) - 1 / 8 * a / (
+        np.pi - np.pi * nu
+    )
+    f[0, 0, 2] = (
+        -25 / 288 * a * np.log(25 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        - 1 / 144 * a * np.log(1 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        - 1 / 6 * a / (np.pi - np.pi * nu)
+    )
+    f[0, 1, 2] = (
+        -25 / 288 * a * np.log(25 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        + 7 / 288 * a * np.log(1 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        + 1 / 12 * a / (np.pi - np.pi * nu)
+    )
+    f[0, 2, 2] = (
+        -5 / 144 * a * np.log(25 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        - 17 / 288 * a * np.log(1 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        + 1 / 12 * a / (np.pi - np.pi * nu)
+    )
+
+    # f1
+    f[1, 0, 0] = 1 / 4 / (nu - 1)
+    f[1, 1, 0] = 0
+    f[1, 2, 0] = 0
+    f[1, 0, 1] = 0
+    f[1, 1, 1] = 1 / 4 / (nu - 1)
+    f[1, 2, 1] = 0
+    f[1, 0, 2] = 0
+    f[1, 1, 2] = 0
+    f[1, 2, 2] = 1 / 4 / (nu - 1)
+
+    # f2
+    f[2, 0, 0] = (
+        1 / 8 * np.log(25 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        - 1 / 8 * np.log(1 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        - 3 / 4 / (np.pi - np.pi * nu)
+    )
+    f[2, 1, 0] = 3 / 4 / (np.pi - np.pi * nu)
+    f[2, 2, 0] = 0
+    f[2, 0, 1] = -3 / 8 / (np.pi - np.pi * nu)
+    f[2, 1, 1] = 0
+    f[2, 2, 1] = 3 / 8 / (np.pi - np.pi * nu)
+    f[2, 0, 2] = 0
+    f[2, 1, 2] = -3 / 4 / (np.pi - np.pi * nu)
+    f[2, 2, 2] = (
+        -1 / 8 * np.log(25 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        + 1 / 8 * np.log(1 / 9 * a ** 2) / (np.pi - np.pi * nu)
+        + 3 / 4 / (np.pi - np.pi * nu)
+    )
+
+    # f3
+    f[3, 0, 0] = -9 / 16 / (a * nu - a)
+    f[3, 1, 0] = 3 / 4 / (a * nu - a)
+    f[3, 2, 0] = -3 / 16 / (a * nu - a)
+    f[3, 0, 1] = -3 / 16 / (a * nu - a)
+    f[3, 1, 1] = 0
+    f[3, 2, 1] = 3 / 16 / (a * nu - a)
+    f[3, 0, 2] = 3 / 16 / (a * nu - a)
+    f[3, 1, 2] = -3 / 4 / (a * nu - a)
+    f[3, 2, 2] = 9 / 16 / (a * nu - a)
+
+    # f4
+    f[4, 0, 0] = (
+        9 / 32 * np.log(25 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        - 9 / 32 * np.log(1 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        + 27 / 80 / (np.pi * a * nu - np.pi * a)
+    )
+    f[4, 1, 0] = (
+        -3 / 8 * np.log(25 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        + 3 / 8 * np.log(1 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        + 9 / 8 / (np.pi * a * nu - np.pi * a)
+    )
+    f[4, 2, 0] = (
+        3 / 32 * np.log(25 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        - 3 / 32 * np.log(1 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        - 9 / 16 / (np.pi * a * nu - np.pi * a)
+    )
+    f[4, 0, 1] = -9 / 16 / (np.pi * a * nu - np.pi * a)
+    f[4, 1, 1] = 13 / 8 / (np.pi * a * nu - np.pi * a)
+    f[4, 2, 1] = -9 / 16 / (np.pi * a * nu - np.pi * a)
+    f[4, 0, 2] = (
+        3 / 32 * np.log(25 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        - 3 / 32 * np.log(1 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        - 9 / 16 / (np.pi * a * nu - np.pi * a)
+    )
+    f[4, 1, 2] = (
+        -3 / 8 * np.log(25 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        + 3 / 8 * np.log(1 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        + 9 / 8 / (np.pi * a * nu - np.pi * a)
+    )
+    f[4, 2, 2] = (
+        9 / 32 * np.log(25 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        - 9 / 32 * np.log(1 / 9 * a ** 2) / (np.pi * a * nu - np.pi * a)
+        + 27 / 80 / (np.pi * a * nu - np.pi * a)
+    )
+
+    # f5
+    f[5, 0, 0] = (
+        9 / 32 * np.log(25 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        - 9 / 32 * np.log(1 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        + 621 / 100 / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+    )
+    f[5, 1, 0] = (
+        -9 / 16 * np.log(25 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        + 9 / 16 * np.log(1 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        - 27 / 5 / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+    )
+    f[5, 2, 0] = (
+        9 / 32 * np.log(25 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        - 9 / 32 * np.log(1 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        + 27 / 20 / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+    )
+    f[5, 0, 1] = 3 / 4 / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+    f[5, 1, 1] = 0
+    f[5, 2, 1] = -3 / 4 / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+    f[5, 0, 2] = (
+        -9 / 32 * np.log(25 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        + 9 / 32 * np.log(1 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        - 27 / 20 / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+    )
+    f[5, 1, 2] = (
+        9 / 16 * np.log(25 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        - 9 / 16 * np.log(1 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        + 27 / 5 / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+    )
+    f[5, 2, 2] = (
+        -9 / 32 * np.log(25 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        + 9 / 32 * np.log(1 / 9 * a ** 2) / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+        - 621 / 100 / (np.pi * a ** 2 * nu - np.pi * a ** 2)
+    )
+
+    # f6
+    f[6, 0, 0] = -9 / 16 / (a ** 2 * nu - a ** 2)
+    f[6, 1, 0] = 9 / 8 / (a ** 2 * nu - a ** 2)
+    f[6, 2, 0] = -9 / 16 / (a ** 2 * nu - a ** 2)
+    f[6, 0, 1] = -9 / 16 / (a ** 2 * nu - a ** 2)
+    f[6, 1, 1] = 9 / 8 / (a ** 2 * nu - a ** 2)
+    f[6, 2, 1] = -9 / 16 / (a ** 2 * nu - a ** 2)
+    f[6, 0, 2] = -9 / 16 / (a ** 2 * nu - a ** 2)
+    f[6, 1, 2] = 9 / 8 / (a ** 2 * nu - a ** 2)
+    f[6, 2, 2] = -9 / 16 / (a ** 2 * nu - a ** 2)
 
     return f
 
@@ -1847,7 +2034,6 @@ def test_planar_rutpure():
     L = 10000
     x1, y1, x2, y2 = discretized_line(-L, 0, L, 0, 50)
 
-
     for i in range(0, x1.size):
         element["x1"] = x1[i]
         element["y1"] = y1[i]
@@ -1855,7 +2041,6 @@ def test_planar_rutpure():
         element["y2"] = y2[i]
         elements_fault.append(element.copy())
     elements_fault = standardize_elements(elements_fault)
-
 
     # Build partial derivative matrices for Ben's thrust fault problem
     slip_to_displacement, slip_to_traction = calc_partials(
@@ -1883,25 +2068,26 @@ def test_planar_rutpure():
     plt.show(block=False)
 
     n_elements = len(elements_fault)
-    sm = 3e10                  # Shear modulus (Pa)
-    density = 2700             # rock density (kg/m^3)
-    cs = np.sqrt(sm / density) # Shear wave speed (m/s)
-    eta = sm / (2 * cs)        # The radiation damping coefficient (kg / (m^2 * s))
-    Vp = 1e-9                  # Rate of plate motion
-    sigma_n = 50e6             # Normal stress (Pa)
-    a = 0.015                  # direct velocity strengthening effect
-    b = 0.02                   # state-based velocity weakening effect
-    Dc = 0.1                   # state evolution length scale (m)
-    f0 = 0.6                   # baseline coefficient of friction
-    V0 = 1e-6                  # when V = V0, f = f0, V is (m/s)
+    sm = 3e10  # Shear modulus (Pa)
+    density = 2700  # rock density (kg/m^3)
+    cs = np.sqrt(sm / density)  # Shear wave speed (m/s)
+    eta = sm / (2 * cs)  # The radiation damping coefficient (kg / (m^2 * s))
+    Vp = 1e-9  # Rate of plate motion
+    sigma_n = 50e6  # Normal stress (Pa)
+    a = 0.015  # direct velocity strengthening effect
+    b = 0.02  # state-based velocity weakening effect
+    Dc = 0.1  # state evolution length scale (m)
+    f0 = 0.6  # baseline coefficient of friction
+    V0 = 1e-6  # when V = V0, f = f0, V is (m/s)
     secs_per_year = 365 * 24 * 60 * 60
     time_interval_yrs = np.linspace(0.0, 1000.0, 5001)
     time_interval = time_interval_yrs * secs_per_year
 
     kcrit = sigma_n * b / Dc
     initial_velocity = np.zeros(2 * n_elements)
-    initial_velocity[0::2] = Vp / 1000.0# Initially, the slider is moving at 1/1000th the plate rate.
-
+    initial_velocity[0::2] = (
+        Vp / 1000.0
+    )  # Initially, the slider is moving at 1/1000th the plate rate.
 
     def calc_frictional_stress(velocity, normal_stress, state):
         """ Rate-state friction law w/ Rice et al 2001 regularization so that
@@ -1911,17 +2097,19 @@ def test_planar_rutpure():
         frictional_stress = friction * normal_stress
         return frictional_stress
 
-
     def calc_state(velocity, state):
         """ State evolution law - aging law """
         return (b * V0 / Dc) * (np.exp((f0 - state) / b) - (velocity / V0))
-
 
     def current_velocity(tau_qs, state, V_old):
         """ Solve the algebraic part of the DAE system """
 
         def f(V, tau_local, normal_stress, state_local):
-            return tau_local - eta * V - calc_frictional_stress(V, normal_stress, state_local)
+            return (
+                tau_local
+                - eta * V
+                - calc_frictional_stress(V, normal_stress, state_local)
+            )
 
         # For each element do the f(V) solve
         current_velocities = np.zeros(2 * n_elements)
@@ -1929,13 +2117,14 @@ def test_planar_rutpure():
             shear_stress = tau_qs[2 * i]
             # shear_dir = ... # Come back to this later for non x-axis geometry
             normal_stress = sigma_n
-            velocity_mag = fsolve(f, V_old[2 * i], args=(shear_stress, normal_stress, state[i]))[0]
+            velocity_mag = fsolve(
+                f, V_old[2 * i], args=(shear_stress, normal_stress, state[i])
+            )[0]
             # ONLY FOR FLAT GEOMETERY with y = 0 on all elements
             current_velocities[2 * i] = velocity_mag
             current_velocities[2 * i + 1] = 0
 
         return current_velocities
-
 
     def steady_state(velocities):
         """ Steady state...state """
@@ -1945,13 +2134,12 @@ def test_planar_rutpure():
             return calc_state(v, state)
 
         for i in range(0, n_elements):
-            #TODO: FIX FOR NON XAXIS FAULT, USE VELOCITY MAGNITUDE
-            steady_state_state[i] = fsolve(f, 0.0, args=(velocities[2 * i], ))[0]
+            # TODO: FIX FOR NON XAXIS FAULT, USE VELOCITY MAGNITUDE
+            steady_state_state[i] = fsolve(f, 0.0, args=(velocities[2 * i],))[0]
 
         return steady_state_state
 
     state_0 = steady_state(initial_velocity)
-
 
     def calc_derivatives(x_and_state, t):
         """ Derivatives to feed to ODE integrator """
@@ -1961,19 +2149,21 @@ def test_planar_rutpure():
         x = np.zeros(ux.size + uy.size)
         x[0::2] = ux
         x[1::2] = uy
-        
+
         # Current shear stress on fault (slip->traction)
         tau_qs = slip_to_traction @ x
-        
+
         # Solve for the current velocity...This is the algebraic part
-        sliding_velocity = current_velocity(tau_qs, state, calc_derivatives.sliding_velocity_old) 
-        
+        sliding_velocity = current_velocity(
+            tau_qs, state, calc_derivatives.sliding_velocity_old
+        )
+
         # Store the velocity to use it next time for warm-start the velocity solver
         calc_derivatives.sliding_velocity_old = sliding_velocity
 
         dx_dt = -sliding_velocity
-        dx_dt[0::2] += Vp # FIX TO USE Vp in the plate direction
-        #TODO: FIX TO USE VELOCITY MAGNITUDE 
+        dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
+        # TODO: FIX TO USE VELOCITY MAGNITUDE
         dstate_dt = calc_state(sliding_velocity[0::2], state)
         derivatives = np.zeros(dx_dt.size + dstate_dt.size)
         derivatives[0::3] = dx_dt[0::2]
@@ -1983,7 +2173,6 @@ def test_planar_rutpure():
 
     calc_derivatives.sliding_velocity_old = initial_velocity
 
-
     displacement_fault = np.zeros(2 * n_elements)
     state_fault = state_0 * np.ones(n_elements)
     initial_conditions = np.zeros(3 * n_elements)
@@ -1992,22 +2181,27 @@ def test_planar_rutpure():
     initial_conditions[2::3] = state_fault
     print(initial_conditions)
     # history = odeint(calc_derivatives, initial_conditions, time_interval, rtol=1e-12, atol=1e-12, mxstep=5000)
-    history = odeint(calc_derivatives, initial_conditions, time_interval, rtol=1e-13, atol=1e-13, mxstep=5000, printmessg=True)
-    plt.close('all')
+    history = odeint(
+        calc_derivatives,
+        initial_conditions,
+        time_interval,
+        rtol=1e-13,
+        atol=1e-13,
+        mxstep=5000,
+        printmessg=True,
+    )
+    plt.close("all")
     plt.figure()
     for i in range(n_elements):
-        plt.plot(history[:, 3 * i], label = str(i), linewidth=0.5)
+        plt.plot(history[:, 3 * i], label=str(i), linewidth=0.5)
         # plt.figure()
         # plt.plot(history[:,2])
     plt.legend()
-    plt.show(block = False)
-
+    plt.show(block=False)
 
     # Save as .npz file:
     # TODO: add a UUID to this
     np.savez("model_run_huge_even_linear.npz", history, time_interval)
-
-
 
 
 plt.close("all")
@@ -2081,4 +2275,3 @@ plot_fields(
 # TODO: Generalize for velocity magnitudes and velocity decomposition in rate and state
 # TODO: Add flag to tread x and y components of forcing/slip in global coordinate system
 # TODO: Visualization for planar rupture output
-
