@@ -1675,6 +1675,10 @@ def standardize_elements(elements):
         element["x_normal"] = dy / mag
         element["y_normal"] = -dx / mag
 
+        # Evaluations points for quadratic kernels
+        element["x_integration_points"] = np.array([element["x_center"] - 2/3 * dx, element["x_center"], element["x_center"] + 2/3 * dx])
+        element["y_integration_points"] = np.array([element["y_center"] - 2/3 * dy, element["y_center"], element["y_center"] + 2/3 * dy])
+        
     return elements
 
 
@@ -2267,8 +2271,9 @@ plot_fields(
     "quadratic tensile slip",
 )
 
-# TODO: Test quadratic slip
-# TODO: Add quadratic evaluation points to each element
+# TODO: Build coincident partials for a single element model
+# TODO: Build coincident and far-field partials for a 2 element model
+
 # TODO: Save information from rupture problem as .pkl/.npz
 # TODO: Try rupture problem with variations in a-b.  Do I have to pass elements_* dict to do this?
 # TODO: Rupture problem with free surface
