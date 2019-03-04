@@ -2208,6 +2208,89 @@ def test_planar_rutpure():
     np.savez("model_run_huge_even_linear.npz", history, time_interval)
 
 
+def coincident_displacements_and_stresses(
+    x,
+    y,
+    a,
+    mu,
+    nu,
+    element_type,
+    x_component,
+    y_component,
+    x_center,
+    y_center,
+    rotation_matrix,
+    inverse_rotation_matrix,
+):
+    """ Calculate displacements and stresses """
+
+    # 2 displacement components at each of the 3 collacation points?
+    displacement = np.zeros((2, 3))
+
+    # 3 stress components at each of the 3 collacation points?
+    stress = np.zeros((3, 3))
+
+
+
+    # Rotate and translate into local coordinate system
+    x = x - x_center
+    y = y - y_center
+    rotated_coords = np.matmul(np.vstack((x, y)).T, rotation_matrix)
+    x = rotated_coords[:, 0]
+    y = rotated_coords[:, 1]
+
+    f = quadratic_kernel_coincident(element["half_length"], nu)
+
+
+    # TODO: Should I set y = 0 here?  I think so.
+    if element_type == "traction":
+        displacement[0, :] = x_component / (2 * mu) * (
+            (3 - 4 * nu) * f[0, :] + y * f[1, :]
+        ) + y_component / (2 * mu) * (-y * f[2, :])
+
+        displacement[1, :] = x_component / (2 * mu) * (-y * f[2, :]) + y_component / (
+            2 * mu
+        ) * ((3 - 4 * nu) * f[0, :] - y * f[1, :])
+
+        stress[0, :] = x_component * (
+            (3 - 2 * nu) * f[2, :] + y * f[3, :]
+        ) + y_component * (2 * nu * f[1, :] + y * f[4, :])
+
+        stress[1, :] = x_component * (
+            -1 * (1 - 2 * nu) * f[2, :] + y * f[3, :]
+        ) + y_component * (2 * (1 - nu) * f[1, :] - y * f[4, :])
+
+        stress[2, :] = x_component * (
+            2 * (1 - nu) * f[1, :] + y * f[4, :]
+        ) + y_component * ((1 - 2 * nu) * f[2, :] - y * f[3, :])
+
+    elif element_type == "slip":
+        displacement[0, :] = x_component * (
+            2 * (1 - nu) * f[1, :] - y * f[4, :]
+        ) + y_component * (-1 * (1 - 2 * nu) * f[2, :] - y * f[3, :])
+
+        displacement[1, :] = x_component * (
+            2 * (1 - 2 * nu) * f[2, :] - y * f[3, :]
+        ) + y_component * (2 * (1 - nu) * f[1, :] - y * f[4, :])
+
+        stress[0, :] = 2 * x_component * mu * (
+            2 * f[3, :] + y * f[5, :]
+        ) + 2 * y_component * mu * (f[4, :] + y * f[6, :])
+
+        stress[1, :] = 2 * x_component * mu * (-y * f[5, :]) + 2 * y_component * mu * (
+            f[4, :] + y * f[6, :]
+        )
+
+        stress[2, :] = 2 * x_component * mu * (
+            f[4, :] + y * f[6, :]
+        ) + 2 * y_component * mu * (-y * f[5, :])
+
+    displacement, stress = rotate_displacement_stress(
+        displacement, stress, inverse_rotation_matrix
+    )
+
+    return displacement, stress
+
 plt.close("all")
 # test_circle()
 # test_thrust()
@@ -2270,6 +2353,8 @@ plot_fields(
     stress_constant_slip,
     "quadratic tensile slip",
 )
+
+f = quadratic_kernel_coincident(element["half_length"], nu)
 
 # TODO: Build coincident partials for a single element model
 # TODO: Build coincident and far-field partials for a 2 element model
