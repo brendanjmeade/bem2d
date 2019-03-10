@@ -2274,7 +2274,6 @@ plot_fields(
 
 # # Kernels for coincident integrals: f, shape_function_idx, node_idx
 f = quadratic_kernel_coincident(element["half_length"], nu)
-print(f[:, :, 0].shape)
 
 def coincident_displacements_and_stresses(
     x,
@@ -2295,9 +2294,11 @@ def coincident_displacements_and_stresses(
 
     # 2 displacement components at each of the 3 collacation points?
     displacement = np.zeros((2, 3))
-
+    displacement_all = np.zeros((6, 3))
+    
     # 3 stress components at each of the 3 collacation points?
     stress = np.zeros((3, 3))
+    stress_all = np.zeros((3, 3))
 
     # Rotate and translate into local coordinate system
     x = x - x_center
@@ -2309,7 +2310,6 @@ def coincident_displacements_and_stresses(
     f_all = quadratic_kernel_coincident(element["half_length"], nu)
 
     for i in range(0, 3):
-        print(i)
         f = f_all[:, i, :] # Select all the fs for the current NNN
         y = 0 # Set to zero because we're evaluating on the element
 
@@ -2351,14 +2351,11 @@ def coincident_displacements_and_stresses(
         displacement, stress = rotate_displacement_stress(
             displacement, stress, inverse_rotation_matrix
         )
-        print(displacement)
-        # print(stress.shape)
-        
-
-    return displacement, stress
+        displacement_all[2 * i : 2 * i + 2, :] = displacement
+    return displacement_all, stress_all
 
 
-d, ss = coincident_displacements_and_stresses(
+d_strike_slip, s_strike_slip = coincident_displacements_and_stresses(
     element["x_center"],
     element["y_center"],
     element["half_length"],
@@ -2373,6 +2370,31 @@ d, ss = coincident_displacements_and_stresses(
     element["inverse_rotation_matrix"],
 )
 
+d_tensile_slip, s_tensile_slip = coincident_displacements_and_stresses(
+    element["x_center"],
+    element["y_center"],
+    element["half_length"],
+    mu,
+    nu,
+    "slip",
+    0,
+    1,
+    element["x_center"],
+    element["y_center"],
+    element["rotation_matrix"],
+    element["inverse_rotation_matrix"],
+)
+
+d = np.hstack((d_strike_slip, d_tensile_slip))
+
+# def quadratic_partials():
+    # Allocate a 6n by 6n array of zeros
+    # Calculate starting indices for each of n elements
+    # Loop over each elements and place coincident 6x6 on the main diagonal
+    # Loop over element combinations and calculate far-field for non-coincident
+        # Store in off_diagonal parts
+
+    # plot and return the partials
 
 # # TODO: Build coincident partials for a single element model
 # # TODO: Build coincident and far-field partials for a 2 element model
