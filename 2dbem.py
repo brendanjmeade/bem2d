@@ -2216,7 +2216,7 @@ plt.close("all")
 # Material and geometric constants
 mu = 3e10
 nu = 0.25
-n_elements = 1
+n_elements = 2
 n_pts = 40
 
 width = 20000
@@ -2387,14 +2387,30 @@ d_tensile_slip, s_tensile_slip = coincident_displacements_and_stresses(
 
 d = np.hstack((d_strike_slip, d_tensile_slip))
 
-# def quadratic_partials():
+def quadratic_partials(elements):
+    ''' Partial derivatives '''
+
     # Allocate a 6n by 6n array of zeros
+    n_elements = len(elements)
+    partials = np.zeros((6 * n_elements, 6 * n_elements))
+
     # Calculate starting indices for each of n elements
+    six_idx = 6 * np.arange(n_elements + 1)
+
     # Loop over each elements and place coincident 6x6 on the main diagonal
+    for i in range(0, n_elements):
+        temp = np.ones((6, 6))
+        partials[six_idx[i]:six_idx[i + 1], six_idx[i]:six_idx[i + 1]] = temp
+
     # Loop over element combinations and calculate far-field for non-coincident
         # Store in off_diagonal parts
 
     # plot and return the partials
+    return partials
+
+
+partials = quadratic_partials(elements)
+
 
 # # TODO: Build coincident partials for a single element model
 # # TODO: Build coincident and far-field partials for a 2 element model
