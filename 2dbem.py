@@ -1559,6 +1559,89 @@ def calc_displacements_and_stresses(
     return displacement, stress
 
 
+
+def calc_displacements_and_stresses_quadratic(
+    x,
+    y,
+    a,
+    mu,
+    nu,
+    shape_function,
+    element_type,
+    x_component,
+    y_component,
+    x_center,
+    y_center,
+    rotation_matrix,
+    inverse_rotation_matrix,
+):
+    """ Calculate displacements and stresses """
+    displacement = np.zeros((2, x.size))
+    stress = np.zeros((3, x.size))
+
+    # Rotate and translate into local coordinate system
+    x = x - x_center
+    y = y - y_center
+    rotated_coords = np.matmul(np.vstack((x, y)).T, rotation_matrix)
+    x = rotated_coords[:, 0]
+    y = rotated_coords[:, 1]
+
+    f_all = quadratic_kernel(x, y, a, nu)
+
+    for i in range(0, 3):
+        f = f[:, i, :]
+
+        if element_type == "traction":
+            displacement[0, :] = x_component / (2 * mu) * (
+                (3 - 4 * nu) * f[0, :] + y * f[1, :]
+            ) + y_component / (2 * mu) * (-y * f[2, :])
+
+            displacement[1, :] = x_component / (2 * mu) * (-y * f[2, :]) + y_component / (
+                2 * mu
+            ) * ((3 - 4 * nu) * f[0, :] - y * f[1, :])
+
+            stress[0, :] = x_component * (
+                (3 - 2 * nu) * f[2, :] + y * f[3, :]
+            ) + y_component * (2 * nu * f[1, :] + y * f[4, :])
+
+            stress[1, :] = x_component * (
+                -1 * (1 - 2 * nu) * f[2, :] + y * f[3, :]
+            ) + y_component * (2 * (1 - nu) * f[1, :] - y * f[4, :])
+
+            stress[2, :] = x_component * (
+                2 * (1 - nu) * f[1, :] + y * f[4, :]
+            ) + y_component * ((1 - 2 * nu) * f[2, :] - y * f[3, :])
+
+        elif element_type == "slip":
+            displacement[0, :] = x_component * (
+                2 * (1 - nu) * f[1, :] - y * f[4, :]
+            ) + y_component * (-1 * (1 - 2 * nu) * f[2, :] - y * f[3, :])
+
+            displacement[1, :] = x_component * (
+                2 * (1 - 2 * nu) * f[2, :] - y * f[3, :]
+            ) + y_component * (2 * (1 - nu) * f[1, :] - y * f[4, :])
+
+            stress[0, :] = 2 * x_component * mu * (
+                2 * f[3, :] + y * f[5, :]
+            ) + 2 * y_component * mu * (f[4, :] + y * f[6, :])
+
+            stress[1, :] = 2 * x_component * mu * (-y * f[5, :]) + 2 * y_component * mu * (
+                f[4, :] + y * f[6, :]
+            )
+
+            stress[2, :] = 2 * x_component * mu * (
+                f[4, :] + y * f[6, :]
+            ) + 2 * y_component * mu * (-y * f[5, :])
+
+        displacement, stress = rotate_displacement_stress(
+            displacement, stress, inverse_rotation_matrix
+        )
+
+    return displacement, stress
+
+
+
+
 def plot_fields(elements, x, y, displacement, stress, sup_title):
     " Contour 2 displacement fields, 3 stress fields, and quiver displacements"
     x_lim = np.array([x.min(), x.max()])
@@ -1808,6 +1891,122 @@ def calc_partials(elements_src, elements_obs, element_type, mu, nu):
         traction_partials[1::2, (2 * i) + 1] = traction[1, :]
 
     return displacement_partials, traction_partials
+
+
+
+def coincident_displacements_and_stresses(
+    x,
+    y,
+    a,
+    mu,
+    nu,
+    element_type,
+    x_component,
+    y_component,
+    x_center,
+    y_center,
+    rotation_matrix,
+    inverse_rotation_matrix,
+):
+    """ Calculate displacements and stresses for coincident evaluation points.
+    Has to be called twice (one strike-slip, one tensile-slip) for partials. """
+
+    # 2 displacement components at each of the 3 collacation points?
+    displacement = np.zeros((2, 3))
+    displacement_all = np.zeros((6, 3))
+    
+    # 3 stress components at each of the 3 collacation points?
+    stress = np.zeros((3, 3))
+    stress_all = np.zeros((3, 3))
+
+    # Rotate and translate into local coordinate system
+    x = x - x_center
+    y = y - y_center
+    rotated_coords = np.matmul(np.vstack((x, y)).T, rotation_matrix)
+    x = rotated_coords[:, 0]
+    y = rotated_coords[:, 1]
+
+    f_all = quadratic_kernel_coincident(element["half_length"], nu)
+
+    for i in range(0, 3):
+        f = f_all[:, i, :] # Select all the fs for the current NNN
+        y = 0 # Set to zero because we're evaluating on the element
+
+        # TODO: Should I set y = 0 here?  I think so.
+        if element_type == "traction":
+            displacement[0, :] = x_component / (2 * mu) * (
+                (3 - 4 * nu) * f[0, :] + y * f[1, :]
+            ) + y_component / (2 * mu) * (-y * f[2, :])
+            displacement[1, :] = x_component / (2 * mu) * (-y * f[2, :]) + y_component / (
+                2 * mu
+            ) * ((3 - 4 * nu) * f[0, :] - y * f[1, :])
+            stress[0, :] = x_component * (
+                (3 - 2 * nu) * f[2, :] + y * f[3, :]
+            ) + y_component * (2 * nu * f[1, :] + y * f[4, :])
+            stress[1, :] = x_component * (
+                -1 * (1 - 2 * nu) * f[2, :] + y * f[3, :]
+            ) + y_component * (2 * (1 - nu) * f[1, :] - y * f[4, :])
+            stress[2, :] = x_component * (
+                2 * (1 - nu) * f[1, :] + y * f[4, :]
+            ) + y_component * ((1 - 2 * nu) * f[2, :] - y * f[3, :])
+
+        elif element_type == "slip":
+            displacement[0, :] = x_component * (
+                2 * (1 - nu) * f[1, :] - y * f[4, :]
+            ) + y_component * (-1 * (1 - 2 * nu) * f[2, :] - y * f[3, :])
+            displacement[1, :] = x_component * (
+                2 * (1 - 2 * nu) * f[2, :] - y * f[3, :]
+            ) + y_component * (2 * (1 - nu) * f[1, :] - y * f[4, :])
+            stress[0, :] = 2 * x_component * mu * (
+                2 * f[3, :] + y * f[5, :]
+            ) + 2 * y_component * mu * (f[4, :] + y * f[6, :])
+            stress[1, :] = 2 * x_component * mu * (-y * f[5, :]) + 2 * y_component * mu * (
+                f[4, :] + y * f[6, :]
+            )
+            stress[2, :] = 2 * x_component * mu * (
+                f[4, :] + y * f[6, :]
+            ) + 2 * y_component * mu * (-y * f[5, :])
+
+        displacement, stress = rotate_displacement_stress(
+            displacement, stress, inverse_rotation_matrix
+        )
+        displacement_all[2 * i : 2 * i + 2, :] = displacement
+    return displacement_all, stress_all
+
+
+def coincident_partials(element, mu, nu):
+    d_strike_slip, s_strike_slip = coincident_displacements_and_stresses(
+        element["x_center"],
+        element["y_center"],
+        element["half_length"],
+        mu,
+        nu,
+        "slip",
+        1,
+        0,
+        element["x_center"],
+        element["y_center"],
+        element["rotation_matrix"],
+        element["inverse_rotation_matrix"],
+    )
+
+    d_tensile_slip, s_tensile_slip = coincident_displacements_and_stresses(
+        element["x_center"],
+        element["y_center"],
+        element["half_length"],
+        mu,
+        nu,
+        "slip",
+        0,
+        1,
+        element["x_center"],
+        element["y_center"],
+        element["rotation_matrix"],
+        element["inverse_rotation_matrix"],
+    )
+
+    single_element_coincident_partials = np.hstack((d_strike_slip, d_tensile_slip))
+    return single_element_coincident_partials
 
 
 def test_circle():
@@ -2208,6 +2407,8 @@ def test_planar_rutpure():
     np.savez("model_run_huge_even_linear.npz", history, time_interval)
 
 
+
+
 plt.close("all")
 # test_circle()
 # test_thrust()
@@ -2275,12 +2476,40 @@ plot_fields(
 # # Kernels for coincident integrals: f, shape_function_idx, node_idx
 f = quadratic_kernel_coincident(element["half_length"], nu)
 
-def coincident_displacements_and_stresses(
+
+def quadratic_partials(elements, mu, nu):
+    ''' Partial derivatives with quadratic shape functions'''
+    n_elements = len(elements)
+    matrix_stride_per_element = 6
+    partials = np.zeros((matrix_stride_per_element * n_elements, matrix_stride_per_element * n_elements))
+    element_to_matrix_idx = matrix_stride_per_element * np.arange(n_elements + 1)
+
+    for i, element in enumerate(elements):
+        temp = np.ones((matrix_stride_per_element, matrix_stride_per_element))
+        temp = coincident_partials(element, mu, nu)
+        partials[element_to_matrix_idx[i]:element_to_matrix_idx[i + 1], element_to_matrix_idx[i]:element_to_matrix_idx[i + 1]] = temp
+
+    # Loop over element combinations and calculate far-field for non-coincident
+        # Store in off_diagonal parts
+
+    return partials
+
+partials = quadratic_partials(elements, mu, nu)
+plt.matshow(partials)
+plt.title("2-element system partials")
+plt.colorbar()
+plt.show(block=False)
+
+
+
+# Finish this function above!
+calc_displacements_and_stresses_quadratic(
     x,
     y,
     a,
     mu,
     nu,
+    shape_function,
     element_type,
     x_component,
     y_component,
@@ -2288,136 +2517,12 @@ def coincident_displacements_and_stresses(
     y_center,
     rotation_matrix,
     inverse_rotation_matrix,
-):
-    """ Calculate displacements and stresses for coincident evaluation points.
-    Has to be called twice (one strike-slip, one tensile-slip) for partials. """
-
-    # 2 displacement components at each of the 3 collacation points?
-    displacement = np.zeros((2, 3))
-    displacement_all = np.zeros((6, 3))
-    
-    # 3 stress components at each of the 3 collacation points?
-    stress = np.zeros((3, 3))
-    stress_all = np.zeros((3, 3))
-
-    # Rotate and translate into local coordinate system
-    x = x - x_center
-    y = y - y_center
-    rotated_coords = np.matmul(np.vstack((x, y)).T, rotation_matrix)
-    x = rotated_coords[:, 0]
-    y = rotated_coords[:, 1]
-
-    f_all = quadratic_kernel_coincident(element["half_length"], nu)
-
-    for i in range(0, 3):
-        f = f_all[:, i, :] # Select all the fs for the current NNN
-        y = 0 # Set to zero because we're evaluating on the element
-
-        # TODO: Should I set y = 0 here?  I think so.
-        if element_type == "traction":
-            displacement[0, :] = x_component / (2 * mu) * (
-                (3 - 4 * nu) * f[0, :] + y * f[1, :]
-            ) + y_component / (2 * mu) * (-y * f[2, :])
-            displacement[1, :] = x_component / (2 * mu) * (-y * f[2, :]) + y_component / (
-                2 * mu
-            ) * ((3 - 4 * nu) * f[0, :] - y * f[1, :])
-            stress[0, :] = x_component * (
-                (3 - 2 * nu) * f[2, :] + y * f[3, :]
-            ) + y_component * (2 * nu * f[1, :] + y * f[4, :])
-            stress[1, :] = x_component * (
-                -1 * (1 - 2 * nu) * f[2, :] + y * f[3, :]
-            ) + y_component * (2 * (1 - nu) * f[1, :] - y * f[4, :])
-            stress[2, :] = x_component * (
-                2 * (1 - nu) * f[1, :] + y * f[4, :]
-            ) + y_component * ((1 - 2 * nu) * f[2, :] - y * f[3, :])
-
-        elif element_type == "slip":
-            displacement[0, :] = x_component * (
-                2 * (1 - nu) * f[1, :] - y * f[4, :]
-            ) + y_component * (-1 * (1 - 2 * nu) * f[2, :] - y * f[3, :])
-            displacement[1, :] = x_component * (
-                2 * (1 - 2 * nu) * f[2, :] - y * f[3, :]
-            ) + y_component * (2 * (1 - nu) * f[1, :] - y * f[4, :])
-            stress[0, :] = 2 * x_component * mu * (
-                2 * f[3, :] + y * f[5, :]
-            ) + 2 * y_component * mu * (f[4, :] + y * f[6, :])
-            stress[1, :] = 2 * x_component * mu * (-y * f[5, :]) + 2 * y_component * mu * (
-                f[4, :] + y * f[6, :]
-            )
-            stress[2, :] = 2 * x_component * mu * (
-                f[4, :] + y * f[6, :]
-            ) + 2 * y_component * mu * (-y * f[5, :])
-
-        displacement, stress = rotate_displacement_stress(
-            displacement, stress, inverse_rotation_matrix
-        )
-        displacement_all[2 * i : 2 * i + 2, :] = displacement
-    return displacement_all, stress_all
-
-
-d_strike_slip, s_strike_slip = coincident_displacements_and_stresses(
-    element["x_center"],
-    element["y_center"],
-    element["half_length"],
-    mu,
-    nu,
-    "slip",
-    1,
-    0,
-    element["x_center"],
-    element["y_center"],
-    element["rotation_matrix"],
-    element["inverse_rotation_matrix"],
 )
 
-d_tensile_slip, s_tensile_slip = coincident_displacements_and_stresses(
-    element["x_center"],
-    element["y_center"],
-    element["half_length"],
-    mu,
-    nu,
-    "slip",
-    0,
-    1,
-    element["x_center"],
-    element["y_center"],
-    element["rotation_matrix"],
-    element["inverse_rotation_matrix"],
-)
-
-d = np.hstack((d_strike_slip, d_tensile_slip))
-
-def quadratic_partials(elements):
-    ''' Partial derivatives '''
-
-    # Allocate a 6n by 6n array of zeros
-    n_elements = len(elements)
-    partials = np.zeros((6 * n_elements, 6 * n_elements))
-
-    # Calculate starting indices for each of n elements
-    six_idx = 6 * np.arange(n_elements + 1)
-
-    # Loop over each elements and place coincident 6x6 on the main diagonal
-    for i in range(0, n_elements):
-        temp = np.ones((6, 6))
-        partials[six_idx[i]:six_idx[i + 1], six_idx[i]:six_idx[i + 1]] = temp
-
-    # Loop over element combinations and calculate far-field for non-coincident
-        # Store in off_diagonal parts
-
-    # plot and return the partials
-    return partials
-
-
-partials = quadratic_partials(elements)
-
-
-# # TODO: Build coincident partials for a single element model
-# # TODO: Build coincident and far-field partials for a 2 element model
-# # TODO: Save information from rupture problem as .pkl/.npz
-# # TODO: Try rupture problem with variations in a-b.  Do I have to pass elements_* dict to do this?
-# # TODO: Rupture problem with free surface
-# # TODO: Generalize for velocity magnitudes and velocity decomposition in rate and state
-# # TODO: Add flag to tread x and y components of forcing/slip in global coordinate system
-# # TODO: Visualization for planar rupture output
+# TODO: Build coincident and far-field partials for a 2 element model
+# TODO: Save information from rupture problem as .pkl/.npz
+# TODO: Try rupture problem with variations in a-b.  Do I have to pass elements_* dict to do this?
+# TODO: Rupture problem with free surface
+# TODO: Generalize for velocity magnitudes and velocity decomposition in rate and state
+# TODO: Add flag to tread x and y components of forcing/slip in global coordinate system
 
