@@ -1578,6 +1578,9 @@ def calc_displacements_and_stresses_quadratic(
     """ Calculate displacements and stresses """
     displacement = np.zeros((2, x.size))
     stress = np.zeros((3, x.size))
+    displacement_all = np.zeros((2, x.size))
+    stress_all = np.zeros((3, x.size))
+    
 
     # Rotate and translate into local coordinate system
     x = x - x_center
@@ -1589,7 +1592,7 @@ def calc_displacements_and_stresses_quadratic(
     f_all = quadratic_kernel(x, y, a, nu)
 
     for i in range(0, 3):
-        f = f[:, i, :]
+        f = f_all[:, i, :]
 
         if element_type == "traction":
             displacement[0, :] = x_component / (2 * mu) * (
@@ -1637,7 +1640,10 @@ def calc_displacements_and_stresses_quadratic(
             displacement, stress, inverse_rotation_matrix
         )
 
-    return displacement, stress
+        displacement_all += displacement
+        stress_all += stress
+
+    return displacement_all, stress_all
 
 
 
@@ -2444,6 +2450,10 @@ elements = standardize_elements(elements)
 # Just a simple forward model for the volume
 displacement_constant_slip = np.zeros((2, x.size))
 stress_constant_slip = np.zeros((3, x.size))
+
+displacement_quadratic = np.zeros((2, x.size))
+stress_quadratic = np.zeros((3, x.size))
+
 for element in elements:
     displacement, stress = calc_displacements_and_stresses(
         x,
@@ -2451,10 +2461,10 @@ for element in elements:
         element["half_length"],
         mu,
         nu,
-        "quadratic",
+        "constant",
         "slip",
-        0,
         1,
+        0,
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -2469,7 +2479,7 @@ plot_fields(
     y.reshape(n_pts, n_pts),
     displacement_constant_slip,
     stress_constant_slip,
-    "quadratic tensile slip",
+    "constant elements (slip)",
 )
 
 
@@ -2502,22 +2512,60 @@ plt.show(block=False)
 
 
 
-# Finish this function above!
-calc_displacements_and_stresses_quadratic(
-    x,
-    y,
-    a,
-    mu,
-    nu,
-    shape_function,
-    element_type,
-    x_component,
-    y_component,
-    x_center,
-    y_center,
-    rotation_matrix,
-    inverse_rotation_matrix,
+# # Finish this function above!
+# calc_displacements_and_stresses_quadratic(
+#     x,
+#     y,
+#     a,
+#     mu,
+#     nu,
+#     shape_function,
+#     element_type,
+#     x_component,
+#     y_component,
+#     x_center,
+#     y_center,
+#     rotation_matrix,
+#     inverse_rotation_matrix,
+# )
+
+for element in elements:
+    displacement, stress = calc_displacements_and_stresses_quadratic(
+        x,
+        y,
+        element["half_length"],
+        mu,
+        nu,
+        "quadratic",
+        "slip",
+        1,
+        0,
+        element["x_center"],
+        element["y_center"],
+        element["rotation_matrix"],
+        element["inverse_rotation_matrix"],
+    )
+    displacement_quadratic += displacement
+    stress_quadratic += stress
+
+plot_fields(
+    elements,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_quadratic,
+    stress_quadratic,
+    "quadratic elements (constant slip)",
 )
+
+plot_fields(
+    elements,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_constant_slip - displacement_quadratic,
+    stress_constant_slip - stress_quadratic,
+    "residuals",
+)
+
 
 # TODO: Build coincident and far-field partials for a 2 element model
 # TODO: Save information from rupture problem as .pkl/.npz
