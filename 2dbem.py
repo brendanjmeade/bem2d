@@ -2450,7 +2450,6 @@ elements = standardize_elements(elements)
 # Just a simple forward model for the volume
 displacement_constant_slip = np.zeros((2, x.size))
 stress_constant_slip = np.zeros((3, x.size))
-
 displacement_quadratic = np.zeros((2, x.size))
 stress_quadratic = np.zeros((3, x.size))
 
@@ -2484,50 +2483,32 @@ plot_fields(
 
 
 # # Kernels for coincident integrals: f, shape_function_idx, node_idx
-f = quadratic_kernel_coincident(element["half_length"], nu)
+# f = quadratic_kernel_coincident(element["half_length"], nu)
 
 
-def quadratic_partials(elements, mu, nu):
-    ''' Partial derivatives with quadratic shape functions'''
-    n_elements = len(elements)
-    matrix_stride_per_element = 6
-    partials = np.zeros((matrix_stride_per_element * n_elements, matrix_stride_per_element * n_elements))
-    element_to_matrix_idx = matrix_stride_per_element * np.arange(n_elements + 1)
+# def quadratic_partials(elements, mu, nu):
+#     ''' Partial derivatives with quadratic shape functions'''
+#     n_elements = len(elements)
+#     matrix_stride_per_element = 6
+#     partials = np.zeros((matrix_stride_per_element * n_elements, matrix_stride_per_element * n_elements))
+#     element_to_matrix_idx = matrix_stride_per_element * np.arange(n_elements + 1)
 
-    for i, element in enumerate(elements):
-        temp = np.ones((matrix_stride_per_element, matrix_stride_per_element))
-        temp = coincident_partials(element, mu, nu)
-        partials[element_to_matrix_idx[i]:element_to_matrix_idx[i + 1], element_to_matrix_idx[i]:element_to_matrix_idx[i + 1]] = temp
+#     for i, element in enumerate(elements):
+#         temp = np.ones((matrix_stride_per_element, matrix_stride_per_element))
+#         temp = coincident_partials(element, mu, nu)
+#         partials[element_to_matrix_idx[i]:element_to_matrix_idx[i + 1], element_to_matrix_idx[i]:element_to_matrix_idx[i + 1]] = temp
 
-    # Loop over element combinations and calculate far-field for non-coincident
-        # Store in off_diagonal parts
+#     # Loop over element combinations and calculate far-field for non-coincident
+#         # Store in off_diagonal parts
 
-    return partials
+#     return partials
 
-partials = quadratic_partials(elements, mu, nu)
-plt.matshow(partials)
-plt.title("2-element system partials")
-plt.colorbar()
-plt.show(block=False)
+# partials = quadratic_partials(elements, mu, nu)
+# plt.matshow(partials)
+# plt.title("2-element system partials")
+# plt.colorbar()
+# plt.show(block=False)
 
-
-
-# # Finish this function above!
-# calc_displacements_and_stresses_quadratic(
-#     x,
-#     y,
-#     a,
-#     mu,
-#     nu,
-#     shape_function,
-#     element_type,
-#     x_component,
-#     y_component,
-#     x_center,
-#     y_center,
-#     rotation_matrix,
-#     inverse_rotation_matrix,
-# )
 
 for element in elements:
     displacement, stress = calc_displacements_and_stresses_quadratic(
