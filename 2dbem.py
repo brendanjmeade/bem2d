@@ -2233,6 +2233,78 @@ def test_thrust():
         "fault + free surface",
     )
 
+def test_quadratic_vs_constant(elements, mu, nu):
+    # Just a simple forward model for the volume
+    displacement_constant_slip = np.zeros((2, x.size))
+    stress_constant_slip = np.zeros((3, x.size))
+    displacement_quadratic = np.zeros((2, x.size))
+    stress_quadratic = np.zeros((3, x.size))
+
+    for element in elements:
+        displacement, stress = calc_displacements_and_stresses(
+            x,
+            y,
+            element["half_length"],
+            mu,
+            nu,
+            "constant",
+            "slip",
+            1,
+            0,
+            element["x_center"],
+            element["y_center"],
+            element["rotation_matrix"],
+            element["inverse_rotation_matrix"],
+        )
+        displacement_constant_slip += displacement
+        stress_constant_slip += stress
+
+    plot_fields(
+        elements,
+        x.reshape(n_pts, n_pts),
+        y.reshape(n_pts, n_pts),
+        displacement_constant_slip,
+        stress_constant_slip,
+        "constant elements (slip)",
+    )
+
+    for element in elements:
+        displacement, stress = calc_displacements_and_stresses_quadratic(
+            x,
+            y,
+            element["half_length"],
+            mu,
+            nu,
+            "quadratic",
+            "slip",
+            1,
+            0,
+            element["x_center"],
+            element["y_center"],
+            element["rotation_matrix"],
+            element["inverse_rotation_matrix"],
+        )
+        displacement_quadratic += displacement
+        stress_quadratic += stress
+
+    plot_fields(
+        elements,
+        x.reshape(n_pts, n_pts),
+        y.reshape(n_pts, n_pts),
+        displacement_quadratic,
+        stress_quadratic,
+        "quadratic elements (constant slip)",
+    )
+
+    plot_fields(
+        elements,
+        x.reshape(n_pts, n_pts),
+        y.reshape(n_pts, n_pts),
+        displacement_constant_slip - displacement_quadratic,
+        stress_constant_slip - stress_quadratic,
+        "residuals",
+    )
+
 
 def test_planar_rutpure():
     """ Taken from Ben's 1d example:
@@ -2447,39 +2519,7 @@ for i in range(0, x1.size):
     elements.append(element.copy())
 elements = standardize_elements(elements)
 
-# Just a simple forward model for the volume
-displacement_constant_slip = np.zeros((2, x.size))
-stress_constant_slip = np.zeros((3, x.size))
-displacement_quadratic = np.zeros((2, x.size))
-stress_quadratic = np.zeros((3, x.size))
-
-for element in elements:
-    displacement, stress = calc_displacements_and_stresses(
-        x,
-        y,
-        element["half_length"],
-        mu,
-        nu,
-        "constant",
-        "slip",
-        1,
-        0,
-        element["x_center"],
-        element["y_center"],
-        element["rotation_matrix"],
-        element["inverse_rotation_matrix"],
-    )
-    displacement_constant_slip += displacement
-    stress_constant_slip += stress
-
-plot_fields(
-    elements,
-    x.reshape(n_pts, n_pts),
-    y.reshape(n_pts, n_pts),
-    displacement_constant_slip,
-    stress_constant_slip,
-    "constant elements (slip)",
-)
+test_quadratic_vs_constant(elements, mu, nu)
 
 
 # # Kernels for coincident integrals: f, shape_function_idx, node_idx
@@ -2510,42 +2550,7 @@ plot_fields(
 # plt.show(block=False)
 
 
-for element in elements:
-    displacement, stress = calc_displacements_and_stresses_quadratic(
-        x,
-        y,
-        element["half_length"],
-        mu,
-        nu,
-        "quadratic",
-        "slip",
-        1,
-        0,
-        element["x_center"],
-        element["y_center"],
-        element["rotation_matrix"],
-        element["inverse_rotation_matrix"],
-    )
-    displacement_quadratic += displacement
-    stress_quadratic += stress
 
-plot_fields(
-    elements,
-    x.reshape(n_pts, n_pts),
-    y.reshape(n_pts, n_pts),
-    displacement_quadratic,
-    stress_quadratic,
-    "quadratic elements (constant slip)",
-)
-
-plot_fields(
-    elements,
-    x.reshape(n_pts, n_pts),
-    y.reshape(n_pts, n_pts),
-    displacement_constant_slip - displacement_quadratic,
-    stress_constant_slip - stress_quadratic,
-    "residuals",
-)
 
 
 # TODO: Build coincident and far-field partials for a 2 element model
