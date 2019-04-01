@@ -1776,6 +1776,8 @@ def standardize_elements(elements):
             ]
         )
 
+        # TODO: project integration points back to global reference frame
+
     return elements
 
 
