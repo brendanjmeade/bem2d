@@ -1761,23 +1761,20 @@ def standardize_elements(elements):
         element["y_normal"] = -dx / mag
 
         # Evaluations points for quadratic kernels
-        element["x_integration_points_global"] = np.array(
+        element["x_integration_points"] = np.array(
             [
                 element["x_center"] - 2 / 3 * dx,
                 element["x_center"],
                 element["x_center"] + 2 / 3 * dx,
             ]
         )
-        element["y_integration_points_global"] = np.array(
+        element["y_integration_points"] = np.array(
             [
                 element["y_center"] - 2 / 3 * dy,
                 element["y_center"],
                 element["y_center"] + 2 / 3 * dy,
             ]
         )
-
-        # TODO: project integration points to local reference frame
-
     return elements
 
 
