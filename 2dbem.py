@@ -1761,14 +1761,14 @@ def standardize_elements(elements):
         element["y_normal"] = -dx / mag
 
         # Evaluations points for quadratic kernels
-        element["x_integration_points"] = np.array(
+        element["x_integration_points_global"] = np.array(
             [
                 element["x_center"] - 2 / 3 * dx,
                 element["x_center"],
                 element["x_center"] + 2 / 3 * dx,
             ]
         )
-        element["y_integration_points"] = np.array(
+        element["y_integration_points_global"] = np.array(
             [
                 element["y_center"] - 2 / 3 * dy,
                 element["y_center"],
@@ -1776,7 +1776,7 @@ def standardize_elements(elements):
             ]
         )
 
-        # TODO: project integration points back to global reference frame
+        # TODO: project integration points to local reference frame
 
     return elements
 
@@ -1923,16 +1923,15 @@ def coincident_displacements_and_stresses(
     rotation_matrix,
     inverse_rotation_matrix,
 ):
-    """ Calculate displacements and stresses for coincident evaluation points.
-    Has to be called twice (one strike-slip, one tensile-slip) for partials. """
+    """ TODO: write doc string """
 
-    # 2 displacement components at each of the 3 collacation points?
+    # 2 displacement components at each of the 3 collocation points?
     displacement = np.zeros((2, 3))
     displacement_all = np.zeros((6, 3))
 
-    # 3 stress components at each of the 3 collacation points?
+    # 3 stress components at each of the 3 collocation points?
     stress = np.zeros((3, 3))
-    stress_all = np.zeros((3, 3))
+    stress_all = np.zeros((9, 3))
 
     # Rotate and translate into local coordinate system
     x = x - x_center
@@ -1947,7 +1946,7 @@ def coincident_displacements_and_stresses(
         f = f_all[:, i, :]  # Select all the fs for the current NNN
         y = 0  # Set to zero because we're evaluating on the element
 
-        # TODO: Should I set y = 0 here?  I think so.
+        # I set y = 0 because the evaluation is on an element rotated to y=0.
         if element_type == "traction":
             displacement[0, :] = x_component / (2 * mu) * (
                 (3 - 4 * nu) * f[0, :] + y * f[1, :]
@@ -1986,10 +1985,40 @@ def coincident_displacements_and_stresses(
             displacement, stress, inverse_rotation_matrix
         )
         displacement_all[2 * i : 2 * i + 2, :] = displacement
+
+        print(displacement_all.shape)
     return displacement_all, stress_all
 
 
 def coincident_partials(element, mu, nu):
+    """ Calculate displacements and stresses for coincident evaluation points.
+    Has to be called twice (one strike-slip, one tensile-slip) for partials.
+    This returns a 6x6 array for the displacements.  The 6x6 array is a hstack
+    of two 3x6 matrices: one for strike-slip and one for tensile-slip.  The
+    strike-slip matrix has the following entries.
+
+    [ux(p0obs, p0src, s0src), ux(p0obs, p1src, s1src), ux(p0obs, p2src, s2src)],
+    [uy(p0obs, p0src, s0src), uy(p0obs, p1src, s1src), uy(p0obs, p2src, s2src)],
+    [ux(p1obs, p0src, s0src), ux(p1obs, p1src, s1src), ux(p1obs, p2src, s2src)],
+    [uy(p1obs, p0src, s0src), uy(p1obs, p1src, s1src), uy(p1obs, p2src, s2src)],
+    [ux(p2obs, p0src, s0src), ux(p2obs, p1src, s1src), ux(p2obs, p2src, s2src)],
+    [uy(p2obs, p0src, s0src), uy(p2obs, p1src, s1src), uy(p2obs, p2src, s2src)],
+
+    - with -
+
+    ux : x component of displacement
+    uy : y component of displacement
+    p?obs: position of ith integration point on the observer element
+    p?src: position of jth integration point on the source element
+    s?src: component of strike-slip on jth integration point on the source element
+
+    The construction of the 3x6 tensile-slip matrix is the same with the exception
+    that strike slip (s?src) is replace with tensile-slip (t?src)
+
+    TODO: Add calculation of stresses/tractions
+
+    """
+
     d_strike_slip, s_strike_slip = coincident_displacements_and_stresses(
         element["x_center"],
         element["y_center"],
@@ -2024,7 +2053,7 @@ def coincident_partials(element, mu, nu):
 
 
 def test_circle():
-    """ Compressed cicle test """
+    """ Compressed circle test """
 
     # Material properties and observation grid
     mu = 30e9
