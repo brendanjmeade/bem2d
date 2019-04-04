@@ -1939,7 +1939,7 @@ def quadratic_displacements_and_stresses(
 
     if type == "coincident":
         f_all = quadratic_kernel_coincident(a, nu)
-        y = 0  # Set to zero because we're evaluating on the element
+        np.testing.assert_almost_equal(y, 0) # Set to zero because we're evaluating on the element
     elif type == "farfield":
         f_all = quadratic_kernel(x, y, a, nu)
 
@@ -1986,7 +1986,6 @@ def quadratic_displacements_and_stresses(
         )
         displacement_all[2 * i : 2 * i + 2, :] = displacement
 
-        print(displacement_all.shape)
     return displacement_all, stress_all
 
 
@@ -2021,8 +2020,8 @@ def coincident_partials(element, mu, nu):
 
     d_strike_slip, s_strike_slip = quadratic_displacements_and_stresses(
         "coincident",
-        element["x_center"],
-        element["y_center"],
+        element["x_integration_points"],
+        element["y_integration_points"],
         element["half_length"],
         mu,
         nu,
@@ -2037,8 +2036,8 @@ def coincident_partials(element, mu, nu):
 
     d_tensile_slip, s_tensile_slip = quadratic_displacements_and_stresses(
         "coincident",
-        element["x_center"],
-        element["y_center"],
+        element["x_integration_points"],
+        element["y_integration_points"],
         element["half_length"],
         mu,
         nu,
@@ -2050,7 +2049,10 @@ def coincident_partials(element, mu, nu):
         element["rotation_matrix"],
         element["inverse_rotation_matrix"],
     )
-    single_element_coincident_partials = np.hstack((d_strike_slip, d_tensile_slip))
+    single_element_coincident_partials = np.empty((6,6))
+    single_element_coincident_partials[:,0::2] = d_strike_slip
+    single_element_coincident_partials[:,1::2] = d_tensile_slip
+    # single_element_coincident_partials = np.hstack((d_strike_slip, d_tensile_slip))
     return single_element_coincident_partials
 
 
@@ -2088,7 +2090,9 @@ def quadratic_partials(element_obs, element_src, mu, nu):
         element_src["rotation_matrix"],
         element_src["inverse_rotation_matrix"],
     )
-    single_element_quadratic_partials = np.hstack((d_strike_slip, d_tensile_slip))
+    single_element_quadratic_partials = np.empty((6,6))
+    single_element_quadratic_partials[:,0::2] = d_strike_slip
+    single_element_quadratic_partials[:,1::2] = d_tensile_slip
     return single_element_quadratic_partials
 
 
@@ -2571,7 +2575,7 @@ plt.close("all")
 # Material and geometric constants
 mu = 3e10
 nu = 0.25
-n_elements = 20
+n_elements = 10
 n_pts = 40
 
 width = 20000
@@ -2610,8 +2614,6 @@ def quadratic_partials_all(elements, mu, nu):
     element_to_matrix_idx = matrix_stride_per_element * np.arange(n_elements + 1)
 
     for i, element in enumerate(elements):
-        # temp = np.zeros((matrix_stride_per_element, matrix_stride_per_element))
-        # temp = coincident_partials(element, mu, nu)
         partials[
             element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
             element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
@@ -2620,13 +2622,12 @@ def quadratic_partials_all(elements, mu, nu):
     for i_src in range(0, n_elements):
         for i_obs in range(0, n_elements):
             if i_src != i_obs:
-                print(i_src, i_obs)
-                temp = np.zeros((matrix_stride_per_element, matrix_stride_per_element))
+                # print(i_src, i_obs)
                 temp = quadratic_partials(elements[i_obs], elements[i_src], mu, nu)
 
                 partials[
-                    element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
                     element_to_matrix_idx[i_obs] : element_to_matrix_idx[i_obs + 1],
+                    element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
                 ] = temp
 
     return partials
