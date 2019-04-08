@@ -2350,7 +2350,7 @@ def quadratic_kernel_coincident(a, nu):
     f = np.zeros((7, 3, 3))
 
     # f0
-    f[0, 0, 0] = g0_quadratic_phi_1_node_1 = (
+    f[0, 0, 0] = (
         -5 / 144 * a * np.log(25 / 9 * a ** 2) / (np.pi - np.pi * nu)
         - 17 / 288 * a * np.log(1 / 9 * a ** 2) / (np.pi - np.pi * nu)
         + 1 / 12 * a / (np.pi - np.pi * nu)
@@ -2802,16 +2802,16 @@ def standardize_elements(elements):
         # Evaluations points for quadratic kernels
         element["x_integration_points"] = np.array(
             [
-                element["x_center"] - 2 / 3 * dx / 2,
+                element["x_center"] - (2 / 3 * dx / 2),
                 element["x_center"],
-                element["x_center"] + 2 / 3 * dx / 2,
+                element["x_center"] + (2 / 3 * dx / 2),
             ]
         )
         element["y_integration_points"] = np.array(
             [
-                element["y_center"] - 2 / 3 * dy / 2,
+                element["y_center"] - (2 / 3 * dy / 2),
                 element["y_center"],
-                element["y_center"] + 2 / 3 * dy / 2,
+                element["y_center"] + (2 / 3 * dy / 2),
             ]
         )
     return elements
@@ -3025,6 +3025,8 @@ def quadratic_displacements_and_stresses(
             displacement, stress, inverse_rotation_matrix
         )
         displacement_all[2 * i : 2 * i + 2, :] = displacement
+        stress_all[3 * i : 3 * i + 3, :] = stress
+        
 
     return displacement_all, stress_all
 
@@ -3053,12 +3055,9 @@ def coincident_partials(element, mu, nu):
 
     The construction of the 3x6 tensile-slip matrix is the same with the exception
     that strike slip (s?src) is replace with tensile-slip (t?src)
-
-    TODO: Add calculation of stresses/tractions
-
     """
 
-    d_strike_slip, s_strike_slip = quadratic_displacements_and_stresses(
+    displacement_strike_slip, stress_strike_slip = quadratic_displacements_and_stresses(
         "coincident",
         element["x_integration_points"],
         element["y_integration_points"],
@@ -3074,7 +3073,7 @@ def coincident_partials(element, mu, nu):
         element["inverse_rotation_matrix"],
     )
 
-    d_tensile_slip, s_tensile_slip = quadratic_displacements_and_stresses(
+    displacement_tensile_slip, stress_tensile_slip = quadratic_displacements_and_stresses(
         "coincident",
         element["x_integration_points"],
         element["y_integration_points"],
@@ -3089,17 +3088,22 @@ def coincident_partials(element, mu, nu):
         element["rotation_matrix"],
         element["inverse_rotation_matrix"],
     )
-    single_element_coincident_partials = np.empty((6, 6))
-    single_element_coincident_partials[:, 0::2] = d_strike_slip
-    single_element_coincident_partials[:, 1::2] = d_tensile_slip
-    # single_element_coincident_partials = np.hstack((d_strike_slip, d_tensile_slip))
-    return single_element_coincident_partials
+    single_element_coincident_partials_displacement = np.zeros((6, 6))
+    single_element_coincident_partials_displacement[:, 0::2] = displacement_strike_slip
+    single_element_coincident_partials_displacement[:, 1::2] = displacement_tensile_slip
+    single_element_coincident_partials_stress = np.zeros((9, 6))
+    single_element_coincident_partials_stress[:, 0::2] = stress_strike_slip
+    single_element_coincident_partials_stress[:, 1::2] = stress_tensile_slip
+    return (
+        single_element_coincident_partials_displacement,
+        single_element_coincident_partials_stress,
+    )
 
 
 def quadratic_partials(element_obs, element_src, mu, nu):
     """ See coincident partials """
 
-    d_strike_slip, s_strike_slip = quadratic_displacements_and_stresses(
+    displacement_strike_slip, stress_strike_slip = quadratic_displacements_and_stresses(
         "farfield",
         element_obs["x_integration_points"],
         element_obs["y_integration_points"],
@@ -3115,7 +3119,7 @@ def quadratic_partials(element_obs, element_src, mu, nu):
         element_src["inverse_rotation_matrix"],
     )
 
-    d_tensile_slip, s_tensile_slip = quadratic_displacements_and_stresses(
+    displacement_tensile_slip, stress_tensile_slip = quadratic_displacements_and_stresses(
         "farfield",
         element_obs["x_integration_points"],
         element_obs["y_integration_points"],
@@ -3130,10 +3134,16 @@ def quadratic_partials(element_obs, element_src, mu, nu):
         element_src["rotation_matrix"],
         element_src["inverse_rotation_matrix"],
     )
-    single_element_quadratic_partials = np.empty((6, 6))
-    single_element_quadratic_partials[:, 0::2] = d_strike_slip
-    single_element_quadratic_partials[:, 1::2] = d_tensile_slip
-    return single_element_quadratic_partials
+    single_element_quadratic_partials_displacement = np.zeros((6, 6))
+    single_element_quadratic_partials_displacement[:, 0::2] = displacement_strike_slip
+    single_element_quadratic_partials_displacement[:, 1::2] = displacement_tensile_slip
+    single_element_quadratic_partials_stress = np.zeros((9, 6))
+    single_element_quadratic_partials_stress[:, 0::2] = stress_strike_slip
+    single_element_quadratic_partials_stress[:, 1::2] = stress_tensile_slip
+    return (
+        single_element_quadratic_partials_displacement,
+        single_element_quadratic_partials_stress,
+    )
 
 
 def test_circle():
@@ -3238,7 +3248,7 @@ def test_thrust():
         elements_fault, elements_surface, "slip", mu, nu
     )
 
-    displacement_partials_2, traction_partials_2 = calc_partials(
+    _, traction_partials_2 = calc_partials(
         elements_surface, elements_surface, "slip", mu, nu
     )
 
@@ -3486,7 +3496,6 @@ def test_planar_rutpure():
     time_interval_yrs = np.linspace(0.0, 1000.0, 5001)
     time_interval = time_interval_yrs * secs_per_year
 
-    kcrit = sigma_n * b / Dc
     initial_velocity = np.zeros(2 * n_elements)
     initial_velocity[0::2] = (
         Vp / 1000.0
@@ -3616,7 +3625,7 @@ plt.close("all")
 mu = 3e10
 nu = 0.25
 n_elements = 3
-n_pts = 40
+n_pts = 100
 
 width = 20000
 x = np.linspace(-width, width, n_pts)
@@ -3648,47 +3657,74 @@ def quadratic_partials_all(elements, mu, nu):
     """ Partial derivatives with quadratic shape functions """
     n_elements = len(elements)
     matrix_stride_per_element = 6
-    partials = np.zeros(
+    partials_displacement = np.zeros(
         (matrix_stride_per_element * n_elements, matrix_stride_per_element * n_elements)
     )
+    partials_stress = np.zeros(
+        (
+            (matrix_stride_per_element + 3) * n_elements,
+            matrix_stride_per_element * n_elements,
+        )
+    )
     element_to_matrix_idx = matrix_stride_per_element * np.arange(n_elements + 1)
+    element_to_matrix_stress_idx = (matrix_stride_per_element + 3) * np.arange(
+        n_elements + 1
+    )
 
     for i, element in enumerate(elements):
-        partials[
+        displacement, stress = coincident_partials(element, mu, nu)
+        partials_displacement[
             element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
             element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
-        ] = coincident_partials(element, mu, nu)
+        ] = displacement
+        partials_stress[
+            element_to_matrix_stress_idx[i] : element_to_matrix_stress_idx[i + 1],
+            element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
+        ] = stress
 
     for i_src in range(0, n_elements):
         for i_obs in range(0, n_elements):
             if i_src != i_obs:
-                partials[
-                    element_to_matrix_idx[i_obs] : element_to_matrix_idx[i_obs + 1],
+                displacement, stress = quadratic_partials(
+                    elements[i_obs], elements[i_src], mu, nu
+                )
+                partials_displacement[
+                    element_to_matrix_idx[i_obs] : element_to_matrix_idx[
+                        i_obs + 1
+                    ],
                     element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
-                ] = quadratic_partials(elements[i_obs], elements[i_src], mu, nu)
+                ] = displacement
+                partials_stress[
+                    element_to_matrix_stress_idx[i_obs] : element_to_matrix_stress_idx[
+                        i_obs + 1
+                    ],
+                    element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
+                ] = stress
 
-    return partials
+    return partials_displacement, partials_stress
 
 
-partials = quadratic_partials_all(elements, mu, nu)
-plt.matshow(partials)
+partials_displacement, partials_stress = quadratic_partials_all(elements, mu, nu)
+plt.matshow(partials_stress)
 plt.title(str(len(elements)) + "-element system partials")
 plt.colorbar()
 plt.show(block=False)
 
+# test_quadratic_vs_constant(elements, mu, nu)
 
-plt.figure()
-for i in range(0, n_elements):
-    plt.plot(elements[i]["x_center"], elements[i]["y_center"], "r+")
-    plt.plot(elements[i]["x_integration_points"], elements[i]["y_integration_points"], "x")
+def plot_elements(elements):
+    plt.figure()
+    for i, element in enumerate(elements):
 
+    x_lim = np.array([x.min(), x.max()])
+    y_lim = np.array([y.min(), y.max()])
+    plt.gca().set_aspect("equal")
+    plt.xticks([x_lim[0], x_lim[1]])
+    plt.yticks([y_lim[0], y_lim[1]])
 
-plt.show(block=False)
-
-
-# TODO: Build coincident and far-field partials for a 2 element model
 # TODO: Save information from rupture problem as .pkl/.npz
 # TODO: Try rupture problem with variations in a-b.  Do I have to pass elements_* dict to do this?
 # TODO: Rupture problem with free surface
 # TODO: Generalize for velocity magnitudes and velocity decomposition in rate and state
 # TODO: Add flag to tread x and y components of forcing/slip in global coordinate system
+# TODO: "Fixing" location of integration points broke constant vs. quadratic
