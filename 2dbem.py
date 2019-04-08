@@ -2802,16 +2802,16 @@ def standardize_elements(elements):
         # Evaluations points for quadratic kernels
         element["x_integration_points"] = np.array(
             [
-                element["x_center"] - 2 / 3 * dx,
+                element["x_center"] - 2 / 3 * dx / 2,
                 element["x_center"],
-                element["x_center"] + 2 / 3 * dx,
+                element["x_center"] + 2 / 3 * dx / 2,
             ]
         )
         element["y_integration_points"] = np.array(
             [
-                element["y_center"] - 2 / 3 * dy,
+                element["y_center"] - 2 / 3 * dy / 2,
                 element["y_center"],
-                element["y_center"] + 2 / 3 * dy,
+                element["y_center"] + 2 / 3 * dy / 2,
             ]
         )
     return elements
@@ -3674,6 +3674,15 @@ partials = quadratic_partials_all(elements, mu, nu)
 plt.matshow(partials)
 plt.title(str(len(elements)) + "-element system partials")
 plt.colorbar()
+plt.show(block=False)
+
+
+plt.figure()
+for i in range(0, n_elements):
+    plt.plot(elements[i]["x_center"], elements[i]["y_center"], "r+")
+    plt.plot(elements[i]["x_integration_points"], elements[i]["y_integration_points"], "x")
+
+
 plt.show(block=False)
 
 
