@@ -252,8 +252,15 @@ def quadratic_kernel(x, y, a, nu):
 
     # arctan_x_minus_a = np.arctan((a - x) / y)
     # arctan_x_plus_a = np.arctan((a + x) / y)
-    arctan_x_minus_a = np.pi / 2 * np.sign(x) - np.arctan(y / (a - x))
-    arctan_x_plus_a = np.pi / 2 * np.sign(x) - np.arctan(y / (a + x))
+    # arctan_x_minus_a = np.pi / 2 * np.sign(a - x) - np.arctan(y / (a - x))
+    # arctan_x_plus_a = np.pi / 2 * np.sign(a + x) - np.arctan(y / (a + x))
+    # arctan_x_minus_a = np.pi / 2 * np.sign(a - x) - np.sign(y) * np.arctan(y / (a - x))
+    # arctan_x_plus_a = np.pi / 2 * np.sign(a + x) - np.sign(y) * np.arctan(y / (a + x))
+
+    arctan_x_minus_a = np.pi / 2 * np.sign(y / (a - x)) - np.arctan(y / (a - x))
+    arctan_x_plus_a = np.pi / 2 * np.sign(y / (a + x)) - np.arctan(y / (a + x))
+
+
 
     f = np.zeros((7, 3, x.size))
 
@@ -3624,7 +3631,7 @@ plt.close("all")
 # Material and geometric constants
 mu = 3e10
 nu = 0.25
-n_elements = 3
+n_elements = 20
 n_pts = 100
 
 width = 20000
@@ -3710,17 +3717,39 @@ plt.title(str(len(elements)) + "-element system partials")
 plt.colorbar()
 plt.show(block=False)
 
-# test_quadratic_vs_constant(elements, mu, nu)
+plt.matshow(partials_displacement)
+plt.title(str(len(elements)) + "-element system partials")
+plt.colorbar()
+plt.show(block=False)
 
-def plot_elements(elements):
-    plt.figure()
-    for i, element in enumerate(elements):
+slip = np.zeros(6 * n_elements)
+slip[0::2] = 1
 
-    x_lim = np.array([x.min(), x.max()])
-    y_lim = np.array([y.min(), y.max()])
-    plt.gca().set_aspect("equal")
-    plt.xticks([x_lim[0], x_lim[1]])
-    plt.yticks([y_lim[0], y_lim[1]])
+predicted_slip = partials_displacement @ slip
+predicted_stress = partials_stress @ slip
+
+plt.figure()
+plt.plot(predicted_slip[0::2])
+plt.plot(predicted_slip[1::2])
+plt.show(block=False)
+
+plt.figure()
+plt.plot(predicted_stress[0::3])
+plt.plot(predicted_stress[1::3])
+plt.plot(predicted_stress[2::3])
+plt.title("stress")
+plt.show(block=False)
+
+
+# def plot_elements(elements):
+#     plt.figure()
+#     for i, element in enumerate(elements):
+
+#     x_lim = np.array([x.min(), x.max()])
+#     y_lim = np.array([y.min(), y.max()])
+#     plt.gca().set_aspect("equal")
+#     plt.xticks([x_lim[0], x_lim[1]])
+#     plt.yticks([y_lim[0], y_lim[1]])
 
 # TODO: Save information from rupture problem as .pkl/.npz
 # TODO: Try rupture problem with variations in a-b.  Do I have to pass elements_* dict to do this?
