@@ -1455,7 +1455,6 @@ def quadratic_kernel_coincident(a, nu):
     f[6, 0, 2] = -9 / 16 / (a ** 2 * nu - a ** 2)
     f[6, 1, 2] = 9 / 8 / (a ** 2 * nu - a ** 2)
     f[6, 2, 2] = -9 / 16 / (a ** 2 * nu - a ** 2)
-
     return f
 
 
@@ -1489,9 +1488,6 @@ def calc_displacements_and_stresses(
         f = constant_kernel(x, y, a, nu)
     elif shape_function == "linear":
         f = linear_kernel(x, y, a, nu)
-    elif shape_function == "quadratic":
-        f = quadratic_kernel_farfield(x, y, a, nu)
-        f = f[:, 1, :]
 
     if element_type == "traction":
         displacement[0, :] = x_component / (2 * mu) * (
@@ -2232,8 +2228,7 @@ def test_thrust():
     plt.tight_layout()
     plt.show(block=False)
 
-    # Now predict internal displacements everywhere
-    # Full space
+    # Predict internal displacements everywhere
     fault_slip_x = fault_slip[0::2]
     fault_slip_y = fault_slip[1::2]
     displacement_full_space = np.zeros((2, x.size))
@@ -2568,7 +2563,7 @@ plt.close("all")
 # Material and geometric constants
 mu = 3e10
 nu = 0.25
-n_elements = 20
+n_elements = 10
 n_pts = 100
 
 width = 20000
@@ -2645,31 +2640,72 @@ def quadratic_partials_all(elements, mu, nu):
 
 
 partials_displacement, partials_stress = quadratic_partials_all(elements, mu, nu)
-plt.matshow(partials_stress)
-plt.title(str(len(elements)) + "-element system partials")
-plt.colorbar()
-plt.show(block=False)
+# plt.matshow(partials_stress)
+# plt.title(str(len(elements)) + "-element system partials")
+# plt.colorbar()
+# plt.show(block=False)
 
-plt.matshow(partials_displacement)
-plt.title(str(len(elements)) + "-element system partials")
-plt.colorbar()
-plt.show(block=False)
+# plt.matshow(partials_displacement)
+# plt.title(str(len(elements)) + "-element system partials")
+# plt.colorbar()
+# plt.show(block=False)
 
 slip = np.zeros(6 * n_elements)
-slip[0::2] = 1
+slip[0::2] = 1 # Strike-slip only
 
-predicted_slip = partials_displacement @ slip
+predicted_displacement = partials_displacement @ slip
 predicted_stress = partials_stress @ slip
 
+predicted_x_displacement = predicted_displacement[0::2]
+# predicted_x_displacement = np.sort(predicted_x_displacement)
+predicted_y_displacement = predicted_displacement[1::2]
+# predicted_y_displacement_ordered_idx = np.argsort(predicted_y_displacement)
+# predicted_y_displacement = np.sort(predicted_y_displacement)
+x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()
+
+# Displacements and stresses from constant elements
+d_constant_slip = np.zeros((2, x_eval.size))
+s_constant_slip = np.zeros((3, x_eval.size))
+for element in elements:
+    d, s = calc_displacements_and_stresses(
+        x_eval,
+        0.0 * np.ones(x_eval.shape),
+        element["half_length"],
+        mu,
+        nu,
+        "constant",
+        "slip",
+        1,
+        0,
+        element["x_center"],
+        element["y_center"],
+        element["rotation_matrix"],
+        element["inverse_rotation_matrix"],
+    )
+    d_constant_slip += d
+    s_constant_slip += s
+
+
 plt.figure()
-plt.plot(predicted_slip[0::2])
-plt.plot(predicted_slip[1::2])
+plt.plot(x_eval, predicted_x_displacement, "-r")
+plt.plot(x_eval, predicted_y_displacement, "-b")
+plt.plot(x_eval, d_constant_slip[0, :], "+r")
+plt.plot(x_eval, d_constant_slip[1, :], "+b")
+
+plt.xlabel("x")
+plt.ylabel("displacements")
 plt.show(block=False)
 
 plt.figure()
-plt.plot(predicted_stress[0::3])
-plt.plot(predicted_stress[1::3])
-plt.plot(predicted_stress[2::3])
+plt.plot(x_eval, predicted_stress[0::3], "-r")
+plt.plot(x_eval, predicted_stress[1::3], "-b")
+plt.plot(x_eval, predicted_stress[2::3], "-g")
+plt.plot(x_eval, s_constant_slip[0, :], "+r")
+plt.plot(x_eval, s_constant_slip[1, :], "+b")
+plt.plot(x_eval, s_constant_slip[2, :], "+g")
+
+plt.xlabel("x")
+plt.ylabel("displacements")
 plt.title("stress")
 plt.show(block=False)
 
