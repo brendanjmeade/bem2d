@@ -1884,11 +1884,10 @@ def calc_partials(elements_src, elements_obs, element_type, mu, nu):
 
     return displacement_partials, traction_partials
 
-
 def quadratic_displacements_and_stresses(
     type,
-    x,
-    y,
+    x_in,
+    y_in,
     a,
     mu,
     nu,
@@ -1910,9 +1909,9 @@ def quadratic_displacements_and_stresses(
     stress_all = np.zeros((9, 3))
 
     # Rotate and translate into local coordinate system
-    x = x - x_center
-    y = y - y_center
-    rotated_coords = np.matmul(np.vstack((x, y)).T, rotation_matrix)
+    x_trans = x_in - x_center
+    y_trans = y_in - y_center
+    rotated_coords = np.matmul(np.vstack((x_trans, y_trans)).T, rotation_matrix)
     x = rotated_coords[:, 0]
     y = rotated_coords[:, 1]
 
@@ -1964,7 +1963,7 @@ def quadratic_displacements_and_stresses(
         displacement, stress = rotate_displacement_stress(
             displacement, stress, inverse_rotation_matrix
         )
-        displacement_all[2 * i : 2 * i + 2, :] = displacement
+        displacement_all[:, i] = displacement.T.flatten()
         stress_all[3 * i : 3 * i + 3, :] = stress
         
 
@@ -2563,7 +2562,7 @@ plt.close("all")
 # Material and geometric constants
 mu = 3e10
 nu = 0.25
-n_elements = 10
+n_elements = 20
 n_pts = 100
 
 width = 20000
@@ -2661,36 +2660,68 @@ predicted_x_displacement = predicted_displacement[0::2]
 predicted_y_displacement = predicted_displacement[1::2]
 # predicted_y_displacement_ordered_idx = np.argsort(predicted_y_displacement)
 # predicted_y_displacement = np.sort(predicted_y_displacement)
-x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()
+x_eval2 = np.array([_["x_integration_points"] for _ in elements]).flatten()
 
-# Displacements and stresses from constant elements
-d_constant_slip = np.zeros((2, x_eval.size))
-s_constant_slip = np.zeros((3, x_eval.size))
-for element in elements:
-    d, s = calc_displacements_and_stresses(
-        x_eval,
-        0.0 * np.ones(x_eval.shape),
-        element["half_length"],
-        mu,
-        nu,
-        "constant",
-        "slip",
-        1,
-        0,
-        element["x_center"],
-        element["y_center"],
-        element["rotation_matrix"],
-        element["inverse_rotation_matrix"],
-    )
-    d_constant_slip += d
-    s_constant_slip += s
+special_idx = 2
+x_eval = x_eval2#np.array([_["x_integration_points"] for _ in [elements[special_idx]]]).flatten()
+
+# # Displacements and stresses from constant elements
+# d_constant_slip = np.zeros((2, x_eval.size))
+# s_constant_slip = np.zeros((3, x_eval.size))
+
+# x2 = np.linspace(-10000, 10000, 1000)
+# d2 = np.zeros((2, x2.size))
+# for i in range(len(elements)):
+#     if i == special_idx:
+#         continue
+
+#     d, s = quadratic_displacements_and_stresses(
+#         "farfield",
+#         x_eval,
+#         0.0 * np.ones(x_eval.shape),
+#         elements[i]["half_length"],
+#         mu,
+#         nu,
+#         "slip",
+#         1,
+#         0,
+#         elements[i]["x_center"],
+#         elements[i]["y_center"],
+#         elements[i]["rotation_matrix"],
+#         elements[i]["inverse_rotation_matrix"],
+#     )
+#     total_d1 = np.sum(d, axis = 1).reshape((3,2)).T
+
+#     total_d2 = calc_displacements_and_stresses_quadratic(
+#         x2,
+#         0.0 * np.ones(x2.shape),
+#         elements[i]["half_length"],
+#         mu,
+#         nu,
+#         "",
+#         "slip",
+#         1,
+#         0,
+#         elements[i]["x_center"],
+#         elements[i]["y_center"],
+#         elements[i]["rotation_matrix"],
+#         elements[i]["inverse_rotation_matrix"],
+#     )[0]
+#     d2 += total_d2
+
+#     # np.testing.assert_almost_equal(total_d1, total_d2)
+
+#     d_constant_slip += total_d1
+#     #s_constant_slip += s
 
 
 plt.figure()
-plt.plot(x_eval, predicted_x_displacement, "-r")
-plt.plot(x_eval, predicted_y_displacement, "-b")
-plt.plot(x_eval, d_constant_slip[0, :], "+r")
-plt.plot(x_eval, d_constant_slip[1, :], "+b")
+plt.plot(x_eval2, predicted_x_displacement, "-r")
+plt.plot(x_eval2, predicted_y_displacement, "-b")
+# plt.plot(x2, d2[1, :], "-k")
+
+# plt.plot(x_eval, d_constant_slip[0, :], "+r")
+# plt.plot(x_eval, d_constant_slip[1, :], "+b")
 
 plt.xlabel("x")
 plt.ylabel("displacements")
