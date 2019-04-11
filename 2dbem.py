@@ -245,7 +245,7 @@ def linear_kernel(x, y, a, nu):
     return f
 
 
-def quadratic_kernel(x, y, a, nu):
+def quadratic_kernel_farfield(x, y, a, nu):
     """ Kernels with quadratic shape functions
         f has dimensions of (f=7, shapefunctions=3, n_obs)
 
@@ -1285,10 +1285,7 @@ def quadratic_kernel(x, y, a, nu):
             * y ** 2
         )
     )
-
     return f
-
-
 
 
 def quadratic_kernel_coincident(a, nu):
@@ -1493,7 +1490,7 @@ def calc_displacements_and_stresses(
     elif shape_function == "linear":
         f = linear_kernel(x, y, a, nu)
     elif shape_function == "quadratic":
-        f = quadratic_kernel(x, y, a, nu)
+        f = quadratic_kernel_farfield(x, y, a, nu)
         f = f[:, 1, :]
 
     if element_type == "traction":
@@ -1573,7 +1570,7 @@ def calc_displacements_and_stresses_quadratic(
     x = rotated_coords[:, 0]
     y = rotated_coords[:, 1]
 
-    f_all = quadratic_kernel(x, y, a, nu)
+    f_all = quadratic_kernel_farfield(x, y, a, nu)
 
     for i in range(0, 3):
         f = f_all[:, i, :]
@@ -1929,7 +1926,7 @@ def quadratic_displacements_and_stresses(
             y, 0
         )  # Set to zero because we're evaluating on the element
     elif type == "farfield":
-        f_all = quadratic_kernel(x, y, a, nu)
+        f_all = quadratic_kernel_farfield(x, y, a, nu)
 
     for i in range(0, 3):
         f = f_all[:, i, :]  # Select all the fs for the current NNN
@@ -2594,10 +2591,6 @@ for i in range(0, x1.size):
     element["y2"] = y2[i]
     elements.append(element.copy())
 elements = standardize_elements(elements)
-
-
-# Kernels for coincident integrals: f, shape_function_idx, node_idx
-# f = quadratic_kernel_coincident(element["half_length"], nu)
 
 
 def quadratic_partials_all(elements, mu, nu):
