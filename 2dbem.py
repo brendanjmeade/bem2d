@@ -1,4 +1,5 @@
 import copy
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
@@ -2654,8 +2655,11 @@ def quadratic_partials_all(elements, mu, nu):
 
     return partials_displacement, partials_stress
 
-
+start_time = time.process_time()
 partials_displacement, partials_stress = quadratic_partials_all(elements, mu, nu)
+end_time = time.process_time()
+print(end_time - start_time)
+
 plt.matshow(partials_stress)
 plt.title(str(len(elements)) + "-element system partials")
 plt.colorbar()
