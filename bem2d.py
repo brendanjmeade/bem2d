@@ -2317,77 +2317,7 @@ def test_thrust():
     )
 
 
-def test_quadratic_vs_constant(elements, mu, nu):
-    # Just a simple forward model for the volume
-    displacement_constant_slip = np.zeros((2, x.size))
-    stress_constant_slip = np.zeros((3, x.size))
-    displacement_quadratic = np.zeros((2, x.size))
-    stress_quadratic = np.zeros((3, x.size))
 
-    for element in elements:
-        displacement, stress = calc_displacements_and_stresses(
-            x,
-            y,
-            element["half_length"],
-            mu,
-            nu,
-            "constant",
-            "slip",
-            1,
-            0,
-            element["x_center"],
-            element["y_center"],
-            element["rotation_matrix"],
-            element["inverse_rotation_matrix"],
-        )
-        displacement_constant_slip += displacement
-        stress_constant_slip += stress
-
-    plot_fields(
-        elements,
-        x.reshape(n_pts, n_pts),
-        y.reshape(n_pts, n_pts),
-        displacement_constant_slip,
-        stress_constant_slip,
-        "constant elements (slip)",
-    )
-
-    for element in elements:
-        displacement, stress = calc_displacements_and_stresses_quadratic(
-            x,
-            y,
-            element["half_length"],
-            mu,
-            nu,
-            "quadratic",
-            "slip",
-            1,
-            0,
-            element["x_center"],
-            element["y_center"],
-            element["rotation_matrix"],
-            element["inverse_rotation_matrix"],
-        )
-        displacement_quadratic += displacement
-        stress_quadratic += stress
-
-    plot_fields(
-        elements,
-        x.reshape(n_pts, n_pts),
-        y.reshape(n_pts, n_pts),
-        displacement_quadratic,
-        stress_quadratic,
-        "quadratic elements (constant slip)",
-    )
-
-    plot_fields(
-        elements,
-        x.reshape(n_pts, n_pts),
-        y.reshape(n_pts, n_pts),
-        displacement_constant_slip - displacement_quadratic,
-        stress_constant_slip - stress_quadratic,
-        "residuals",
-    )
 
 
 def test_planar_rutpure():
@@ -2568,189 +2498,192 @@ def test_planar_rutpure():
     np.savez("model_run_huge_even_linear.npz", history, time_interval)
 
 
-plt.close("all")
-# test_circle()
-# test_thrust()
-# test_planar_rupture()
 
-# Material and geometric constants
-mu = 3e10
-nu = 0.25
-n_elements = 100
-n_pts = 100
+def main():
+    plt.close("all")
+    # test_circle()
+    # test_thrust()
+    # test_planar_rupture()
 
-width = 20000
-x = np.linspace(-width, width, n_pts)
-y = np.linspace(-width, width, n_pts)
-x, y = np.meshgrid(x, y)
-x = x.flatten()
-y = y.flatten()
+    # Material and geometric constants
+    mu = 3e10
+    nu = 0.25
+    n_elements = 100
+    n_pts = 100
 
-# Constant slip fault
-elements = []
-element = {}
-L = 10000
-x1, y1, x2, y2 = discretized_line(-L, 0, L, 0, n_elements)
-amplitude = 0.00002
-y1 = amplitude * x1 ** 2
-y2 = amplitude * x2 ** 2
+    width = 20000
+    x = np.linspace(-width, width, n_pts)
+    y = np.linspace(-width, width, n_pts)
+    x, y = np.meshgrid(x, y)
+    x = x.flatten()
+    y = y.flatten()
 
-
-for i in range(0, x1.size):
-    element["x1"] = x1[i]
-    element["y1"] = y1[i]
-    element["x2"] = x2[i]
-    element["y2"] = y2[i]
-    elements.append(element.copy())
-elements = standardize_elements(elements)
+    # Constant slip fault
+    elements = []
+    element = {}
+    L = 10000
+    x1, y1, x2, y2 = discretized_line(-L, 0, L, 0, n_elements)
+    amplitude = 0.00002
+    y1 = amplitude * x1 ** 2
+    y2 = amplitude * x2 ** 2
 
 
-def quadratic_partials_all(elements, mu, nu):
-    """ Partial derivatives with quadratic shape functions """
-    n_elements = len(elements)
-    matrix_stride_per_element = 6
-    partials_displacement = np.zeros(
-        (matrix_stride_per_element * n_elements, matrix_stride_per_element * n_elements)
-    )
-    partials_stress = np.zeros(
-        (
-            (matrix_stride_per_element + 3) * n_elements,
-            matrix_stride_per_element * n_elements,
+    for i in range(0, x1.size):
+        element["x1"] = x1[i]
+        element["y1"] = y1[i]
+        element["x2"] = x2[i]
+        element["y2"] = y2[i]
+        elements.append(element.copy())
+    elements = standardize_elements(elements)
+
+
+    def quadratic_partials_all(elements, mu, nu):
+        """ Partial derivatives with quadratic shape functions """
+        n_elements = len(elements)
+        matrix_stride_per_element = 6
+        partials_displacement = np.zeros(
+            (matrix_stride_per_element * n_elements, matrix_stride_per_element * n_elements)
         )
-    )
-    element_to_matrix_idx = matrix_stride_per_element * np.arange(n_elements + 1)
-    element_to_matrix_stress_idx = (matrix_stride_per_element + 3) * np.arange(
-        n_elements + 1
-    )
+        partials_stress = np.zeros(
+            (
+                (matrix_stride_per_element + 3) * n_elements,
+                matrix_stride_per_element * n_elements,
+            )
+        )
+        element_to_matrix_idx = matrix_stride_per_element * np.arange(n_elements + 1)
+        element_to_matrix_stress_idx = (matrix_stride_per_element + 3) * np.arange(
+            n_elements + 1
+        )
 
-    for i, element in enumerate(elements):
-        displacement, stress = coincident_partials(element, mu, nu)
-        partials_displacement[
-            element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
-            element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
-        ] = displacement
-        partials_stress[
-            element_to_matrix_stress_idx[i] : element_to_matrix_stress_idx[i + 1],
-            element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
-        ] = stress
+        for i, element in enumerate(elements):
+            displacement, stress = coincident_partials(element, mu, nu)
+            partials_displacement[
+                element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
+                element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
+            ] = displacement
+            partials_stress[
+                element_to_matrix_stress_idx[i] : element_to_matrix_stress_idx[i + 1],
+                element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
+            ] = stress
 
-    for i_src in range(0, n_elements):
-        for i_obs in range(0, n_elements):
-            if i_src != i_obs:
-                displacement, stress = quadratic_partials(
-                    elements[i_obs], elements[i_src], mu, nu
-                )
-                partials_displacement[
-                    element_to_matrix_idx[i_obs] : element_to_matrix_idx[
-                        i_obs + 1
-                    ],
-                    element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
-                ] = displacement
-                partials_stress[
-                    element_to_matrix_stress_idx[i_obs] : element_to_matrix_stress_idx[
-                        i_obs + 1
-                    ],
-                    element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
-                ] = stress
+        for i_src in range(0, n_elements):
+            for i_obs in range(0, n_elements):
+                if i_src != i_obs:
+                    displacement, stress = quadratic_partials(
+                        elements[i_obs], elements[i_src], mu, nu
+                    )
+                    partials_displacement[
+                        element_to_matrix_idx[i_obs] : element_to_matrix_idx[
+                            i_obs + 1
+                        ],
+                        element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
+                    ] = displacement
+                    partials_stress[
+                        element_to_matrix_stress_idx[i_obs] : element_to_matrix_stress_idx[
+                            i_obs + 1
+                        ],
+                        element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
+                    ] = stress
 
-    return partials_displacement, partials_stress
+        return partials_displacement, partials_stress
 
-start_time = time.process_time()
-partials_displacement, partials_stress = quadratic_partials_all(elements, mu, nu)
-end_time = time.process_time()
-print(end_time - start_time)
+    start_time = time.process_time()
+    partials_displacement, partials_stress = quadratic_partials_all(elements, mu, nu)
+    end_time = time.process_time()
+    print(end_time - start_time)
 
-plt.matshow(partials_stress)
-plt.title(str(len(elements)) + "-element system partials")
-plt.colorbar()
-plt.show(block=False)
+    plt.matshow(partials_stress)
+    plt.title(str(len(elements)) + "-element system partials")
+    plt.colorbar()
+    plt.show(block=False)
 
-plt.matshow(partials_displacement)
-plt.title(str(len(elements)) + "-element system partials")
-plt.colorbar()
-plt.show(block=False)
+    plt.matshow(partials_displacement)
+    plt.title(str(len(elements)) + "-element system partials")
+    plt.colorbar()
+    plt.show(block=False)
 
-x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()
-y_eval = np.array([_["y_integration_points"] for _ in elements]).flatten()
-slip = np.zeros(6 * n_elements)
-slip[0::2] = 1 # Strike-slip only
-#slip[0::2] = x_eval / 10000.0 # Strike-slip only
-
-
-predicted_displacement = partials_displacement @ slip
-predicted_stress = partials_stress @ slip
-
-predicted_x_displacement = predicted_displacement[0::2]
-# predicted_x_displacement = np.sort(predicted_x_displacement)
-predicted_y_displacement = predicted_displacement[1::2]
-# predicted_y_displacement_ordered_idx = np.argsort(predicted_y_displacement)
-# predicted_y_displacement = np.sort(predicted_y_displacement)
+    x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()
+    y_eval = np.array([_["y_integration_points"] for _ in elements]).flatten()
+    slip = np.zeros(6 * n_elements)
+    slip[0::2] = 1 # Strike-slip only
 
 
+    predicted_displacement = partials_displacement @ slip
+    predicted_stress = partials_stress @ slip
 
-# # Displacements and stresses from constant elements
-d_constant_slip = np.zeros((2, x_eval.size))
-s_constant_slip = np.zeros((3, x_eval.size))
+    predicted_x_displacement = predicted_displacement[0::2]
+    predicted_y_displacement = predicted_displacement[1::2]
 
-for i in range(len(elements)):
-    d, s = calc_displacements_and_stresses(
-        x_eval,
-        y_eval,
-        elements[i]["half_length"],
-        mu,
-        nu,
-        "constant",
-        "slip",
-        1,
-        0,
-        elements[i]["x_center"],
-        elements[i]["y_center"],
-        elements[i]["rotation_matrix"],
-        elements[i]["inverse_rotation_matrix"],
-    )
+    # # Displacements and stresses from constant elements
+    d_constant_slip = np.zeros((2, x_eval.size))
+    s_constant_slip = np.zeros((3, x_eval.size))
 
-    d_constant_slip += d
-    s_constant_slip += s
+    for i in range(len(elements)):
+        d, s = calc_displacements_and_stresses(
+            x_eval,
+            y_eval,
+            elements[i]["half_length"],
+            mu,
+            nu,
+            "constant",
+            "slip",
+            1,
+            0,
+            elements[i]["x_center"],
+            elements[i]["y_center"],
+            elements[i]["rotation_matrix"],
+            elements[i]["inverse_rotation_matrix"],
+        )
 
-
-plt.figure()
-plt.plot(x_eval, predicted_x_displacement, "-r")
-plt.plot(x_eval, predicted_y_displacement, "-b")
-
-plt.plot(x_eval[1::3], d_constant_slip[0, 1::3], "+r")
-plt.plot(x_eval[1::3], d_constant_slip[1, 1::3], "+b")
-
-plt.xlabel("x")
-plt.ylabel("displacements")
-plt.show(block=False)
-
-plt.figure()
-plt.plot(x_eval, predicted_stress[0::3], "-r")
-plt.plot(x_eval, predicted_stress[1::3], "-b")
-plt.plot(x_eval, predicted_stress[2::3], "-k")
-# plt.plot(x_eval, s_constant_slip[0, :], "--r")
-# plt.plot(x_eval, s_constant_slip[1, :], "--b")
-# plt.plot(x_eval, s_constant_slip[2, :], "--k")
-
-plt.xlabel("x")
-plt.ylabel("displacements")
-plt.title("stress")
-plt.show(block=False)
+        d_constant_slip += d
+        s_constant_slip += s
 
 
-# def plot_elements(elements):
-#     plt.figure()
-#     for i, element in enumerate(elements):
+    plt.figure()
+    plt.plot(x_eval, predicted_x_displacement, "-r")
+    plt.plot(x_eval, predicted_y_displacement, "-b")
 
-#     x_lim = np.array([x.min(), x.max()])
-#     y_lim = np.array([y.min(), y.max()])
-#     plt.gca().set_aspect("equal")
-#     plt.xticks([x_lim[0], x_lim[1]])
-#     plt.yticks([y_lim[0], y_lim[1]])
+    plt.plot(x_eval[1::3], d_constant_slip[0, 1::3], "+r")
+    plt.plot(x_eval[1::3], d_constant_slip[1, 1::3], "+b")
 
-# TODO: Save information from rupture problem as .pkl/.npz
-# TODO: Try rupture problem with variations in a-b.  Do I have to pass elements_* dict to do this?
-# TODO: Rupture problem with free surface
-# TODO: Generalize for velocity magnitudes and velocity decomposition in rate and state
-# TODO: Add flag to tread x and y components of forcing/slip in global coordinate system
-# TODO: "Fixing" location of integration points broke constant vs. quadratic
+    plt.xlabel("x")
+    plt.ylabel("displacements")
+    plt.show(block=False)
+
+    plt.figure()
+    plt.plot(x_eval, predicted_stress[0::3], "-r")
+    plt.plot(x_eval, predicted_stress[1::3], "-b")
+    plt.plot(x_eval, predicted_stress[2::3], "-k")
+    # plt.plot(x_eval, s_constant_slip[0, :], "--r")
+    # plt.plot(x_eval, s_constant_slip[1, :], "--b")
+    # plt.plot(x_eval, s_constant_slip[2, :], "--k")
+
+    plt.xlabel("x")
+    plt.ylabel("displacements")
+    plt.title("stress")
+    plt.show(block=False)
+
+
+    # def plot_elements(elements):
+    #     plt.figure()
+    #     for i, element in enumerate(elements):
+
+    #     x_lim = np.array([x.min(), x.max()])
+    #     y_lim = np.array([y.min(), y.max()])
+    #     plt.gca().set_aspect("equal")
+    #     plt.xticks([x_lim[0], x_lim[1]])
+    #     plt.yticks([y_lim[0], y_lim[1]])
+
+    # TODO: Save information from rupture problem as .pkl/.npz
+    # TODO: Try rupture problem with variations in a-b.  Do I have to pass elements_* dict to do this?
+    # TODO: Rupture problem with free surface
+    # TODO: Generalize for velocity magnitudes and velocity decomposition in rate and state
+    # TODO: Add flag to tread x and y components of forcing/slip in global coordinate system
+    # TODO: "Fixing" location of integration points broke constant vs. quadratic
+
+
+
+
+
+if __name__ == "__main__":
+    main()
