@@ -2499,7 +2499,7 @@ def test_planar_rutpure():
 
 
 
-def main():
+def example_partials():
     plt.close("all")
     # test_circle()
     # test_thrust()
@@ -2664,16 +2664,6 @@ def main():
     plt.show(block=False)
 
 
-    # def plot_elements(elements):
-    #     plt.figure()
-    #     for i, element in enumerate(elements):
-
-    #     x_lim = np.array([x.min(), x.max()])
-    #     y_lim = np.array([y.min(), y.max()])
-    #     plt.gca().set_aspect("equal")
-    #     plt.xticks([x_lim[0], x_lim[1]])
-    #     plt.yticks([y_lim[0], y_lim[1]])
-
     # TODO: Save information from rupture problem as .pkl/.npz
     # TODO: Try rupture problem with variations in a-b.  Do I have to pass elements_* dict to do this?
     # TODO: Rupture problem with free surface
@@ -2682,7 +2672,8 @@ def main():
     # TODO: "Fixing" location of integration points broke constant vs. quadratic
 
 
-
+def main():
+    pass
 
 
 if __name__ == "__main__":
