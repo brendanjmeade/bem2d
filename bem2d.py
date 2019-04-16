@@ -1459,7 +1459,7 @@ def quadratic_kernel_coincident(a, nu):
     return f
 
 
-def calc_displacements_and_stresses(
+def displacements_stresses_constant_linear(
     x,
     y,
     a,
@@ -1535,11 +1535,10 @@ def calc_displacements_and_stresses(
     displacement, stress = rotate_displacement_stress(
         displacement, stress, inverse_rotation_matrix
     )
-
     return displacement, stress
 
 
-def calc_displacements_and_stresses_quadratic(
+def displacements_stresses_quadratic(
     x,
     y,
     a,
@@ -1554,7 +1553,8 @@ def calc_displacements_and_stresses_quadratic(
     rotation_matrix,
     inverse_rotation_matrix,
 ):
-    """ Calculate displacements and stresses """
+    """ This function implements constant slip on a quadratic element
+    Its only really useful for benchmarking """
     displacement = np.zeros((2, x.size))
     stress = np.zeros((3, x.size))
     displacement_all = np.zeros((2, x.size))
@@ -1620,24 +1620,23 @@ def calc_displacements_and_stresses_quadratic(
 
         displacement_all += displacement
         stress_all += stress
-
     return displacement_all, stress_all
 
 
 def plot_fields(elements, x, y, displacement, stress, sup_title):
-    " Contour 2 displacement fields, 3 stress fields, and quiver displacements"
+    """ Contour 2 displacement fields, 3 stress fields, and quiver displacements """
     x_lim = np.array([x.min(), x.max()])
     y_lim = np.array([y.min(), y.max()])
 
     def style_plots():
-        " Common plot elements "
+        """ Common plot elements """
         plt.gca().set_aspect("equal")
         plt.xticks([x_lim[0], x_lim[1]])
         plt.yticks([y_lim[0], y_lim[1]])
         plt.colorbar(fraction=0.046, pad=0.04)
 
     def plot_subplot(elements, x, y, idx, field, title):
-        " Common elements for each subplot - other than quiver "
+        """ Common elements for each subplot - other than quiver """
         plt.subplot(2, 3, idx)
         plt.contourf(x, y, field.reshape(x.shape), n_contours)
         for element in elements:
@@ -1799,20 +1798,7 @@ def discretized_line(x_start, y_start, x_end, y_end, n_elements):
     return x1, y1, x2, y2
 
 
-# def discretized_quad(x_start, y_start, x_end, y_end, n_elements):
-#     """ Create geometry of discretized parabola """
-#     n_pts = n_elements + 1
-#     x = np.linspace(x_start, x_end, n_pts)
-#     y = np.linspace(y_start, y_end, n_pts)
-#     y = 0.1 * x
-#     x1 = x[:-1]
-#     y1 = y[:-1]
-#     x2 = x[1:]
-#     y2 = y[1:]
-#     return x1, y1, x2, y2
-
-
-def calc_partials(elements_src, elements_obs, element_type, mu, nu):
+def constant_linear_partials(elements_src, elements_obs, element_type, mu, nu):
     # Now calculate the element effects on one another and store as matrices
     # Traction to displacement, traction to stress
     displacement_partials = np.zeros((2 * len(elements_obs), 2 * len(elements_src)))
@@ -1824,7 +1810,7 @@ def calc_partials(elements_src, elements_obs, element_type, mu, nu):
 
     # x-component
     for i, element_src in enumerate(elements_src):
-        displacement, stress = calc_displacements_and_stresses(
+        displacement, stress = displacements_stresses_constant_linear(
             x_center_obs,
             y_center_obs,
             element_src["half_length"],
@@ -1861,7 +1847,7 @@ def calc_partials(elements_src, elements_obs, element_type, mu, nu):
 
     # y-component
     for i, element_src in enumerate(elements_src):
-        displacement, stress = calc_displacements_and_stresses(
+        displacement, stress = displacements_stresses_constant_linear(
             x_center_obs,
             y_center_obs,
             element_src["half_length"],
@@ -1899,7 +1885,7 @@ def calc_partials(elements_src, elements_obs, element_type, mu, nu):
     return displacement_partials, traction_partials
 
 
-def quadratic_displacements_and_stresses(
+def displacements_stresses_quadratic(
     type,
     x_in,
     y_in,
@@ -1915,11 +1901,11 @@ def quadratic_displacements_and_stresses(
     inverse_rotation_matrix,
 ):
 
-    # 2 displacement components at each of the 3 collocation points?
+    # 2 displacement components at each of the 3 collocation points
     displacement = np.zeros((2, 3))
     displacement_all = np.zeros((6, 3))
 
-    # 3 stress components at each of the 3 collocation points?
+    # 3 stress components at each of the 3 collocation points
     stress = np.zeros((3, 3))
     stress_all = np.zeros((9, 3))
 
@@ -1980,7 +1966,6 @@ def quadratic_displacements_and_stresses(
         )
         displacement_all[:, i] = displacement.T.flatten()
         stress_all[:, i] = stress.T.flatten()
-
     return displacement_all, stress_all
 
 
@@ -2099,65 +2084,6 @@ def quadratic_partials(element_obs, element_src, mu, nu):
     )
 
 
-def test_circle():
-    """ Compressed circle test """
-
-    # Material properties and observation grid
-    mu = 30e9
-    nu = 0.25
-    n_pts = 50
-    width = 5
-    x = np.linspace(-width, width, n_pts)
-    y = np.linspace(-width, width, n_pts)
-    x, y = np.meshgrid(x, y)
-    x = x.flatten()
-    y = y.flatten()
-
-    # Create set of elements defining a circle
-    elements = []
-    element = {}
-    x1, y1, x2, y2 = discretized_circle(1, 50)
-    for i in range(0, x1.size):
-        element["x1"] = x1[i]
-        element["y1"] = y1[i]
-        element["x2"] = x2[i]
-        element["y2"] = y2[i]
-        elements.append(element.copy())
-    elements = standardize_elements(elements)
-    plot_element_geometry(elements)
-
-    # Just a simple forward model for the volume
-    displacement_constant_slip = np.zeros((2, x.size))
-    stress_constant_slip = np.zeros((3, x.size))
-    for element in elements:
-        displacement, stress = calc_displacements_and_stresses(
-            x,
-            y,
-            element["half_length"],
-            mu,
-            nu,
-            "constant",
-            "traction",
-            0,
-            1,
-            element["x_center"],
-            element["y_center"],
-            element["rotation_matrix"],
-            element["inverse_rotation_matrix"],
-        )
-        displacement_constant_slip += displacement
-        stress_constant_slip += stress
-
-    plot_fields(
-        elements,
-        x.reshape(n_pts, n_pts),
-        y.reshape(n_pts, n_pts),
-        displacement_constant_slip,
-        stress_constant_slip,
-        "constant traction",
-    )
-
-
 def test_planar_rutpure():
     """ Taken from Ben's 1d example:
         http://tbenthompson.com/post/block_slider/ """
@@ -2176,10 +2102,10 @@ def test_planar_rutpure():
     elements_fault = standardize_elements(elements_fault)
 
     # Build partial derivative matrices for Ben's thrust fault problem
-    slip_to_displacement, slip_to_traction = calc_partials(
+    slip_to_displacement, slip_to_traction = partials_constant_linear(
         elements_fault, elements_fault, "slip", mu, nu
     )
-    traction_to_displacement, traction_to_traction = calc_partials(
+    traction_to_displacement, traction_to_traction = partials_constant_linear(
         elements_fault, elements_fault, "traction", mu, nu
     )
 
@@ -2255,8 +2181,8 @@ def test_planar_rutpure():
             # ONLY FOR FLAT GEOMETERY with y = 0 on all elements
             current_velocities[2 * i] = velocity_mag
             current_velocities[2 * i + 1] = 0
-
         return current_velocities
+
 
     def steady_state(velocities):
         """ Steady state...state """
@@ -2268,7 +2194,6 @@ def test_planar_rutpure():
         for i in range(0, n_elements):
             # TODO: FIX FOR NON XAXIS FAULT, USE VELOCITY MAGNITUDE
             steady_state_state[i] = fsolve(f, 0.0, args=(velocities[2 * i],))[0]
-
         return steady_state_state
 
     state_0 = steady_state(initial_velocity)
@@ -2454,7 +2379,7 @@ def example_partials():
     s_constant_slip = np.zeros((3, x_eval.size))
 
     for i in range(len(elements)):
-        d, s = calc_displacements_and_stresses(
+        d, s = displacements_stresses_constant_linear(
             x_eval,
             y_eval,
             elements[i]["half_length"],

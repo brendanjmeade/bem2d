@@ -35,7 +35,7 @@ displacement_quadratic = np.zeros((2, x.size))
 stress_quadratic = np.zeros((3, x.size))
 
 for element in elements:
-    displacement, stress = bem2d.calc_displacements_and_stresses(
+    displacement, stress = bem2d.displacements_stresses_constant_linear(
         x,
         y,
         element["half_length"],
@@ -63,7 +63,7 @@ bem2d.plot_fields(
 )
 
 for element in elements:
-    displacement, stress = bem2d.calc_displacements_and_stresses_quadratic(
+    displacement, stress = bem2d.displacements_stresses_quadratic(
         x,
         y,
         element["half_length"],

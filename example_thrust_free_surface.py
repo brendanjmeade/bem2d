@@ -41,11 +41,11 @@ for i in range(0, x1.size):
 elements_fault = bem2d.standardize_elements(elements_fault)
 
 # Build partial derivative matrices for Ben's thrust fault problem
-displacement_partials_1, traction_partials_1 = bem2d.calc_partials(
+displacement_partials_1, traction_partials_1 = bem2d.constant_linear_partials(
     elements_fault, elements_surface, "slip", mu, nu
 )
 
-_, traction_partials_2 = bem2d.calc_partials(
+_, traction_partials_2 = bem2d.constant_linear_partials(
     elements_surface, elements_surface, "slip", mu, nu
 )
 
@@ -91,7 +91,7 @@ fault_slip_y = fault_slip[1::2]
 displacement_full_space = np.zeros((2, x.size))
 stress_full_space = np.zeros((3, x.size))
 for i, element in enumerate(elements_fault):
-    displacement, stress = bem2d.calc_displacements_and_stresses(
+    displacement, stress = bem2d.displacements_stresses_constant_linear(
         x,
         y,
         element["half_length"],
@@ -124,7 +124,7 @@ fault_slip_y = disp_free_surface[1::2]
 displacement_free_surface = np.zeros((2, x.size))
 stress_free_surface = np.zeros((3, x.size))
 for i, element in enumerate(elements_surface):
-    displacement, stress = bem2d.calc_displacements_and_stresses(
+    displacement, stress = bem2d.displacements_stresses_constant_linear(
         x,
         y,
         element["half_length"],

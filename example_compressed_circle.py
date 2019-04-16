@@ -32,7 +32,7 @@ bem2d.plot_element_geometry(elements)
 displacement_constant_slip = np.zeros((2, x.size))
 stress_constant_slip = np.zeros((3, x.size))
 for element in elements:
-    displacement, stress = bem2d.calc_displacements_and_stresses(
+    displacement, stress = bem2d.displacements_stresses_constant_linear(
         x,
         y,
         element["half_length"],
