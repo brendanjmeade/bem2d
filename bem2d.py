@@ -1950,7 +1950,7 @@ def coincident_partials(element, mu, nu):
 
 
 def quadratic_partials(element_obs, element_src, mu, nu):
-    """ See coincident partials """
+    """ See coincident_partials """
 
     displacement_strike_slip, stress_strike_slip = displacements_stresses_quadratic(
         "farfield",
