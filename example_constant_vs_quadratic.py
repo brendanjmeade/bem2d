@@ -1,6 +1,7 @@
 import numpy as np
 import bem2d
 
+
 def displacements_stresses_quadratic_constant_slip(
     x,
     y,
@@ -84,7 +85,6 @@ def displacements_stresses_quadratic_constant_slip(
         displacement_all += displacement
         stress_all += stress
     return displacement_all, stress_all
-
 
 
 # List of elements for forward model

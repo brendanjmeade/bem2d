@@ -1537,6 +1537,7 @@ def displacements_stresses_constant_linear(
     )
     return displacement, stress
 
+
 def displacements_stresses_quadratic(
     type,
     x_in,
@@ -1945,10 +1946,7 @@ def coincident_partials(element, mu, nu):
     partials_stress = np.zeros((9, 6))
     partials_stress[:, 0::2] = stress_strike_slip
     partials_stress[:, 1::2] = stress_tensile_slip
-    return (
-        partials_displacement,
-        partials_stress,
-    )
+    return (partials_displacement, partials_stress)
 
 
 def quadratic_partials(element_obs, element_src, mu, nu):
@@ -1991,10 +1989,7 @@ def quadratic_partials(element_obs, element_src, mu, nu):
     partials_stress = np.zeros((9, 6))
     partials_stress[:, 0::2] = stress_strike_slip
     partials_stress[:, 1::2] = stress_tensile_slip
-    return (
-        partials_displacement,
-        partials_stress,
-    )
+    return (partials_displacement, partials_stress)
 
     # TODO: Rupture problem with free surface
     # TODO: Generalize for velocity magnitudes and velocity decomposition in rate and state
@@ -2003,6 +1998,7 @@ def quadratic_partials(element_obs, element_src, mu, nu):
 
 def main():
     pass
+
 
 if __name__ == "__main__":
     main()
