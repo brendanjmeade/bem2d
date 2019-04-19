@@ -1949,11 +1949,18 @@ def coincident_partials(element, mu, nu):
     return (partials_displacement, partials_stress)
 
 
-def quadratic_partials(element_obs, element_src, mu, nu):
-    """ See coincident_partials """
+def quadratic_partials_single(element_obs, element_src, mu, nu):
+    """ See coincident_partials for format
+        This does no this is for a single src obs pair only """
+
+    if element_obs == element_src:
+        f_type = "coincident"
+    else:
+        f_type = "farfield"
+    print(f_type)
 
     displacement_strike_slip, stress_strike_slip = displacements_stresses_quadratic(
-        "farfield",
+        f_type,
         element_obs["x_integration_points"],
         element_obs["y_integration_points"],
         element_src["half_length"],
@@ -1969,7 +1976,7 @@ def quadratic_partials(element_obs, element_src, mu, nu):
     )
 
     displacement_tensile_slip, stress_tensile_slip = displacements_stresses_quadratic(
-        "farfield",
+        f_type,
         element_obs["x_integration_points"],
         element_obs["y_integration_points"],
         element_src["half_length"],

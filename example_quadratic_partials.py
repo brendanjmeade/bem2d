@@ -8,17 +8,7 @@ plt.close("all")
 # Material and geometric constants
 mu = 3e10
 nu = 0.25
-n_elements = 100
-n_pts = 100
-
-width = 20000
-x = np.linspace(-width, width, n_pts)
-y = np.linspace(-width, width, n_pts)
-x, y = np.meshgrid(x, y)
-x = x.flatten()
-y = y.flatten()
-
-# Constant slip fault
+n_elements = 10
 elements = []
 element = {}
 L = 10000
@@ -35,53 +25,35 @@ for i in range(0, x1.size):
     elements.append(element.copy())
 elements = bem2d.standardize_elements(elements)
 
-
 def quadratic_partials_all(elements, mu, nu):
     """ Partial derivatives with quadratic shape functions """
     n_elements = len(elements)
-    matrix_stride_per_element = 6
+    stride = 6 # number of columns per element
     partials_displacement = np.zeros(
-        (matrix_stride_per_element * n_elements, matrix_stride_per_element * n_elements)
+        (stride * n_elements, stride * n_elements)
     )
     partials_stress = np.zeros(
         (
-            (matrix_stride_per_element + 3) * n_elements,
-            matrix_stride_per_element * n_elements,
+            (stride + 3) * n_elements,
+            stride * n_elements,
         )
     )
-    element_to_matrix_idx = matrix_stride_per_element * np.arange(n_elements + 1)
-    element_to_matrix_stress_idx = (matrix_stride_per_element + 3) * np.arange(
-        n_elements + 1
-    )
+    displacement_idx = stride * np.arange(n_elements + 1)
+    stress_idx = (stride + 3) * np.arange(n_elements + 1)
 
-    for i, element in enumerate(elements):
-        displacement, stress = bem2d.coincident_partials(element, mu, nu)
-        partials_displacement[
-            element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
-            element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
-        ] = displacement
-        partials_stress[
-            element_to_matrix_stress_idx[i] : element_to_matrix_stress_idx[i + 1],
-            element_to_matrix_idx[i] : element_to_matrix_idx[i + 1],
-        ] = stress
-
-    for i_src in range(0, n_elements):
-        for i_obs in range(0, n_elements):
-            if i_src != i_obs:
-                displacement, stress = bem2d.quadratic_partials(
-                    elements[i_obs], elements[i_src], mu, nu
-                )
-                partials_displacement[
-                    element_to_matrix_idx[i_obs] : element_to_matrix_idx[i_obs + 1],
-                    element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
-                ] = displacement
-                partials_stress[
-                    element_to_matrix_stress_idx[i_obs] : element_to_matrix_stress_idx[
-                        i_obs + 1
-                    ],
-                    element_to_matrix_idx[i_src] : element_to_matrix_idx[i_src + 1],
-                ] = stress
-
+    for i_src, element_src in enumerate(elements):
+        for i_obs, element_obs in enumerate(elements):
+            displacement, stress = bem2d.quadratic_partials_single(
+                element_obs, element_src, mu, nu
+            )
+            partials_displacement[
+                displacement_idx[i_obs] : displacement_idx[i_obs + 1],
+                displacement_idx[i_src] : displacement_idx[i_src + 1],
+            ] = displacement
+            partials_stress[
+                stress_idx[i_obs] : stress_idx[i_obs + 1],
+                displacement_idx[i_src] : displacement_idx[i_src + 1],
+            ] = stress
     return partials_displacement, partials_stress
 
 
