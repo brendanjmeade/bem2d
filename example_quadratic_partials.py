@@ -25,40 +25,8 @@ for i in range(0, x1.size):
     elements.append(element.copy())
 elements = bem2d.standardize_elements(elements)
 
-def quadratic_partials_all(elements, mu, nu):
-    """ Partial derivatives with quadratic shape functions """
-    n_elements = len(elements)
-    stride = 6 # number of columns per element
-    partials_displacement = np.zeros(
-        (stride * n_elements, stride * n_elements)
-    )
-    partials_stress = np.zeros(
-        (
-            (stride + 3) * n_elements,
-            stride * n_elements,
-        )
-    )
-    displacement_idx = stride * np.arange(n_elements + 1)
-    stress_idx = (stride + 3) * np.arange(n_elements + 1)
-
-    for i_src, element_src in enumerate(elements):
-        for i_obs, element_obs in enumerate(elements):
-            displacement, stress = bem2d.quadratic_partials_single(
-                element_obs, element_src, mu, nu
-            )
-            partials_displacement[
-                displacement_idx[i_obs] : displacement_idx[i_obs + 1],
-                displacement_idx[i_src] : displacement_idx[i_src + 1],
-            ] = displacement
-            partials_stress[
-                stress_idx[i_obs] : stress_idx[i_obs + 1],
-                displacement_idx[i_src] : displacement_idx[i_src + 1],
-            ] = stress
-    return partials_displacement, partials_stress
-
-
 start_time = time.process_time()
-partials_displacement, partials_stress = quadratic_partials_all(elements, mu, nu)
+partials_displacement, partials_stress = bem2d.quadratic_partials_all(elements, mu, nu)
 end_time = time.process_time()
 print(end_time - start_time)
 
