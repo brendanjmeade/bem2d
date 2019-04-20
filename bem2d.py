@@ -1684,12 +1684,20 @@ def plot_fields(elements, x, y, displacement, stress, sup_title):
 
 
 def plot_element_geometry(elements):
-    " Plot element geometry "
+    """ Plot element geometry """
     for element in elements:
         plt.plot(
             [element["x1"], element["x2"]],
             [element["y1"], element["y2"]],
             "-k",
+            color="r",
+            linewidth=0.5,
+        )
+        plt.plot(
+            [element["x1"], element["x2"]],
+            [element["y1"], element["y2"]],
+            "r.",
+            markersize=1,
             linewidth=0.5,
         )
 
@@ -1699,8 +1707,18 @@ def plot_element_geometry(elements):
     x_normal = np.array([_["x_normal"] for _ in elements])
     y_normal = np.array([_["y_normal"] for _ in elements])
     plt.quiver(
-        x_center, y_center, x_normal, y_normal, units="width", color="r", width=0.0025
+        x_center, y_center, x_normal, y_normal, units="width", color="gray", width=0.002
     )
+
+    for i, element in enumerate(elements):
+        plt.text(
+            element["x_center"],
+            element["y_center"],
+            str(i),
+            horizontalalignment="center",
+            verticalalignment="center",
+            fontsize=8,
+        )
 
     plt.xlabel("x")
     plt.ylabel("y")
