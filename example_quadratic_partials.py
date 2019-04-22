@@ -54,7 +54,7 @@ slip_constant = np.zeros(n_elements)
 
 # Linear slip
 slip_quadratic[0::2] = np.linspace(-1, 1, int(slip_quadratic.size/2))  # constant strike-slip only
-slip_constant = slip_quadratic[0::3]
+slip_constant = slip_quadratic[2::6] #TODO: need to fix this
 suptitle = "Linear slip"
 
 predicted_displacement = partials_displacement @ slip_quadratic
