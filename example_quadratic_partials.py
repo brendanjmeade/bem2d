@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 
 bem2d = reload(bem2d)
 
-plt.close("all")
-
 # Material and geometric constants
 mu = 3e10
 nu = 0.25
@@ -17,8 +15,14 @@ element = {}
 L = 10000
 x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, n_elements)
 amplitude = 0.00002
+
+# # Parabola
 # y1 = amplitude * x1 ** 2
 # y2 = amplitude * x2 ** 2
+
+# # Kinked
+# y1[x1<0] = amplitude * x1[x1<0]
+# y2[x2<0] = amplitude * x2[x2<0]
 
 for i in range(0, x1.size):
     element["x1"] = x1[i]
@@ -27,34 +31,27 @@ for i in range(0, x1.size):
     element["y2"] = y2[i]
     elements.append(element.copy())
 elements = bem2d.standardize_elements(elements)
-
-start_time = time.process_time()
 partials_displacement, partials_stress = bem2d.quadratic_partials_all(elements, mu, nu)
-end_time = time.process_time()
-print(end_time - start_time)
 
-# plt.matshow(partials_stress)
-# plt.title(str(len(elements)) + "-element system partials")
-# plt.colorbar()
-# plt.show(block=False)
-# plt.matshow(partials_displacement)
-# plt.title(str(len(elements)) + "-element system partials")
-# plt.colorbar()
-# plt.show(block=False)
+# TODO: This function is a disaster right now and should be modeled after the quadartic one
+# Where else is it used?
+_, _ = bem2d.constant_linear_partials(elements_src, elements_obs, element_type, mu, nu)
 
 x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()
 y_eval = np.array([_["y_integration_points"] for _ in elements]).flatten()
 slip_quadratic = np.zeros(6 * n_elements)
 slip_constant = np.zeros(n_elements)
 
-# Constant slip
+# # Constant slip
 # slip_quadratic[0::2] = 1  # constant strike-slip only
 # slip_constant = np.ones(slip_constant.size)
 # suptitle = "Constant slip"
 
 # Linear slip
-slip_quadratic[0::2] = np.linspace(-1, 1, int(slip_quadratic.size/2))  # constant strike-slip only
-slip_constant = slip_quadratic[2::6] #TODO: need to fix this
+slip_quadratic[0::2] = np.linspace(
+    -1, 1, int(slip_quadratic.size / 2)
+)  # constant strike-slip only
+slip_constant = slip_quadratic[2::6]  # TODO: need to fix this
 suptitle = "Linear slip"
 
 predicted_displacement = partials_displacement @ slip_quadratic
@@ -85,8 +82,8 @@ for i in range(len(elements)):
     d_constant_slip += d
     s_constant_slip += s
 
-# TODO add constant partials here to make comparison easier
 
+plt.close("all")
 plt.figure(figsize=(16, 12))
 plt.subplot(2, 2, 1)
 for element in elements:
@@ -169,27 +166,38 @@ plt.ylabel("input slip")
 plt.title("element slip")
 
 plt.subplot(2, 2, 4)
+# plt.plot(
+#     x_eval[1::3],
+#     predicted_stress[3::9],
+#     "+r",
+#     label="s_xx quadratic",
+#     markeredgewidth=0.5,
+# )
+# plt.plot(
+#     x_eval[1::3],
+#     predicted_stress[4::9],
+#     "+b",
+#     label="s_yy quadratic",
+#     markeredgewidth=0.5,
+# )
+# plt.plot(
+#     x_eval[1::3],
+#     predicted_stress[5::9],
+#     "+k",
+#     label="s_xy quadratic",
+#     markeredgewidth=0.5,
+# )
 plt.plot(
-    x_eval[1::3],
-    predicted_stress[3::9],
-    "+r",
-    label="s_xx quadratic",
-    markeredgewidth=0.5,
+    x_eval, predicted_stress[0::3], "+r", label="s_xx quadratic", markeredgewidth=0.5
 )
 plt.plot(
-    x_eval[1::3],
-    predicted_stress[4::9],
-    "+b",
-    label="s_yy quadratic",
-    markeredgewidth=0.5,
+    x_eval, predicted_stress[1::3], "+b", label="s_yy quadratic", markeredgewidth=0.5
 )
 plt.plot(
-    x_eval[1::3],
-    predicted_stress[5::9],
-    "+k",
-    label="s_xy quadratic",
-    markeredgewidth=0.5,
+    x_eval, predicted_stress[2::3], "+k", label="s_xy quadratic", markeredgewidth=0.5
 )
+
+
 plt.plot(
     x_eval[1::3],
     s_constant_slip[0, 1::3],

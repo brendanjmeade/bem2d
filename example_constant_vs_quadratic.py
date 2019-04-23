@@ -120,7 +120,9 @@ stress_constant_slip = np.zeros((3, x.size))
 displacement_quadratic = np.zeros((2, x.size))
 stress_quadratic = np.zeros((3, x.size))
 
-for element in elements:
+# slip_linear = np.linspace(-1, 1, len(elements))
+
+for i, element in enumerate(elements):
     displacement, stress = bem2d.displacements_stresses_constant_linear(
         x,
         y,
