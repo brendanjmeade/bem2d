@@ -35,12 +35,12 @@ partials_displacement, partials_stress = bem2d.quadratic_partials_all(elements, 
 
 # TODO: This function is a disaster right now and should be modeled after the quadartic one
 # Where else is it used?
-_, _ = bem2d.constant_linear_partials(elements_src, elements_obs, element_type, mu, nu)
+partials_displacement_constant, partials_stress_constant = bem2d.constant_partials_all(elements, mu, nu)
 
 x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()
 y_eval = np.array([_["y_integration_points"] for _ in elements]).flatten()
 slip_quadratic = np.zeros(6 * n_elements)
-slip_constant = np.zeros(n_elements)
+slip_constant = np.zeros(2 * n_elements)
 
 # # Constant slip
 # slip_quadratic[0::2] = 1  # constant strike-slip only
@@ -51,7 +51,7 @@ slip_constant = np.zeros(n_elements)
 slip_quadratic[0::2] = np.linspace(
     -1, 1, int(slip_quadratic.size / 2)
 )  # constant strike-slip only
-slip_constant = slip_quadratic[2::6]  # TODO: need to fix this
+slip_constant[0::2] = slip_quadratic[2::6]  # TODO: need to fix this
 suptitle = "Linear slip"
 
 predicted_displacement = partials_displacement @ slip_quadratic
@@ -60,28 +60,8 @@ predicted_x_displacement = predicted_displacement[0::2]
 predicted_y_displacement = predicted_displacement[1::2]
 
 # Displacements and stresses from classical constant slip elements
-d_constant_slip = np.zeros((2, x_eval.size))
-s_constant_slip = np.zeros((3, x_eval.size))
-
-for i in range(len(elements)):
-    d, s = bem2d.displacements_stresses_constant_linear(
-        x_eval,
-        y_eval,
-        elements[i]["half_length"],
-        mu,
-        nu,
-        "constant",
-        "slip",
-        slip_constant[i],
-        0,
-        elements[i]["x_center"],
-        elements[i]["y_center"],
-        elements[i]["rotation_matrix"],
-        elements[i]["inverse_rotation_matrix"],
-    )
-    d_constant_slip += d
-    s_constant_slip += s
-
+d_constant_slip = partials_displacement_constant @ slip_constant
+s_constant_slip = partials_stress_constant @ slip_constant
 
 plt.close("all")
 plt.figure(figsize=(16, 12))
@@ -131,7 +111,7 @@ plt.plot(
 )
 plt.plot(
     x_eval[1::3],
-    d_constant_slip[0, 1::3],
+    d_constant_slip[0::2],
     "or",
     markerfacecolor="none",
     markeredgewidth=0.5,
@@ -139,7 +119,7 @@ plt.plot(
 )
 plt.plot(
     x_eval[1::3],
-    d_constant_slip[1, 1::3],
+    d_constant_slip[1::2],
     "ob",
     markerfacecolor="none",
     markeredgewidth=0.5,
@@ -154,7 +134,7 @@ plt.subplot(2, 2, 3)
 plt.plot(x_eval, slip_quadratic[0::2], "+k", label="quadratic", markeredgewidth=0.5)
 plt.plot(
     x_eval[1::3],
-    slip_constant,
+    slip_constant[0::2],
     "ok",
     markerfacecolor="none",
     label="constant",
@@ -166,27 +146,6 @@ plt.ylabel("input slip")
 plt.title("element slip")
 
 plt.subplot(2, 2, 4)
-# plt.plot(
-#     x_eval[1::3],
-#     predicted_stress[3::9],
-#     "+r",
-#     label="s_xx quadratic",
-#     markeredgewidth=0.5,
-# )
-# plt.plot(
-#     x_eval[1::3],
-#     predicted_stress[4::9],
-#     "+b",
-#     label="s_yy quadratic",
-#     markeredgewidth=0.5,
-# )
-# plt.plot(
-#     x_eval[1::3],
-#     predicted_stress[5::9],
-#     "+k",
-#     label="s_xy quadratic",
-#     markeredgewidth=0.5,
-# )
 plt.plot(
     x_eval, predicted_stress[0::3], "+r", label="s_xx quadratic", markeredgewidth=0.5
 )
@@ -197,10 +156,9 @@ plt.plot(
     x_eval, predicted_stress[2::3], "+k", label="s_xy quadratic", markeredgewidth=0.5
 )
 
-
 plt.plot(
     x_eval[1::3],
-    s_constant_slip[0, 1::3],
+    s_constant_slip[0::3],
     "or",
     markerfacecolor="none",
     markeredgewidth=0.5,
@@ -208,7 +166,7 @@ plt.plot(
 )
 plt.plot(
     x_eval[1::3],
-    s_constant_slip[1, 1::3],
+    s_constant_slip[1::3],
     "ob",
     markerfacecolor="none",
     markeredgewidth=0.5,
@@ -216,7 +174,7 @@ plt.plot(
 )
 plt.plot(
     x_eval[1::3],
-    s_constant_slip[2, 1::3],
+    s_constant_slip[2::3],
     "ok",
     markerfacecolor="none",
     markeredgewidth=0.5,

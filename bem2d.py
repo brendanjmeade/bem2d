@@ -1901,47 +1901,70 @@ def constant_linear_partials(elements_src, elements_obs, element_type, mu, nu):
     return displacement_partials, traction_partials
 
 
-# def coincident_partials(element, mu, nu):
+def constant_partials_single(element_obs, element_src, mu, nu):
+    """ Calculate displacements and stresses for coincident evaluation points. """
+
+    displacement_strike_slip, stress_strike_slip = displacements_stresses_constant_linear(
+        element_obs["x_center"],
+        element_obs["y_center"],
+        element_src["half_length"],
+        mu,
+        nu,
+        "constant",
+        "slip",
+        1,
+        0,
+        element_src["x_center"],
+        element_src["y_center"],
+        element_src["rotation_matrix"],
+        element_src["inverse_rotation_matrix"],
+    )
+
+    displacement_tensile_slip, stress_tensile_slip = displacements_stresses_constant_linear(
+        element_obs["x_center"],
+        element_obs["y_center"],
+        element_src["half_length"],
+        mu,
+        nu,
+        "constant",
+        "slip",
+        0,
+        1,
+        element_src["x_center"],
+        element_src["y_center"],
+        element_src["rotation_matrix"],
+        element_src["inverse_rotation_matrix"],
+    )
+    partials_displacement = np.zeros((2, 2))
+    partials_displacement[:, 0::2] = displacement_strike_slip
+    partials_displacement[:, 1::2] = displacement_tensile_slip
+    partials_stress = np.zeros((3, 2))
+    partials_stress[:, 0::2] = stress_strike_slip
+    partials_stress[:, 1::2] = stress_tensile_slip
+    return partials_displacement, partials_stress
 
 
-#     displacement_strike_slip, stress_strike_slip = displacements_stresses_quadratic(
-#         "coincident",
-#         element["x_integration_points"],
-#         element["y_integration_points"],
-#         element["half_length"],
-#         mu,
-#         nu,
-#         "slip",
-#         1,
-#         0,
-#         element["x_center"],
-#         element["y_center"],
-#         element["rotation_matrix"],
-#         element["inverse_rotation_matrix"],
-#     )
+def constant_partials_all(elements, mu, nu):
+    """ Partial derivatives with for constant slip case for all element pairs """
+    n_elements = len(elements)
+    stride = 2  # number of columns per element
+    partials_displacement = np.zeros((stride * n_elements, stride * n_elements))
+    partials_stress = np.zeros((3 * n_elements, stride * n_elements))
+    idx = stride * np.arange(n_elements + 1)
+    stress_idx = 3 * np.arange(n_elements + 1)
 
-#     displacement_tensile_slip, stress_tensile_slip = displacements_stresses_quadratic(
-#         "coincident",
-#         element["x_integration_points"],
-#         element["y_integration_points"],
-#         element["half_length"],
-#         mu,
-#         nu,
-#         "slip",
-#         0,
-#         1,
-#         element["x_center"],
-#         element["y_center"],
-#         element["rotation_matrix"],
-#         element["inverse_rotation_matrix"],
-#     )
-#     partials_displacement = np.zeros((6, 6))
-#     partials_displacement[:, 0::2] = displacement_strike_slip
-#     partials_displacement[:, 1::2] = displacement_tensile_slip
-#     partials_stress = np.zeros((9, 6))
-#     partials_stress[:, 0::2] = stress_strike_slip
-#     partials_stress[:, 1::2] = stress_tensile_slip
-#     return (partials_displacement, partials_stress)
+    for i_src, element_src in enumerate(elements):
+        for i_obs, element_obs in enumerate(elements):
+            displacement, stress = constant_partials_single(
+                element_obs, element_src, mu, nu
+            )
+            partials_displacement[
+                idx[i_obs] : idx[i_obs + 1], idx[i_src] : idx[i_src + 1]
+            ] = displacement
+            partials_stress[
+                stress_idx[i_obs] : stress_idx[i_obs + 1], idx[i_src] : idx[i_src + 1]
+            ] = stress
+    return partials_displacement, partials_stress
 
 
 def quadratic_partials_single(element_obs, element_src, mu, nu):
