@@ -56,5 +56,36 @@ bem2d.plot_fields(
     y.reshape(n_pts, n_pts),
     displacement_constant_slip,
     stress_constant_slip,
-    "constant traction",
+    "constant traction - constant elements",
+)
+
+# Now try with quadratic elements
+# displacement_constant_slip = np.zeros((2, x.size))
+# stress_constant_slip = np.zeros((3, x.size))
+# for element in elements:
+#     displacement, stress = bem2d.displacements_stresses_constant_linear(
+#         x,
+#         y,
+#         element["half_length"],
+#         mu,
+#         nu,
+#         "constant",
+#         "traction",
+#         0,
+#         1,
+#         element["x_center"],
+#         element["y_center"],
+#         element["rotation_matrix"],
+#         element["inverse_rotation_matrix"],
+#     )
+#     displacement_constant_slip += displacement
+#     stress_constant_slip += stress
+
+bem2d.plot_fields(
+    elements,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_constant_slip,
+    stress_constant_slip,
+    "constant traction - quadratic elements",
 )
