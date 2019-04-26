@@ -184,7 +184,5 @@ plt.legend()
 plt.xlabel("x (m)")
 plt.ylabel("stresses (Pa)")
 plt.title("stresses")
-
-
 plt.suptitle(suptitle)
 plt.show(block=False)
