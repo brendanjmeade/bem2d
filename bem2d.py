@@ -2086,6 +2086,16 @@ def displacements_stresses_quadratic(
     return displacement_all, stress_all
 
 
+def shape_function_coefficients(x, y, a):
+    """ Go from fault slip to 3 quadratic shape function coefficients """
+    partials = np.zeros((x.size, 3))
+    partials[:, 0] = (x / a) * (9 * (x / a) / 8 - 3 / 4)
+    partials[:, 1] = (1 - 3 * (x / a) / 2) * (1 + 3 * (x / a) / 2)
+    partials[:, 2] = (x / a) * (9 * (x / a) / 8 + 3 / 4)
+    coefficients = np.linalg.inv(partials) @ y
+    return coefficients
+
+
 def main():
     pass
     # TODO: Rupture problem with free surface
