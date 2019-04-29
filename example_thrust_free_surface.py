@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import bem2d
+
 plt.close("all")
 
 # Material properties and observation grid
@@ -54,7 +55,7 @@ fault_slip = np.zeros(2 * len(elements_fault))
 fault_slip[0::2] = -1
 # fault_slip[:] = -1  # WTF...this looks better!!!
 
-disp_full_space = (displacement_partials_1 @ fault_slip)
+disp_full_space = displacement_partials_1 @ fault_slip
 disp_free_surface = np.linalg.inv(traction_partials_2) @ (
     traction_partials_1 @ fault_slip
 )

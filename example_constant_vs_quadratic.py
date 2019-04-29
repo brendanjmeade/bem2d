@@ -69,7 +69,7 @@ bem2d.plot_fields(
 )
 
 for element in elements:
-    quadratic_coefficients = np.array([1, 1, 1]) # constant slip quadratic element
+    quadratic_coefficients = np.array([1, 1, 1])  # constant slip quadratic element
     displacement, stress = bem2d.displacements_stresses_quadratic(
         quadratic_coefficients,
         x,
