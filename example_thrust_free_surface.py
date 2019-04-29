@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import bem2d
+plt.close("all")
 
-
-""" TODO: Write doc string """
 # Material properties and observation grid
 mu = 30e9
 nu = 0.25
@@ -21,7 +20,7 @@ elements_fault = []
 element = {}
 
 # Traction free surface
-x1, y1, x2, y2 = bem2d.discretized_line(-5, 0, 5, 0, 101)
+x1, y1, x2, y2 = bem2d.discretized_line(-5, 0, 5, 0, 100)
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
@@ -45,16 +44,18 @@ displacement_partials_1, traction_partials_1 = bem2d.constant_linear_partials(
     elements_fault, elements_surface, "slip", mu, nu
 )
 
-_, traction_partials_2 = bem2d.constant_linear_partials(
+displacement_partials_2, traction_partials_2 = bem2d.constant_linear_partials(
     elements_surface, elements_surface, "slip", mu, nu
 )
 
 # Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
-fault_slip = np.ones(2 * len(elements_fault))
-fault_slip[0::2] = 1
-disp_full_space = -(displacement_partials_1 @ fault_slip)
-disp_free_surface = np.linalg.inv(traction_partials_2) @ -(
+fault_slip = np.zeros(2 * len(elements_fault))
+fault_slip[0::2] = -1
+# fault_slip[:] = -1  # WTF...this looks better!!!
+
+disp_full_space = (displacement_partials_1 @ fault_slip)
+disp_free_surface = np.linalg.inv(traction_partials_2) @ (
     traction_partials_1 @ fault_slip
 )
 
@@ -75,9 +76,9 @@ plt.subplot(2, 1, 2)
 plt.plot(x_center, disp_free_surface[1::2], "-r", linewidth=0.5)
 plt.plot(x_center, disp_full_space[1::2], "-b", linewidth=0.5)
 plt.xlim([-5, 5])
-plt.ylim([-1, 1])
+# plt.ylim([-1, 1])
 plt.xticks([-5, 0, 5])
-plt.yticks([-1, 0, 1])
+# plt.yticks([-1, 0, 1])
 plt.xlabel("x")
 plt.ylabel("displacement")
 plt.title("u_y")
@@ -86,8 +87,9 @@ plt.tight_layout()
 plt.show(block=False)
 
 # Predict internal displacements everywhere
-fault_slip_x = fault_slip[0::2]
-fault_slip_y = fault_slip[1::2]
+fault_slip_ss = fault_slip[0::2]
+fault_slip_ts = fault_slip[1::2]
+
 displacement_full_space = np.zeros((2, x.size))
 stress_full_space = np.zeros((3, x.size))
 for i, element in enumerate(elements_fault):
@@ -99,8 +101,8 @@ for i, element in enumerate(elements_fault):
         nu,
         "constant",
         "slip",
-        fault_slip_x[i],
-        fault_slip_y[i],
+        fault_slip_ss[i],
+        fault_slip_ts[i],
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -119,6 +121,9 @@ bem2d.plot_fields(
 )
 
 # Half space
+# TODO this seems like a problem...
+# I'm substituting x and y displacements for ss and ts displacements!!!
+# pretty sure this is wrong
 fault_slip_x = disp_free_surface[0::2]
 fault_slip_y = disp_free_surface[1::2]
 displacement_free_surface = np.zeros((2, x.size))
