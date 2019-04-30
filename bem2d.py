@@ -1746,90 +1746,90 @@ def discretized_line(x_start, y_start, x_end, y_end, n_elements):
     return x1, y1, x2, y2
 
 
-# def constant_linear_partials(elements_src, elements_obs, element_type, mu, nu):
-#     # Now calculate the element effects on one another and store as matrices
-#     # Traction to displacement, traction to stress
-#     displacement_partials = np.zeros((2 * len(elements_obs), 2 * len(elements_src)))
-#     traction_partials = np.zeros((2 * len(elements_obs), 2 * len(elements_src)))
+def constant_linear_partials(elements_src, elements_obs, element_type, mu, nu):
+    # Now calculate the element effects on one another and store as matrices
+    # Traction to displacement, traction to stress
+    displacement_partials = np.zeros((2 * len(elements_obs), 2 * len(elements_src)))
+    traction_partials = np.zeros((2 * len(elements_obs), 2 * len(elements_src)))
 
-#     # Observation coordinates as arrays
-#     x_center_obs = np.array([_["x_center"] for _ in elements_obs])
-#     y_center_obs = np.array([_["y_center"] for _ in elements_obs])
+    # Observation coordinates as arrays
+    x_center_obs = np.array([_["x_center"] for _ in elements_obs])
+    y_center_obs = np.array([_["y_center"] for _ in elements_obs])
 
-#     # x-component
-#     for i, element_src in enumerate(elements_src):
-#         displacement, stress = displacements_stresses_constant_linear(
-#             x_center_obs,
-#             y_center_obs,
-#             element_src["half_length"],
-#             mu,
-#             nu,
-#             "constant",
-#             element_type,
-#             1,
-#             0,
-#             element_src["x_center"],
-#             element_src["y_center"],
-#             element_src["rotation_matrix"],
-#             element_src["inverse_rotation_matrix"],
-#         )
+    # x-component
+    for i, element_src in enumerate(elements_src):
+        displacement, stress = displacements_stresses_constant_linear(
+            x_center_obs,
+            y_center_obs,
+            element_src["half_length"],
+            mu,
+            nu,
+            "constant",
+            element_type,
+            1,
+            0,
+            element_src["x_center"],
+            element_src["y_center"],
+            element_src["rotation_matrix"],
+            element_src["inverse_rotation_matrix"],
+        )
 
-#         # Reshape displacements
-#         displacement_partials[0::2, 2 * i] = displacement[0, :]
-#         displacement_partials[1::2, 2 * i] = displacement[1, :]
+        # Reshape displacements
+        displacement_partials[0::2, 2 * i] = displacement[0, :]
+        displacement_partials[1::2, 2 * i] = displacement[1, :]
 
-#         # Convert stress to traction on obs elements and reshape
-#         traction = np.zeros(displacement.shape)
-#         for j, element_obs in enumerate(elements_obs):
-#             normal_vector_obs = np.array(
-#                 [element_obs["x_normal"], element_obs["y_normal"]]
-#             )
-#             stress_tensor_obs = np.array(
-#                 [[stress[0, j], stress[2, j]], [stress[2, j], stress[1, j]]]
-#             )
-#             traction[0, j], traction[1, j] = np.dot(
-#                 stress_tensor_obs, normal_vector_obs
-#             )
-#         traction_partials[0::2, 2 * i] = traction[0, :]
-#         traction_partials[1::2, 2 * i] = traction[1, :]
+        # Convert stress to traction on obs elements and reshape
+        traction = np.zeros(displacement.shape)
+        for j, element_obs in enumerate(elements_obs):
+            normal_vector_obs = np.array(
+                [element_obs["x_normal"], element_obs["y_normal"]]
+            )
+            stress_tensor_obs = np.array(
+                [[stress[0, j], stress[2, j]], [stress[2, j], stress[1, j]]]
+            )
+            traction[0, j], traction[1, j] = np.dot(
+                stress_tensor_obs, normal_vector_obs
+            )
+        traction_partials[0::2, 2 * i] = traction[0, :]
+        traction_partials[1::2, 2 * i] = traction[1, :]
 
-#     # y-component
-#     for i, element_src in enumerate(elements_src):
-#         displacement, stress = displacements_stresses_constant_linear(
-#             x_center_obs,
-#             y_center_obs,
-#             element_src["half_length"],
-#             mu,
-#             nu,
-#             "constant",
-#             element_type,
-#             0,
-#             1,
-#             element_src["x_center"],
-#             element_src["y_center"],
-#             element_src["rotation_matrix"],
-#             element_src["inverse_rotation_matrix"],
-#         )
+    # y-component
+    for i, element_src in enumerate(elements_src):
+        displacement, stress = displacements_stresses_constant_linear(
+            x_center_obs,
+            y_center_obs,
+            element_src["half_length"],
+            mu,
+            nu,
+            "constant",
+            element_type,
+            0,
+            1,
+            element_src["x_center"],
+            element_src["y_center"],
+            element_src["rotation_matrix"],
+            element_src["inverse_rotation_matrix"],
+        )
 
-#         # Reshape displacements
-#         displacement_partials[0::2, (2 * i) + 1] = displacement[0, :]
-#         displacement_partials[1::2, (2 * i) + 1] = displacement[1, :]
+        # Reshape displacements
+        displacement_partials[0::2, (2 * i) + 1] = displacement[0, :]
+        displacement_partials[1::2, (2 * i) + 1] = displacement[1, :]
 
-#         # Convert stress to traction on obs elements and reshape
-#         traction = np.zeros(displacement.shape)
-#         for j, element_obs in enumerate(elements_obs):
-#             normal_vector_obs = np.array(
-#                 [element_obs["x_normal"], element_obs["y_normal"]]
-#             )
-#             stress_tensor_obs = np.array(
-#                 [[stress[0, j], stress[2, j]], [stress[2, j], stress[1, j]]]
-#             )
-#             traction[0, j], traction[1, j] = np.dot(
-#                 stress_tensor_obs, normal_vector_obs
-#             )
-#         traction_partials[0::2, (2 * i) + 1] = traction[0, :]
-#         traction_partials[1::2, (2 * i) + 1] = traction[1, :]
-#     return displacement_partials, traction_partials
+        # Convert stress to traction on obs elements and reshape
+        traction = np.zeros(displacement.shape)
+        for j, element_obs in enumerate(elements_obs):
+            normal_vector_obs = np.array(
+                [element_obs["x_normal"], element_obs["y_normal"]]
+            )
+            stress_tensor_obs = np.array(
+                [[stress[0, j], stress[2, j]], [stress[2, j], stress[1, j]]]
+            )
+            traction[0, j], traction[1, j] = np.dot(
+                stress_tensor_obs, normal_vector_obs
+            )
+        traction_partials[0::2, (2 * i) + 1] = traction[0, :]
+        traction_partials[1::2, (2 * i) + 1] = traction[1, :]
+    return displacement_partials, traction_partials
 
 
 def constant_partials_single(element_obs, element_src, mu, nu):
@@ -1872,30 +1872,60 @@ def constant_partials_single(element_obs, element_src, mu, nu):
     partials_stress = np.zeros((3, 2))
     partials_stress[:, 0::2] = stress_strike_slip
     partials_stress[:, 1::2] = stress_tensile_slip
+
+    partials_stress = np.zeros((3, 2))
+    partials_stress[:, 0::2] = stress_strike_slip
+    partials_stress[:, 1::2] = stress_tensile_slip
+
+
     return partials_displacement, partials_stress
 
 
-def constant_partials_all(elements, mu, nu):
+def constant_partials_all(elements_obs, elements_src, mu, nu):
     """ Partial derivatives with for constant slip case for all element pairs """
-    n_elements = len(elements)
+    n_elements_obs = len(elements_obs)
+    n_elements_src = len(elements_src)
     stride = 2  # number of columns per element
-    partials_displacement = np.zeros((stride * n_elements, stride * n_elements))
-    partials_stress = np.zeros((3 * n_elements, stride * n_elements))
-    idx = stride * np.arange(n_elements + 1)
-    stress_idx = 3 * np.arange(n_elements + 1)
+    partials_displacement = np.zeros((stride * n_elements_obs, stride * n_elements_src))
+    partials_stress = np.zeros((3 * n_elements_obs, stride * n_elements_src))
+    idx_obs = stride * np.arange(n_elements_obs + 1)
+    idx_src = stride * np.arange(n_elements_src + 1)
+    stress_idx_obs = 3 * np.arange(n_elements_src + 1)
+    # stress_idx_src = 3 * np.arange(n_elements_src + 1) # Can I really delete this???
 
-    for i_src, element_src in enumerate(elements):
-        for i_obs, element_obs in enumerate(elements):
+    for i_src, element_src in enumerate(elements_src):
+        for i_obs, element_obs in enumerate(elements_obs):
             displacement, stress = constant_partials_single(
                 element_obs, element_src, mu, nu
             )
             partials_displacement[
-                idx[i_obs] : idx[i_obs + 1], idx[i_src] : idx[i_src + 1]
+                idx_obs[i_obs] : idx_obs[i_obs + 1], idx_src[i_src] : idx_src[i_src + 1]
             ] = displacement
             partials_stress[
-                stress_idx[i_obs] : stress_idx[i_obs + 1], idx[i_src] : idx[i_src + 1]
+                stress_idx_obs[i_obs] : stress_idx_obs[i_obs + 1],
+                idx_src[i_src] : idx_src[i_src + 1],
             ] = stress
     return partials_displacement, partials_stress
+
+
+def stress_to_traction(elements, stress):
+    """ Convert stresses to tractions """
+    traction = np.zeros(displacement.shape)
+    for i, element in enumerate(elements):
+        normal_vector_obs = np.array(
+            [element["x_normal"], element["y_normal"]]
+        )
+
+        # I feel like this is wrong!!!
+        stress_tensor_obs = np.array(
+            [[stress[0, j], stress[2, j]], [stress[2, j], stress[1, j]]]
+        )
+        traction[0, j], traction[1, j] = np.dot(
+            stress_tensor_obs, normal_vector_obs
+        )
+    traction_partials[0::2, (2 * i) + 1] = traction[0, :]
+    traction_partials[1::2, (2 * i) + 1] = traction[1, :]
+    return traction
 
 
 def quadratic_partials_single(element_obs, element_src, mu, nu):
