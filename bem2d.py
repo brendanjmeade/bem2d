@@ -1866,6 +1866,7 @@ def constant_partials_single(element_obs, element_src, mu, nu):
         element_src["rotation_matrix"],
         element_src["inverse_rotation_matrix"],
     )
+
     partials_displacement = np.zeros((2, 2))
     partials_displacement[:, 0::2] = displacement_strike_slip
     partials_displacement[:, 1::2] = displacement_tensile_slip
@@ -1873,24 +1874,19 @@ def constant_partials_single(element_obs, element_src, mu, nu):
     partials_stress[:, 0::2] = stress_strike_slip
     partials_stress[:, 1::2] = stress_tensile_slip
     partials_traction = np.zeros((2, 2))
-
     normal_vector = np.array([element_obs["x_normal"], element_obs["y_normal"]])
-    stress_tensor_strike_slip = np.array(
-        [
-            [stress_strike_slip[0], stress_strike_slip[2]],
-            [stress_strike_slip[2], stress_strike_slip[1]],
-        ]
-    )
-    stress_tensor_tensile_slip = np.array(
-        [
-            [stress_tensile_slip[0], stress_tensile_slip[2]],
-            [stress_tensile_slip[2], stress_tensile_slip[1]],
-        ]
-    )
-
-    traction_strike_slip = stress_tensor_strike_slip[:, :, 0] @ normal_vector
-    traction_tensile_slip = stress_tensor_tensile_slip[:, :, 0] @ normal_vector
-    # import ipdb; ipdb.set_trace()
+    stress_tensor_strike_slip = np.zeros((2, 2))
+    stress_tensor_strike_slip[0, 0] = stress_strike_slip[0]
+    stress_tensor_strike_slip[0, 1] = stress_strike_slip[2]
+    stress_tensor_strike_slip[1, 0] = stress_strike_slip[2]
+    stress_tensor_strike_slip[1, 1] = stress_strike_slip[1]
+    stress_tensor_tensile_slip = np.zeros((2, 2))
+    stress_tensor_tensile_slip[0, 0] = stress_tensile_slip[0]
+    stress_tensor_tensile_slip[0, 1] = stress_tensile_slip[2]
+    stress_tensor_tensile_slip[1, 0] = stress_tensile_slip[2]
+    stress_tensor_tensile_slip[1, 1] = stress_tensile_slip[1]
+    traction_strike_slip = stress_tensor_strike_slip @ normal_vector
+    traction_tensile_slip = stress_tensor_tensile_slip @ normal_vector
     partials_traction[:, 0::2] = traction_strike_slip[:, np.newaxis]
     partials_traction[:, 1::2] = traction_tensile_slip[:, np.newaxis]
     return partials_displacement, partials_stress, partials_traction
