@@ -25,9 +25,16 @@ element = {}
 
 
 def analytic(x):
-    delta = np.deg2rad(135)
+    # fault dipping at 45 degrees
+    # delta = np.deg2rad(135)
+    # depth = 1
+    # xi = -1
+
+    # fault dipping at 90 degrees
+    delta = np.deg2rad(90)
     depth = 1
-    xi = -1
+    xi = 0
+
     zeta = (x - xi) / depth
     ux = (
         1
@@ -59,7 +66,8 @@ for i in range(0, x1.size):
 elements_surface = bem2d.standardize_elements(elements_surface)
 
 # Constant slip fault
-x1, y1, x2, y2 = bem2d.discretized_line(-1, -1, 0, 0, 10)
+# x1, y1, x2, y2 = bem2d.discretized_line(-1, -1, 0, 0, 10)
+x1, y1, x2, y2 = bem2d.discretized_line(0, -1, 0, 0, 10)
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
@@ -68,25 +76,16 @@ for i in range(0, x1.size):
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
 
-
-# Build partial derivative matrices for Ben's thrust fault problem
-displacement_partials_1, traction_partials_1 = bem2d.constant_linear_partials(
-    elements_fault, elements_surface, "slip", mu, nu
-)
-
-displacement_partials_2, traction_partials_2 = bem2d.constant_linear_partials(
-    elements_surface, elements_surface, "slip", mu, nu
-)
+d1, s1, t1 = bem2d.constant_partials_all(elements_surface, elements_fault, mu, nu)
+d2, s2, t2 = bem2d.constant_partials_all(elements_surface, elements_surface, mu, nu)
 
 # Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
 fault_slip = np.zeros(2 * len(elements_fault))
-fault_slip[1::2] = -1.0
+fault_slip[0::2] = -1.0
 
-disp_full_space = displacement_partials_1 @ fault_slip
-disp_free_surface = np.linalg.inv(traction_partials_2) @ (
-    traction_partials_1 @ fault_slip
-)
+disp_full_space = d1 @ fault_slip
+disp_free_surface = np.linalg.inv(t2) @ (t1 @ fault_slip)
 disp_free_surface_analytic = analytic(x_center)
 
 plt.figure()
@@ -119,18 +118,16 @@ plt.title("u_y")
 plt.legend(["half space", "full space"])
 plt.tight_layout()
 
-full_mat = np.linalg.inv(traction_partials_2) @ (traction_partials_1)
+full_mat = np.linalg.inv(t2) @ t1
 fm2 = full_mat.reshape((full_mat.shape[0] // 2, 2, full_mat.shape[1] // 2, 2))
 fm3 = np.swapaxes(np.swapaxes(fm2, 0, 1), 2, 3).reshape(full_mat.shape)
 plt.matshow(fm3)
-plt.title("surface - surface")
-
+plt.title("partials: surface - surface")
 plt.matshow(np.log10(np.abs(fm3)))
-plt.title("fault - surface")
+plt.title("partials: fault - surface")
 
 plt.show(block=False)
 
-d, s = bem2d.constant_partials_all(elements_surface, elements_surface, mu, nu)
 
 # # Predict internal displacements everywhere
 # fault_slip_ss = fault_slip[0::2]

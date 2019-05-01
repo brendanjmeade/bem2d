@@ -1872,13 +1872,28 @@ def constant_partials_single(element_obs, element_src, mu, nu):
     partials_stress = np.zeros((3, 2))
     partials_stress[:, 0::2] = stress_strike_slip
     partials_stress[:, 1::2] = stress_tensile_slip
+    partials_traction = np.zeros((2, 2))
 
-    partials_stress = np.zeros((3, 2))
-    partials_stress[:, 0::2] = stress_strike_slip
-    partials_stress[:, 1::2] = stress_tensile_slip
+    normal_vector = np.array([element_obs["x_normal"], element_obs["y_normal"]])
+    stress_tensor_strike_slip = np.array(
+        [
+            [stress_strike_slip[0], stress_strike_slip[2]],
+            [stress_strike_slip[2], stress_strike_slip[1]],
+        ]
+    )
+    stress_tensor_tensile_slip = np.array(
+        [
+            [stress_tensile_slip[0], stress_tensile_slip[2]],
+            [stress_tensile_slip[2], stress_tensile_slip[1]],
+        ]
+    )
 
-
-    return partials_displacement, partials_stress
+    traction_strike_slip = stress_tensor_strike_slip[:, :, 0] @ normal_vector
+    traction_tensile_slip = stress_tensor_tensile_slip[:, :, 0] @ normal_vector
+    # import ipdb; ipdb.set_trace()
+    partials_traction[:, 0::2] = traction_strike_slip[:, np.newaxis]
+    partials_traction[:, 1::2] = traction_tensile_slip[:, np.newaxis]
+    return partials_displacement, partials_stress, partials_traction
 
 
 def constant_partials_all(elements_obs, elements_src, mu, nu):
@@ -1888,14 +1903,14 @@ def constant_partials_all(elements_obs, elements_src, mu, nu):
     stride = 2  # number of columns per element
     partials_displacement = np.zeros((stride * n_elements_obs, stride * n_elements_src))
     partials_stress = np.zeros((3 * n_elements_obs, stride * n_elements_src))
+    partials_traction = np.zeros((stride * n_elements_obs, stride * n_elements_src))
     idx_obs = stride * np.arange(n_elements_obs + 1)
     idx_src = stride * np.arange(n_elements_src + 1)
-    stress_idx_obs = 3 * np.arange(n_elements_src + 1)
-    # stress_idx_src = 3 * np.arange(n_elements_src + 1) # Can I really delete this???
+    stress_idx_obs = 3 * np.arange(n_elements_obs + 1)
 
     for i_src, element_src in enumerate(elements_src):
         for i_obs, element_obs in enumerate(elements_obs):
-            displacement, stress = constant_partials_single(
+            displacement, stress, traction = constant_partials_single(
                 element_obs, element_src, mu, nu
             )
             partials_displacement[
@@ -1905,27 +1920,10 @@ def constant_partials_all(elements_obs, elements_src, mu, nu):
                 stress_idx_obs[i_obs] : stress_idx_obs[i_obs + 1],
                 idx_src[i_src] : idx_src[i_src + 1],
             ] = stress
-    return partials_displacement, partials_stress
-
-
-def stress_to_traction(elements, stress):
-    """ Convert stresses to tractions """
-    traction = np.zeros(displacement.shape)
-    for i, element in enumerate(elements):
-        normal_vector_obs = np.array(
-            [element["x_normal"], element["y_normal"]]
-        )
-
-        # I feel like this is wrong!!!
-        stress_tensor_obs = np.array(
-            [[stress[0, j], stress[2, j]], [stress[2, j], stress[1, j]]]
-        )
-        traction[0, j], traction[1, j] = np.dot(
-            stress_tensor_obs, normal_vector_obs
-        )
-    traction_partials[0::2, (2 * i) + 1] = traction[0, :]
-    traction_partials[1::2, (2 * i) + 1] = traction[1, :]
-    return traction
+            partials_traction[
+                idx_obs[i_obs] : idx_obs[i_obs + 1], idx_src[i_src] : idx_src[i_src + 1]
+            ] = traction
+    return partials_displacement, partials_stress, partials_traction
 
 
 def quadratic_partials_single(element_obs, element_src, mu, nu):
