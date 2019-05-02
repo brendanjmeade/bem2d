@@ -50,7 +50,7 @@ def analytic(x):
 
 
 # Traction free surface
-x1, y1, x2, y2 = bem2d.discretized_line(-5, 0, 5, 0, 100)
+x1, y1, x2, y2 = bem2d.discretized_line(-5, 0, 5, 0, 20)
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
@@ -60,7 +60,7 @@ for i in range(0, x1.size):
 elements_surface = bem2d.standardize_elements(elements_surface)
 
 # Constant slip fault
-x1, y1, x2, y2 = bem2d.discretized_line(-1, -1, 0, 0, 10)
+x1, y1, x2, y2 = bem2d.discretized_line(-1, -1, 0, 0, 1)
 # x1, y1, x2, y2 = bem2d.discretized_line(-1, -1, 1, -1, 10) # flat fault
 for i in range(0, x1.size):
     element["x1"] = x1[i]

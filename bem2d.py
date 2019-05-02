@@ -1499,6 +1499,9 @@ def displacements_stresses_constant_linear(
     displacement, stress = rotate_displacement_stress(
         displacement, stress, inverse_rotation_matrix
     )
+    print("here")
+    print(stress)
+    print("there")
     return displacement, stress
 
 
@@ -1866,6 +1869,8 @@ def constant_partials_single(element_obs, element_src, mu, nu):
         element_src["rotation_matrix"],
         element_src["inverse_rotation_matrix"],
     )
+    print(displacement_strike_slip)
+    print(stress_strike_slip)
 
     partials_displacement = np.zeros((2, 2))
     partials_displacement[:, 0::2] = displacement_strike_slip
