@@ -1499,9 +1499,6 @@ def displacements_stresses_constant_linear(
     displacement, stress = rotate_displacement_stress(
         displacement, stress, inverse_rotation_matrix
     )
-    print("here")
-    print(stress)
-    print("there")
     return displacement, stress
 
 
@@ -1869,8 +1866,6 @@ def constant_partials_single(element_obs, element_src, mu, nu):
         element_src["rotation_matrix"],
         element_src["inverse_rotation_matrix"],
     )
-    print(displacement_strike_slip)
-    print(stress_strike_slip)
 
     partials_displacement = np.zeros((2, 2))
     partials_displacement[:, 0::2] = displacement_strike_slip
@@ -1878,6 +1873,8 @@ def constant_partials_single(element_obs, element_src, mu, nu):
     partials_stress = np.zeros((3, 2))
     partials_stress[:, 0::2] = stress_strike_slip
     partials_stress[:, 1::2] = stress_tensile_slip
+
+    # Tractions...is there an error here?
     partials_traction = np.zeros((2, 2))
     normal_vector = np.array([element_obs["x_normal"], element_obs["y_normal"]])
     stress_tensor_strike_slip = np.zeros((2, 2))
