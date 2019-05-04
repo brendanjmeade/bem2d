@@ -35,8 +35,8 @@ partials_displacement, partials_stress = bem2d.quadratic_partials_all(elements, 
 
 # TODO: This function is a disaster right now and should be modeled after the quadartic one
 # Where else is it used?
-partials_displacement_constant, partials_stress_constant = bem2d.constant_partials_all(
-    elements, mu, nu
+partials_displacement_constant, partials_stress_constant, partials_traction_constant = bem2d.constant_partials_all(
+    elements, elements, mu, nu
 )
 
 x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()

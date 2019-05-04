@@ -4,6 +4,7 @@ from matplotlib import cm
 import bem2d
 from importlib import reload
 from okada_wrapper import dc3d0wrapper, dc3dwrapper
+
 bem2d = reload(bem2d)
 
 plt.close("all")
@@ -23,6 +24,7 @@ y = y.flatten()
 elements_surface = []
 elements_fault = []
 element = {}
+
 
 def analytic(x):
     # fault dipping at 45 degrees
@@ -79,7 +81,7 @@ d2, s2, t2 = bem2d.constant_partials_all(elements_surface, elements_surface, mu,
 x_center = np.array([_["x_center"] for _ in elements_surface])
 fault_slip = np.zeros(2 * len(elements_fault))
 fault_slip[0::2] = -1.0
-fault_slip[1::2] =  0.0
+fault_slip[1::2] = 0.0
 
 disp_full_space = d1 @ fault_slip
 disp_free_surface = np.linalg.inv(t2) @ (t1 @ fault_slip)
@@ -89,20 +91,28 @@ disp_free_surface_analytic = analytic(x_center)
 disp_okada_x = np.zeros(x_center.shape)
 disp_okada_y = np.zeros(x_center.shape)
 for i in range(0, x_center.size):
-    _, u, _ = dc3dwrapper(0.67,
-                          [0, x_center[i]+0.5, 0],
-                          0.5,
-                          45, # 135
-                          [-1000, 1000],
-                          [-np.sqrt(2)/2, np.sqrt(2)/2],
-                          [0.0, -1.0, 0.0]) 
+    _, u, _ = dc3dwrapper(
+        0.67,
+        [0, x_center[i] + 0.5, 0],
+        0.5,
+        45,  # 135
+        [-1000, 1000],
+        [-np.sqrt(2) / 2, np.sqrt(2) / 2],
+        [0.0, -1.0, 0.0],
+    )
     disp_okada_x[i] = u[1]
     disp_okada_y[i] = -u[2]
 
 plt.figure(figsize=(6, 8))
 plt.subplot(2, 1, 1)
 plt.plot(x_center, disp_full_space[0::2], "-b", linewidth=0.5, label="full space")
-plt.plot(x_center, disp_free_surface_analytic[0], "--r", linewidth=0.5, label="half space (analytic)")
+plt.plot(
+    x_center,
+    disp_free_surface_analytic[0],
+    "--r",
+    linewidth=0.5,
+    label="half space (analytic)",
+)
 plt.plot(x_center, disp_free_surface[0::2], "-r", linewidth=0.5, label="half space")
 plt.plot(x_center, disp_okada_x, ".r", linewidth=0.5, label="Okada")
 plt.xlim([-5, 5])
@@ -116,7 +126,13 @@ plt.legend()
 
 plt.subplot(2, 1, 2)
 plt.plot(x_center, disp_full_space[1::2], "-b", linewidth=0.5, label="full space")
-plt.plot(x_center, disp_free_surface_analytic[1], "--r", linewidth=0.5, label="half space (analytic)")
+plt.plot(
+    x_center,
+    disp_free_surface_analytic[1],
+    "--r",
+    linewidth=0.5,
+    label="half space (analytic)",
+)
 plt.plot(x_center, disp_free_surface[1::2], "-r", linewidth=0.5, label="half space")
 plt.plot(x_center, disp_okada_y, ".r", linewidth=0.5, label="Okada")
 plt.xlim([-5, 5])
@@ -129,11 +145,14 @@ plt.title(r"$u_y$")
 plt.legend()
 plt.tight_layout()
 
+
 def ben_plot_reorder(mat):
     fm2 = mat.reshape((mat.shape[0] // 2, 2, mat.shape[1] // 2, 2))
     fm3 = np.swapaxes(np.swapaxes(fm2, 0, 1), 2, 3).reshape(mat.shape)
     plt.matshow(np.log10(np.abs(fm3)))
     plt.title(r"$log_{10}$")
+
+
 # ben_plot_reorder(np.linalg.inv(t2) @ t1)
 plt.show(block=False)
 

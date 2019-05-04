@@ -2064,7 +2064,7 @@ def f_slip_to_displacement_stress(x_component, y_component, f, y, mu, nu):
     return displacement, stress
 
 
-def displacements_stresses_quadratic(
+def displacements_stresses_quadratic_farfield_coefficients(
     quadratic_coefficients,
     x,
     y,
@@ -2107,6 +2107,7 @@ def displacements_stresses_quadratic(
         )
 
         # Multiply by coefficient for current shape function and sum
+        print(quadratic_coefficients)
         displacement_all += displacement * quadratic_coefficients[i]
         stress_all += stress * quadratic_coefficients[i]
     return displacement_all, stress_all
