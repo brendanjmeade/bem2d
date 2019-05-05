@@ -77,6 +77,10 @@ bem2d.plot_element_geometry(elements_fault + elements_surface)
 d1, s1, t1 = bem2d.constant_partials_all(elements_surface, elements_fault, mu, nu)
 d2, s2, t2 = bem2d.constant_partials_all(elements_surface, elements_surface, mu, nu)
 
+d1_, s1_, t1_ = bem2d.quadratic_partials_all(elements_surface, elements_fault, mu, nu)
+d2_, s2_, t2_ = bem2d.quadratic_partials_all(elements_surface, elements_surface, mu, nu)
+
+
 # Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
 fault_slip = np.zeros(2 * len(elements_fault))

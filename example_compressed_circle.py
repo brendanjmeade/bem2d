@@ -63,7 +63,7 @@ bem2d.plot_fields(
 displacement_quadratic_elements = np.zeros((2, x.size))
 stress_quadratic_elements = np.zeros((3, x.size))
 for element in elements:
-    displacement, stress = bem2d.displacements_stresses_quadratic(
+    displacement, stress = bem2d.displacements_stresses_quadratic_farfield_coefficients(
         np.array([1, 1, 1]),
         x,
         y,

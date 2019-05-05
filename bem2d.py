@@ -1993,31 +1993,58 @@ def quadratic_partials_single(element_obs, element_src, mu, nu):
     partials_stress = np.zeros((9, 6))
     partials_stress[:, 0::2] = stress_strike_slip
     partials_stress[:, 1::2] = stress_tensile_slip
-    return partials_displacement, partials_stress
+
+    partials_traction = np.zeros((6, 6))
+    normal_vector = np.array([element_obs["x_normal"], element_obs["y_normal"]])
+    normal_vector = np.tile(normal_vector, 3)
+    stress_tensor_strike_slip = np.zeros((6, 6))
+
+    # How to build these stress tensors properly? Are they leaky?...I don't think so.
+    # stress_tensor_strike_slip[0, 0] = stress_strike_slip[0]
+    # stress_tensor_strike_slip[0, 1] = stress_strike_slip[2]
+    # stress_tensor_strike_slip[1, 0] = stress_strike_slip[2]
+    # stress_tensor_strike_slip[1, 1] = stress_strike_slip[1]
+    stress_tensor_tensile_slip = np.zeros((6, 6))
+    # stress_tensor_tensile_slip[0, 0] = stress_tensile_slip[0]
+    # stress_tensor_tensile_slip[0, 1] = stress_tensile_slip[2]
+    # stress_tensor_tensile_slip[1, 0] = stress_tensile_slip[2]
+    # stress_tensor_tensile_slip[1, 1] = stress_tensile_slip[1]
+    traction_strike_slip = stress_tensor_strike_slip @ normal_vector
+    traction_tensile_slip = stress_tensor_tensile_slip @ normal_vector
+    partials_traction[:, 0::2] = traction_strike_slip[:, np.newaxis]
+    partials_traction[:, 1::2] = traction_tensile_slip[:, np.newaxis]
+    return partials_displacement, partials_stress, partials_traction
 
 
-def quadratic_partials_all(elements, mu, nu):
+def quadratic_partials_all(elements_obs, elements_src, mu, nu):
     """ Partial derivatives with quadratic shape functions 
     for all element pairs """
-    n_elements = len(elements)
+    n_elements_obs = len(elements_obs)
+    n_elements_src = len(elements_src)
     stride = 6  # number of columns per element
-    partials_displacement = np.zeros((stride * n_elements, stride * n_elements))
-    partials_stress = np.zeros(((stride + 3) * n_elements, stride * n_elements))
-    idx = stride * np.arange(n_elements + 1)
-    stress_idx = (stride + 3) * np.arange(n_elements + 1)
+    partials_displacement = np.zeros((stride * n_elements_obs, stride * n_elements_src))
+    partials_stress = np.zeros(((stride + 3) * n_elements_obs, stride * n_elements_src))
+    partials_traction = np.zeros((stride * n_elements_obs, stride * n_elements_src))
+    idx_obs = stride * np.arange(n_elements_obs + 1)
+    idx_src = stride * np.arange(n_elements_src + 1)
+    stress_idx_obs = (stride + 3) * np.arange(n_elements_obs + 1)
 
-    for i_src, element_src in enumerate(elements):
-        for i_obs, element_obs in enumerate(elements):
-            displacement, stress = quadratic_partials_single(
+    for i_src, element_src in enumerate(elements_src):
+        for i_obs, element_obs in enumerate(elements_obs):
+            displacement, stress, traction = quadratic_partials_single(
                 element_obs, element_src, mu, nu
             )
             partials_displacement[
-                idx[i_obs] : idx[i_obs + 1], idx[i_src] : idx[i_src + 1]
+                idx_obs[i_obs] : idx_obs[i_obs + 1], idx_src[i_src] : idx_src[i_src + 1]
             ] = displacement
             partials_stress[
-                stress_idx[i_obs] : stress_idx[i_obs + 1], idx[i_src] : idx[i_src + 1]
+                stress_idx_obs[i_obs] : stress_idx_obs[i_obs + 1],
+                idx_src[i_src] : idx_src[i_src + 1],
             ] = stress
-    return partials_displacement, partials_stress
+            partials_traction[
+                idx_obs[i_obs] : idx_obs[i_obs + 1], idx_src[i_src] : idx_src[i_src + 1]
+            ] = traction
+    return partials_displacement, partials_stress, partials_traction
 
 
 def f_traction_to_displacement_stress(x_component, y_component, f, y, mu, nu):
@@ -2107,7 +2134,6 @@ def displacements_stresses_quadratic_farfield_coefficients(
         )
 
         # Multiply by coefficient for current shape function and sum
-        print(quadratic_coefficients)
         displacement_all += displacement * quadratic_coefficients[i]
         stress_all += stress * quadratic_coefficients[i]
     return displacement_all, stress_all

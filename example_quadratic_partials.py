@@ -31,11 +31,11 @@ for i in range(0, x1.size):
     element["y2"] = y2[i]
     elements.append(element.copy())
 elements = bem2d.standardize_elements(elements)
-partials_displacement, partials_stress = bem2d.quadratic_partials_all(elements, mu, nu)
+partials_displacement, partials_stress, _ = bem2d.quadratic_partials_all(
+    elements, elements, mu, nu
+)
 
-# TODO: This function is a disaster right now and should be modeled after the quadartic one
-# Where else is it used?
-partials_displacement_constant, partials_stress_constant, partials_traction_constant = bem2d.constant_partials_all(
+partials_displacement_constant, partials_stress_constant, _ = bem2d.constant_partials_all(
     elements, elements, mu, nu
 )
 
