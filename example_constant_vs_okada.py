@@ -41,8 +41,6 @@ stress_constant_slip = np.zeros((3, x.size))
 displacement_quadratic = np.zeros((2, x.size))
 stress_quadratic = np.zeros((3, x.size))
 
-# slip_linear = np.linspace(-1, 1, len(elements))
-
 for i, element in enumerate(elements):
     displacement, stress = bem2d.displacements_stresses_constant_linear(
         x,
@@ -72,31 +70,58 @@ bem2d.plot_fields(
 )
 
 # Okada solution for 45 degree dipping fault
-big_deep = -1e6
+big_deep = 1e6
 disp_okada_x = np.zeros(x.shape)
 disp_okada_y = np.zeros(y.shape)
+stress_okada_xx = np.zeros(x.shape)
+stress_okada_yy = np.zeros(y.shape)
+stress_okada_xy = np.zeros(y.shape)
+
+
+# Okada solution for 45 degree dipping fault
+big_deep = 1e8
 for i in range(0, x.size):
-    _, u, _ = dc3dwrapper(
+    _, u, s = dc3dwrapper(
         0.67,
-        [x[i], -y[i], big_deep],
-        # [x[i], big_deep, y[i]],
+        [0, x[i], y[i] - big_deep],
         big_deep,
-        90,
-        # [-2000000, 2000000],
-        # [-L, L],
-        [-1, 1],
+        0,  # 135
+        [-1e10, 1e10],
         [-L, L],
         [0.0, -1.0, 0.0],
     )
     disp_okada_x[i] = u[1]
-    disp_okada_y[i] = -u[2]
+    disp_okada_y[i] = u[2]
+    dgt_xx = s[1, 1]
+    dgt_yy = s[2, 2]
+    dgt_xy = s[1, 2]
+    dgt_yx = s[2, 1]
+    e_xx = dgt_xx
+    e_yy = dgt_yy
+    e_xy = 0.5 * (dgt_yx + dgt_yx)
+    s_xx = 3e10 * (e_xx + e_yy) + 2 * 3e10 * e_xx
+    s_yy = 3e10 * (e_xx + e_yy)+ 2 * 3e10 * e_yy
+    s_xy = 2 * 3e10 * e_xy
+    stress_okada_xx[i] = s_xx
+    stress_okada_yy[i] = s_yy
+    stress_okada_xy[i] = s_xy
 disp_okada =  np.array([disp_okada_x, disp_okada_y])
+stress_okada =  np.array([stress_okada_xx, stress_okada_yy, stress_okada_xy])
 
 bem2d.plot_fields(
     elements,
     x.reshape(n_pts, n_pts),
     y.reshape(n_pts, n_pts),
     disp_okada,
-    stress_constant_slip,
+    stress_okada,
     "Okada",
+)
+
+bem2d.plot_fields(
+    elements,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_constant_slip - disp_okada,
+    stress_constant_slip - stress_okada,
+    "residuals",
 )
