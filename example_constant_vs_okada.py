@@ -27,7 +27,7 @@ for i in range(0, x1.size):
 elements = bem2d.standardize_elements(elements)
 
 # Observation coordinates for far-field calculation
-n_pts = 100
+n_pts = 6
 width = 20000
 x = np.linspace(-width, width, n_pts)
 y = np.linspace(-width, width, n_pts)
@@ -125,3 +125,27 @@ bem2d.plot_fields(
     stress_constant_slip - stress_okada,
     "residuals",
 )
+
+
+
+# Try analytic solution from Segall (equations 3.53)
+u1 = np.zeros(x.shape)
+u2 = np.zeros(x.shape)
+xi = L
+
+for i in range(x.size):
+    d = np.sqrt((x[i]-L)**2 + y[i]**2) 
+    zeta = xi - d
+    u1[i] = (-1 / np.pi) / (1 + zeta**2)
+    u2[i] = (1 / np.pi) * (zeta / (1 + zeta**2) + np.arctan(zeta))
+u = np.array([u1, u2])
+
+bem2d.plot_fields(
+    elements,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    u,
+    np.zeros(stress_okada.shape),
+    "whaaa?",
+)
+
