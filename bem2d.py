@@ -2073,14 +2073,14 @@ def f_slip_to_displacement_stress(x_component, y_component, f, y, mu, nu):
     """ This is the generalization from Starfield and Crouch """
     displacement = np.zeros((2, y.size))
     stress = np.zeros((3, y.size))
-    
+
     displacement[0, :] = x_component * (
         2 * (1 - nu) * f[1, :] - y * f[4, :]
     ) + y_component * (-1 * (1 - 2 * nu) * f[2, :] - y * f[3, :])
 
     displacement[1, :] = x_component * (
         (1 - 2 * nu) * f[2, :] - y * f[3, :]
-    ) + y_component * (2 * (1 - nu) * f[1, :] + y * f[4, :]) # Note sign change because f[4, :] = f,xx = -f,yy
+    ) + y_component * (2 * (1 - nu) * f[1, :] - y * -f[4, :]) # Note the negative sign in front f[4, :] because f[4, :] = f,xx = -f,yy
 
     stress[0, :] = 2 * x_component * mu * (
         2 * f[3, :] + y * f[5, :]
@@ -2091,9 +2091,10 @@ def f_slip_to_displacement_stress(x_component, y_component, f, y, mu, nu):
     )
 
     stress[2, :] = 2 * x_component * mu * (
-        -f[4, :] - y * f[6, :]
+        -f[4, :] + y * f[6, :]
     ) + 2 * y_component * mu * (-y * f[5, :])
     
+    print(f.shape)
     return displacement, stress
 
 

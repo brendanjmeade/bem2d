@@ -27,7 +27,7 @@ for i in range(0, x1.size):
 elements = bem2d.standardize_elements(elements)
 
 # Observation coordinates for far-field calculation
-n_pts = 10
+n_pts = 20
 width = 20000
 x = np.linspace(-width, width, n_pts)
 y = np.linspace(-width, width, n_pts)
@@ -70,7 +70,6 @@ bem2d.plot_fields(
 )
 
 # Okada solution for 45 degree dipping fault
-big_deep = 1e6
 disp_okada_x = np.zeros(x.shape)
 disp_okada_y = np.zeros(y.shape)
 stress_okada_xx = np.zeros(x.shape)
@@ -79,10 +78,10 @@ stress_okada_xy = np.zeros(y.shape)
 
 
 # Okada solution for 45 degree dipping fault
-big_deep = 1e8
+big_deep = 1e6
 for i in range(0, x.size):
     _, u, s = dc3dwrapper(
-        0.67,
+        2.0/3.0,
         [0, x[i], y[i] - big_deep],
         big_deep,
         0,
@@ -98,10 +97,10 @@ for i in range(0, x.size):
     dgt_yx = s[2, 1]
     e_xx = dgt_xx
     e_yy = dgt_yy
-    e_xy = 0.5 * (dgt_yx + dgt_yx)
-    s_xx = 3e10 * (e_xx + e_yy) + 2 * 3e10 * e_xx
-    s_yy = 3e10 * (e_xx + e_yy)+ 2 * 3e10 * e_yy
-    s_xy = 2 * 3e10 * e_xy
+    e_xy = 0.5 * (dgt_yx + dgt_xy)
+    s_xx = mu * (e_xx + e_yy) + 2 * mu * e_xx
+    s_yy = mu * (e_xx + e_yy)+ 2 * mu * e_yy
+    s_xy = 2 * mu * e_xy
     stress_okada_xx[i] = s_xx
     stress_okada_yy[i] = s_yy
     stress_okada_xy[i] = s_xy
@@ -117,12 +116,17 @@ bem2d.plot_fields(
     "Okada",
 )
 
+disp_resid = displacement_constant_slip - disp_okada
+# disp_resid = disp_resid / disp_okada * 100
+stress_resid = stress_constant_slip - stress_okada
+# stress_resid = stress_resid / stress_okada * 100
+
 bem2d.plot_fields(
     elements,
     x.reshape(n_pts, n_pts),
     y.reshape(n_pts, n_pts),
-    displacement_constant_slip - disp_okada,
-    stress_constant_slip - stress_okada,
+    disp_resid,
+    stress_resid,
     "residuals",
 )
 
