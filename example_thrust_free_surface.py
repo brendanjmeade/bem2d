@@ -84,7 +84,7 @@ d2_, s2_, t2_ = bem2d.quadratic_partials_all(elements_surface, elements_surface,
 # Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
 fault_slip = np.zeros(2 * len(elements_fault))
-fault_slip[0::2] = -1.0
+fault_slip[0::2] = 1.0
 fault_slip[1::2] = 0.0
 
 disp_full_space = d1 @ fault_slip

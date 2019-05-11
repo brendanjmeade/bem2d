@@ -2094,7 +2094,6 @@ def f_slip_to_displacement_stress(x_component, y_component, f, y, mu, nu):
         -f[4, :] + y * f[6, :]
     ) + 2 * y_component * mu * (-y * f[5, :])
     
-    print(f.shape)
     return displacement, stress
 
 
