@@ -10,7 +10,7 @@ bem2d = reload(bem2d)
 plt.close("all")
 
 # List of elements for forward model
-n_elements = 2
+n_elements = 1
 mu = np.array([3e10])
 nu = np.array([0.25])
 elements = []
@@ -27,7 +27,7 @@ for i in range(0, x1.size):
 elements = bem2d.standardize_elements(elements)
 
 # Observation coordinates for far-field calculation
-n_pts = 6
+n_pts = 10
 width = 20000
 x = np.linspace(-width, width, n_pts)
 y = np.linspace(-width, width, n_pts)
@@ -85,7 +85,7 @@ for i in range(0, x.size):
         0.67,
         [0, x[i], y[i] - big_deep],
         big_deep,
-        0,  # 135
+        0,
         [-1e10, 1e10],
         [-L, L],
         [0.0, -1.0, 0.0],
@@ -128,24 +128,24 @@ bem2d.plot_fields(
 
 
 
-# Try analytic solution from Segall (equations 3.53)
-u1 = np.zeros(x.shape)
-u2 = np.zeros(x.shape)
-xi = L
+# # Try analytic solution from Segall (equations 3.53)
+# u1 = np.zeros(x.shape)
+# u2 = np.zeros(x.shape)
+# xi = L
 
-for i in range(x.size):
-    d = np.sqrt((x[i]-L)**2 + y[i]**2) 
-    zeta = xi - d
-    u1[i] = (-1 / np.pi) / (1 + zeta**2)
-    u2[i] = (1 / np.pi) * (zeta / (1 + zeta**2) + np.arctan(zeta))
-u = np.array([u1, u2])
+# for i in range(x.size):
+#     d = np.sqrt((x[i]-L)**2 + y[i]**2) 
+#     zeta = xi - d
+#     u1[i] = (-1 / np.pi) / (1 + zeta**2)
+#     u2[i] = (1 / np.pi) * (zeta / (1 + zeta**2) + np.arctan(zeta))
+# u = np.array([u1, u2])
 
-bem2d.plot_fields(
-    elements,
-    x.reshape(n_pts, n_pts),
-    y.reshape(n_pts, n_pts),
-    u,
-    np.zeros(stress_okada.shape),
-    "whaaa?",
-)
+# bem2d.plot_fields(
+#     elements,
+#     x.reshape(n_pts, n_pts),
+#     y.reshape(n_pts, n_pts),
+#     u,
+#     np.zeros(stress_okada.shape),
+#     "whaaa?",
+# )
 
