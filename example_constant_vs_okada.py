@@ -50,8 +50,8 @@ for i, element in enumerate(elements):
         nu,
         "constant",
         "slip",
-        0,
         1,
+        0,
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -76,7 +76,6 @@ stress_okada_xx = np.zeros(x.shape)
 stress_okada_yy = np.zeros(y.shape)
 stress_okada_xy = np.zeros(y.shape)
 
-
 # Okada solution for 45 degree dipping fault
 big_deep = 1e6
 for i in range(0, x.size):
@@ -87,7 +86,7 @@ for i in range(0, x.size):
         0,
         [-1e10, 1e10],
         [-L, L],
-        [0.0, 0.0, -1.0],
+        [0.0, -1.0, 0.0],
     )
     disp_okada_x[i] = u[1]
     disp_okada_y[i] = u[2]

@@ -2084,10 +2084,10 @@ def f_slip_to_displacement_stress(x_component, y_component, f, y, mu, nu):
 
     stress[0, :] = 2 * x_component * mu * (
         2 * f[3, :] + y * f[5, :]
-    ) + 2 * y_component * mu * (f[4, :] + y * f[6, :])
+    ) + 2 * y_component * mu * (-f[4, :] + y * f[6, :])
 
     stress[1, :] = 2 * x_component * mu * (-y * f[5, :]) + 2 * y_component * mu * (
-        f[4, :] + y * f[6, :]
+        -f[4, :] - y * f[6, :]
     )
 
     stress[2, :] = 2 * x_component * mu * (
