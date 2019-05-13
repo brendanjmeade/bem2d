@@ -1882,14 +1882,15 @@ def constant_partials_single(element_obs, element_src, mu, nu):
     stress_tensor_strike_slip[0, 1] = stress_strike_slip[2]
     stress_tensor_strike_slip[1, 0] = stress_strike_slip[2]
     stress_tensor_strike_slip[1, 1] = stress_strike_slip[1]
+    traction_strike_slip = stress_tensor_strike_slip @ normal_vector
+    partials_traction[:, 0::2] = traction_strike_slip[:, np.newaxis]
+    
     stress_tensor_tensile_slip = np.zeros((2, 2))
     stress_tensor_tensile_slip[0, 0] = stress_tensile_slip[0]
     stress_tensor_tensile_slip[0, 1] = stress_tensile_slip[2]
     stress_tensor_tensile_slip[1, 0] = stress_tensile_slip[2]
     stress_tensor_tensile_slip[1, 1] = stress_tensile_slip[1]
-    traction_strike_slip = stress_tensor_strike_slip @ normal_vector
     traction_tensile_slip = stress_tensor_tensile_slip @ normal_vector
-    partials_traction[:, 0::2] = traction_strike_slip[:, np.newaxis]
     partials_traction[:, 1::2] = traction_tensile_slip[:, np.newaxis]
     return partials_displacement, partials_stress, partials_traction
 

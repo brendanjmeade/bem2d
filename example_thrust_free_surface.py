@@ -25,7 +25,6 @@ elements_surface = []
 elements_fault = []
 element = {}
 
-
 def analytic(x):
     # fault dipping at 45 degrees
     delta = np.deg2rad(135)
@@ -50,7 +49,6 @@ def analytic(x):
     )
     return ux, uy
 
-
 # Traction free surface
 x1, y1, x2, y2 = bem2d.discretized_line(-5, 0, 5, 0, 20)
 for i in range(0, x1.size):
@@ -62,8 +60,8 @@ for i in range(0, x1.size):
 elements_surface = bem2d.standardize_elements(elements_surface)
 
 # Constant slip fault
-x1, y1, x2, y2 = bem2d.discretized_line(-1, -1, 0, 0, 1)
-# x1, y1, x2, y2 = bem2d.discretized_line(-1, -1, 1, -1, 10) # flat fault
+# x1, y1, x2, y2 = bem2d.discretized_line(-1, -1, 0, 0, 1)
+x1, y1, x2, y2 = bem2d.discretized_line(0, -1, 0, 0, 1)
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
@@ -76,10 +74,8 @@ bem2d.plot_element_geometry(elements_fault + elements_surface)
 
 d1, s1, t1 = bem2d.constant_partials_all(elements_surface, elements_fault, mu, nu)
 d2, s2, t2 = bem2d.constant_partials_all(elements_surface, elements_surface, mu, nu)
-
 d1_, s1_, t1_ = bem2d.quadratic_partials_all(elements_surface, elements_fault, mu, nu)
 d2_, s2_, t2_ = bem2d.quadratic_partials_all(elements_surface, elements_surface, mu, nu)
-
 
 # Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
@@ -94,30 +90,44 @@ disp_free_surface_analytic = analytic(x_center)
 # Okada solution for 45 degree dipping fault
 disp_okada_x = np.zeros(x_center.shape)
 disp_okada_y = np.zeros(x_center.shape)
+
 for i in range(0, x_center.size):
+    # Fault dipping at 45 degrees
+#     _, u, _ = dc3dwrapper(
+#         0.67,
+#         [0, x_center[i] + 0.5, 0],
+#         0.5,
+#         45,  # 135
+#         [-1000, 1000],
+#         [-np.sqrt(2) / 2, np.sqrt(2) / 2],
+#         [0.0, -1.0, 0.0],
+#     )
+
+    # Vertical fault
     _, u, _ = dc3dwrapper(
-        0.67,
-        [0, x_center[i] + 0.5, 0],
-        0.5,
-        45,  # 135
-        [-1000, 1000],
-        [-np.sqrt(2) / 2, np.sqrt(2) / 2],
-        [0.0, -1.0, 0.0],
-    )
-    disp_okada_x[i] = u[1]
+    2.0/3.0,
+    [0, x_center[i] + 0.0, 0],
+    0.5,
+    90,  # 135
+    [-1e4, 1e4],
+    [-0.5, 0.5],
+    [0.0, -1.0, 0.0],
+)
+
+    disp_okada_x[i] = -u[1]
     disp_okada_y[i] = -u[2]
 
 plt.figure(figsize=(6, 8))
 plt.subplot(2, 1, 1)
 plt.plot(x_center, disp_full_space[0::2], "-b", linewidth=0.5, label="full space")
-plt.plot(
-    x_center,
-    disp_free_surface_analytic[0],
-    "--r",
-    linewidth=0.5,
-    label="half space (analytic)",
-)
-plt.plot(x_center, disp_free_surface[0::2], "-r", linewidth=0.5, label="half space")
+# plt.plot(
+#     x_center,
+#     disp_free_surface_analytic[0],
+#     "--r",
+#     linewidth=0.5,
+#     label="half space (analytic)",
+# )
+plt.plot(x_center, disp_free_surface[0::2], "-r", linewidth=0.5, label="half space (BEM)")
 plt.plot(x_center, disp_okada_x, ".r", linewidth=0.5, label="Okada")
 plt.xlim([-5, 5])
 plt.ylim([-1, 1])
@@ -130,14 +140,14 @@ plt.legend()
 
 plt.subplot(2, 1, 2)
 plt.plot(x_center, disp_full_space[1::2], "-b", linewidth=0.5, label="full space")
-plt.plot(
-    x_center,
-    disp_free_surface_analytic[1],
-    "--r",
-    linewidth=0.5,
-    label="half space (analytic)",
-)
-plt.plot(x_center, disp_free_surface[1::2], "-r", linewidth=0.5, label="half space")
+# plt.plot(
+#     x_center,
+#     disp_free_surface_analytic[1],
+#     "--r",
+#     linewidth=0.5,
+#     label="half space (analytic)",
+# )
+plt.plot(x_center, disp_free_surface[1::2], "-r", linewidth=0.5, label="half space (BEM)")
 plt.plot(x_center, disp_okada_y, ".r", linewidth=0.5, label="Okada")
 plt.xlim([-5, 5])
 plt.ylim([-1, 1])
@@ -157,7 +167,7 @@ def ben_plot_reorder(mat):
     plt.title(r"$log_{10}$")
 
 
-# ben_plot_reorder(np.linalg.inv(t2) @ t1)
+ben_plot_reorder(np.linalg.inv(t2) @ t1)
 plt.show(block=False)
 
 # # Predict internal displacements everywhere
