@@ -1713,7 +1713,7 @@ def rotate_displacement_stress(displacement, stress, inverse_rotation_matrix):
             [[stress[0, i], stress[2, i]], [stress[2, i], stress[1, i]]]
         )
         stress_tensor_global = (
-            inverse_rotation_matrix @ stress_tensor @ inverse_rotation_matrix.T
+            inverse_rotation_matrix.T @ stress_tensor @ inverse_rotation_matrix
         )
         stress[0, i] = stress_tensor_global[0, 0]
         stress[1, i] = stress_tensor_global[1, 1]

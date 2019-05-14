@@ -16,8 +16,9 @@ nu = np.array([0.25])
 elements = []
 element = {}
 L = 10000
-x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, n_elements)
 
+# x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, n_elements)
+x1, y1, x2, y2 = bem2d.discretized_line(-L, -L, L, L, n_elements)
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
@@ -27,7 +28,7 @@ for i in range(0, x1.size):
 elements = bem2d.standardize_elements(elements)
 
 # Observation coordinates for far-field calculation
-n_pts = 30
+n_pts = 31
 width = 20000
 x = np.linspace(-width, width, n_pts)
 y = np.linspace(-width, width, n_pts)
@@ -79,15 +80,27 @@ stress_okada_xy = np.zeros(y.shape)
 # Okada solution for 45 degree dipping fault
 big_deep = 1e6
 for i in range(0, x.size):
+    # # Horizontal fault
+    # _, u, s = dc3dwrapper(
+    #     2.0/3.0,
+    #     [0, x[i], y[i] - big_deep],
+    #     big_deep,
+    #     0,
+    #     [-1e10, 1e10],
+    #     [-L, L],
+    #     [0.0, -1.0, 0.0],
+    # )
+    # Horizontal fault
     _, u, s = dc3dwrapper(
         2.0/3.0,
         [0, x[i], y[i] - big_deep],
         big_deep,
-        0,
+        45,
         [-1e10, 1e10],
-        [-L, L],
+        [-L*np.sqrt(2), L*np.sqrt(2)],
         [0.0, -1.0, 0.0],
     )
+
     disp_okada_x[i] = u[1]
     disp_okada_y[i] = u[2]
     dgt_xx = s[1, 1]
@@ -103,8 +116,12 @@ for i in range(0, x.size):
     stress_okada_xx[i] = s_xx
     stress_okada_yy[i] = s_yy
     stress_okada_xy[i] = s_xy
+
 disp_okada =  np.array([disp_okada_x, disp_okada_y])
 stress_okada =  np.array([stress_okada_xx, stress_okada_yy, stress_okada_xy])
+disp_resid = displacement_constant_slip - disp_okada
+stress_resid = stress_constant_slip - stress_okada
+
 
 bem2d.plot_fields(
     elements,
@@ -115,10 +132,6 @@ bem2d.plot_fields(
     "Okada",
 )
 
-disp_resid = displacement_constant_slip - disp_okada
-# disp_resid = disp_resid / disp_okada * 100
-stress_resid = stress_constant_slip - stress_okada
-# stress_resid = stress_resid / stress_okada * 100
 
 bem2d.plot_fields(
     elements,
@@ -128,27 +141,3 @@ bem2d.plot_fields(
     stress_resid,
     "residuals",
 )
-
-
-
-# # Try analytic solution from Segall (equations 3.53)
-# u1 = np.zeros(x.shape)
-# u2 = np.zeros(x.shape)
-# xi = L
-
-# for i in range(x.size):
-#     d = np.sqrt((x[i]-L)**2 + y[i]**2) 
-#     zeta = xi - d
-#     u1[i] = (-1 / np.pi) / (1 + zeta**2)
-#     u2[i] = (1 / np.pi) * (zeta / (1 + zeta**2) + np.arctan(zeta))
-# u = np.array([u1, u2])
-
-# bem2d.plot_fields(
-#     elements,
-#     x.reshape(n_pts, n_pts),
-#     y.reshape(n_pts, n_pts),
-#     u,
-#     np.zeros(stress_okada.shape),
-#     "whaaa?",
-# )
-
