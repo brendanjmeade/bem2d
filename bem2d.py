@@ -1503,7 +1503,7 @@ def displacements_stresses_constant_linear(
 
 
 def displacements_stresses_quadratic(
-    type,
+    type_,
     x_in,
     y_in,
     a,
@@ -1527,10 +1527,10 @@ def displacements_stresses_quadratic(
     x = rotated_coords[:, 0]
     y = rotated_coords[:, 1]
 
-    if type == "coincident":
+    if type_ == "coincident":
         f_all = quadratic_kernel_coincident(a, nu)
         np.testing.assert_almost_equal(y, 0)
-    elif type == "farfield":
+    elif type_ == "farfield":
         f_all = quadratic_kernel_farfield(x, y, a, nu)
 
     for i in range(0, 3):
