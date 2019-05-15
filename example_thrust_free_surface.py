@@ -127,72 +127,72 @@ def ben_plot_reorder(mat):
 # ben_plot_reorder(np.linalg.inv(t2) @ t1)
 plt.show(block=False)
 
-# Predict internal displacements everywhere
-fault_slip_ss = fault_slip[0::2]
-fault_slip_ts = fault_slip[1::2]
+# # Predict internal displacements everywhere
+# fault_slip_ss = fault_slip[0::2]
+# fault_slip_ts = fault_slip[1::2]
 
-displacement_full_space = np.zeros((2, x.size))
-stress_full_space = np.zeros((3, x.size))
-for i, element in enumerate(elements_fault):
-    displacement, stress = bem2d.displacements_stresses_constant_linear(
-        x,
-        y,
-        element["half_length"],
-        mu,
-        nu,
-        "constant",
-        "slip",
-        fault_slip_ss[i],
-        fault_slip_ts[i],
-        element["x_center"],
-        element["y_center"],
-        element["rotation_matrix"],
-        element["inverse_rotation_matrix"],
-    )
-    displacement_full_space += displacement
-    stress_full_space += stress
+# displacement_full_space = np.zeros((2, x.size))
+# stress_full_space = np.zeros((3, x.size))
+# for i, element in enumerate(elements_fault):
+#     displacement, stress = bem2d.displacements_stresses_constant_linear(
+#         x,
+#         y,
+#         element["half_length"],
+#         mu,
+#         nu,
+#         "constant",
+#         "slip",
+#         fault_slip_ss[i],
+#         fault_slip_ts[i],
+#         element["x_center"],
+#         element["y_center"],
+#         element["rotation_matrix"],
+#         element["inverse_rotation_matrix"],
+#     )
+#     displacement_full_space += displacement
+#     stress_full_space += stress
 
-bem2d.plot_fields(
-    elements_surface + elements_fault,
-    x.reshape(n_pts, n_pts),
-    y.reshape(n_pts, n_pts),
-    displacement_full_space,
-    stress_full_space,
-    "full space",
-)
+# bem2d.plot_fields(
+#     elements_surface + elements_fault,
+#     x.reshape(n_pts, n_pts),
+#     y.reshape(n_pts, n_pts),
+#     displacement_full_space,
+#     stress_full_space,
+#     "full space",
+# )
 
-# Half space
-fault_slip_x = disp_free_surface[1::2]
-fault_slip_y = disp_free_surface[0::2]
-displacement_free_surface = np.zeros((2, x.size))
-stress_free_surface = np.zeros((3, x.size))
-for i, element in enumerate(elements_surface):
-    displacement, stress = bem2d.displacements_stresses_constant_linear(
-        x,
-        y,
-        element["half_length"],
-        mu,
-        nu,
-        "constant",
-        "slip",
-        fault_slip_x[i],
-        fault_slip_y[i],
-        element["x_center"],
-        element["y_center"],
-        element["rotation_matrix"],
-        element["inverse_rotation_matrix"],
-    )
-    displacement_free_surface += displacement
-    stress_free_surface += stress
+# # Half space
+# fault_slip_x = disp_free_surface[1::2]
+# fault_slip_y = disp_free_surface[0::2]
+# displacement_free_surface = np.zeros((2, x.size))
+# stress_free_surface = np.zeros((3, x.size))
+# for i, element in enumerate(elements_surface):
+#     displacement, stress = bem2d.displacements_stresses_constant_linear(
+#         x,
+#         y,
+#         element["half_length"],
+#         mu,
+#         nu,
+#         "constant",
+#         "slip",
+#         fault_slip_x[i],
+#         fault_slip_y[i],
+#         element["x_center"],
+#         element["y_center"],
+#         element["rotation_matrix"],
+#         element["inverse_rotation_matrix"],
+#     )
+#     displacement_free_surface += displacement
+#     stress_free_surface += stress
 
-bem2d.plot_fields(
-    elements_surface + elements_fault,
-    x.reshape(n_pts, n_pts),
-    y.reshape(n_pts, n_pts),
-    displacement_free_surface,
-    stress_free_surface,
-    "free surface",
-)
+# bem2d.plot_fields(
+#     elements_surface + elements_fault,
+#     x.reshape(n_pts, n_pts),
+#     y.reshape(n_pts, n_pts),
+#     displacement_free_surface,
+#     stress_free_surface,
+#     "free surface",
+# )
 
 # bem2d.plot_fields(
 #     elements_surface + elements_fault,
