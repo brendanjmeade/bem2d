@@ -60,6 +60,16 @@ fault_slip[1::2] = 0.0
 disp_full_space = d1 @ fault_slip
 disp_free_surface = np.linalg.inv(t2) @ (t1 @ fault_slip)
 
+
+plt.show(block=False)
+
+# fault_slip_ = np.zeros(6 * len(elements_fault))
+# fault_slip[0::2] = 1.0
+# fault_slip[1::2] = 0.0
+# disp_full_space = d1_ @ fault_slip_
+# disp_free_surface_ = np.linalg.inv(t2_) @ (t1_ @ fault_slip_)
+
+
 # Okada solution for 45 degree dipping fault
 disp_okada_x = np.zeros(x_center.shape)
 disp_okada_y = np.zeros(x_center.shape)
@@ -143,7 +153,7 @@ for i, element in enumerate(elements_fault):
     stress_full_space += stress
 
 bem2d.plot_fields(
-    elements_fault,
+    elements_surface + elements_fault,
     x.reshape(n_pts, n_pts),
     y.reshape(n_pts, n_pts),
     displacement_full_space,
@@ -176,7 +186,7 @@ for i, element in enumerate(elements_surface):
     stress_free_surface += stress
 
 bem2d.plot_fields(
-    elements_surface,
+    elements_surface + elements_fault,
     x.reshape(n_pts, n_pts),
     y.reshape(n_pts, n_pts),
     displacement_free_surface,
