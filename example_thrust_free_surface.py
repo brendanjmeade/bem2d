@@ -52,7 +52,7 @@ d2, s2, t2 = bem2d.constant_partials_all(elements_surface, elements_surface, mu,
 d1_, s1_, t1_ = bem2d.quadratic_partials_all(elements_surface, elements_fault, mu, nu)
 d2_, s2_, t2_ = bem2d.quadratic_partials_all(elements_surface, elements_surface, mu, nu)
 
-# Predict surface displacements from unit strike slip forcing
+# Constant case: Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
 fault_slip = np.zeros(2 * len(elements_fault))
 fault_slip[0::2] = 1.0
@@ -60,15 +60,14 @@ fault_slip[1::2] = 0.0
 disp_full_space = d1 @ fault_slip
 disp_free_surface = np.linalg.inv(t2) @ (t1 @ fault_slip)
 
-
-plt.show(block=False)
-
-# fault_slip_ = np.zeros(6 * len(elements_fault))
-# fault_slip[0::2] = 1.0
-# fault_slip[1::2] = 0.0
-# disp_full_space = d1_ @ fault_slip_
-# disp_free_surface_ = np.linalg.inv(t2_) @ (t1_ @ fault_slip_)
-
+# Quadratic case: Predict surface displacements from unit strike slip forcing
+x_center_ = np.array([_["x_integration_points"] for _ in elements_surface])
+fault_slip_ = np.zeros(6 * len(elements_fault))
+fault_slip_[0::2] = 1.0
+fault_slip_[1::2] = 0.0
+disp_full_space_ = d1_ @ fault_slip_
+disp_free_surface_ = np.linalg.inv(t2_) @ (t1_ @ fault_slip_)
+# disp_free_surface_ = disp_free_surface_[3::6]
 
 # Okada solution for 45 degree dipping fault
 disp_okada_x = np.zeros(x_center.shape)
@@ -92,9 +91,22 @@ plt.figure(figsize=(6, 8))
 plt.subplot(2, 1, 1)
 plt.plot(x_center, disp_full_space[0::2], "-b", linewidth=0.5, label="full space")
 plt.plot(
-    x_center, disp_free_surface[0::2], "-r", linewidth=0.5, label="half space (BEM)"
+    x_center,
+    disp_free_surface[0::2],
+    "-r",
+    linewidth=0.5,
+    label="half space (constant BEM)",
 )
-plt.plot(x_center, disp_okada_x, ".r", linewidth=0.5, label="Okada")
+plt.plot(
+    x_center,
+    disp_free_surface_[2::6],
+    "+k",
+    linewidth=0.5,
+    label="half space (quadratic BEM)",
+)
+
+
+plt.plot(x_center, disp_okada_x, ".r", linewidth=0.5, label="half space (Okada)")
 plt.xlim([-5, 5])
 plt.ylim([-1, 1])
 plt.xticks(np.arange(-5, 6))
@@ -107,9 +119,21 @@ plt.legend()
 plt.subplot(2, 1, 2)
 plt.plot(x_center, disp_full_space[1::2], "-b", linewidth=0.5, label="full space")
 plt.plot(
-    x_center, disp_free_surface[1::2], "-r", linewidth=0.5, label="half space (BEM)"
+    x_center,
+    disp_free_surface[1::2],
+    "-r",
+    linewidth=0.5,
+    label="half space (constant BEM)",
 )
-plt.plot(x_center, disp_okada_y, ".r", linewidth=0.5, label="Okada")
+plt.plot(
+    x_center,
+    disp_free_surface_[3::6],
+    "+k",
+    linewidth=0.5,
+    label="half space (quadratic BEM)",
+)
+
+plt.plot(x_center, disp_okada_y, ".r", linewidth=0.5, label="half space (Okada)")
 plt.xlim([-5, 5])
 plt.ylim([-1, 1])
 plt.xticks(np.arange(-5, 6))

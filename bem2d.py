@@ -1997,30 +1997,15 @@ def quadratic_partials_single(element_obs, element_src, mu, nu):
 
     partials_traction = np.zeros((6, 6))
     normal_vector = np.array([element_obs["x_normal"], element_obs["y_normal"]])
-    normal_vector = np.tile(normal_vector, 3)
-    # stress_strike_slip = stress_strike_slip[i * 3:(i + 1) * 3, i:(i + 1)]
-    stress_tensor_strike_slip = np.zeros((2, 6))
-    for i in range(3):
-        offset = 2 * i
-        stress_tensor_strike_slip[0, 0 + offset] = stress_strike_slip[0 + offset, 0]
-        stress_tensor_strike_slip[0, 1 + offset] = stress_strike_slip[0 + offset, 2]
-        stress_tensor_strike_slip[1, 0 + offset] = stress_strike_slip[0 + offset, 2]
-        stress_tensor_strike_slip[1, 1 + offset] = stress_strike_slip[0 + offset, 1]
+    for i in range(3):  # row loop
+        for j in range(3):  # column loop
+            stress = stress_strike_slip[i * 3 : i * 3 + 3, j]
+            traction = stress_to_traction(stress, normal_vector)
+            partials_traction[i * 2 : i * 2 + 2, j * 2] = traction
 
-    print(stress_tensor_strike_slip @ normal_vector)
-    print(" ")
-    # for i in range(3):
-    #     _partials_traction = np.zeros((2, 2))
-    #     _stress_strike_slip = stress_strike_slip[i * 3:(i + 1) * 3, i:(i + 1)]
-    #     print(_stress_strike_slip)
-    #     _stress_tensile_slip = stress_tensile_slip[i * 3:(i + 1) * 3, i:(i + 1)]
-    #     traction_strike_slip = stress_to_traction(_stress_strike_slip, normal_vector)
-    #     traction_tensile_slip = stress_to_traction(_stress_tensile_slip, normal_vector)
-    #     _partials_traction[:, 0::2] = traction_strike_slip[:, np.newaxis]
-    #     _partials_traction[:, 1::2] = traction_tensile_slip[:, np.newaxis]
-    #     partials_traction[i*2:(i+1)*2, i*2:(i+1)*2] = _partials_traction
-    #     print(_partials_traction)
-    # print(partials_traction)
+            stress = stress_tensile_slip[i * 3 : i * 3 + 3, j]
+            traction = stress_to_traction(stress, normal_vector)
+            partials_traction[i * 2 : i * 2 + 2, j * 2 + 1] = traction
 
     return partials_displacement, partials_stress, partials_traction
 
