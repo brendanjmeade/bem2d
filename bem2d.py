@@ -1881,7 +1881,7 @@ def constant_partials_single(element_obs, element_src, mu, nu):
     partials_displacement = np.zeros((2, 2))
     partials_displacement[:, 0::2] = displacement_strike_slip
     partials_displacement[:, 1::2] = displacement_tensile_slip
-    
+
     partials_stress = np.zeros((3, 2))
     partials_stress[:, 0::2] = stress_strike_slip
     partials_stress[:, 1::2] = stress_tensile_slip
@@ -2089,7 +2089,9 @@ def f_slip_to_displacement_stress(x_component, y_component, f, y, mu, nu):
 
     displacement[1, :] = x_component * (
         (1 - 2 * nu) * f[2, :] - y * f[3, :]
-    ) + y_component * (2 * (1 - nu) * f[1, :] - y * -f[4, :]) # Note the negative sign in front f[4, :] because f[4, :] = f,xx = -f,yy
+    ) + y_component * (
+        2 * (1 - nu) * f[1, :] - y * -f[4, :]
+    )  # Note the negative sign in front f[4, :] because f[4, :] = f,xx = -f,yy
 
     stress[0, :] = 2 * x_component * mu * (
         2 * f[3, :] + y * f[5, :]
@@ -2102,7 +2104,7 @@ def f_slip_to_displacement_stress(x_component, y_component, f, y, mu, nu):
     stress[2, :] = 2 * x_component * mu * (
         -f[4, :] + y * f[6, :]
     ) + 2 * y_component * mu * (-y * f[5, :])
-    
+
     return displacement, stress
 
 

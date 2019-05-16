@@ -91,7 +91,9 @@ for i in range(0, x_center.size):
 plt.figure(figsize=(6, 8))
 plt.subplot(2, 1, 1)
 plt.plot(x_center, disp_full_space[0::2], "-b", linewidth=0.5, label="full space")
-plt.plot(x_center, disp_free_surface[0::2], "-r", linewidth=0.5, label="half space (BEM)")
+plt.plot(
+    x_center, disp_free_surface[0::2], "-r", linewidth=0.5, label="half space (BEM)"
+)
 plt.plot(x_center, disp_okada_x, ".r", linewidth=0.5, label="Okada")
 plt.xlim([-5, 5])
 plt.ylim([-1, 1])
@@ -104,7 +106,9 @@ plt.legend()
 
 plt.subplot(2, 1, 2)
 plt.plot(x_center, disp_full_space[1::2], "-b", linewidth=0.5, label="full space")
-plt.plot(x_center, disp_free_surface[1::2], "-r", linewidth=0.5, label="half space (BEM)")
+plt.plot(
+    x_center, disp_free_surface[1::2], "-r", linewidth=0.5, label="half space (BEM)"
+)
 plt.plot(x_center, disp_okada_y, ".r", linewidth=0.5, label="Okada")
 plt.xlim([-5, 5])
 plt.ylim([-1, 1])

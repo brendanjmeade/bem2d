@@ -92,12 +92,12 @@ for i in range(0, x.size):
     # )
     # Horizontal fault
     _, u, s = dc3dwrapper(
-        2.0/3.0,
+        2.0 / 3.0,
         [0, x[i], y[i] - big_deep],
         big_deep,
         45,
         [-1e10, 1e10],
-        [-L*np.sqrt(2), L*np.sqrt(2)],
+        [-L * np.sqrt(2), L * np.sqrt(2)],
         [0.0, -1.0, 0.0],
     )
 
@@ -111,14 +111,14 @@ for i in range(0, x.size):
     e_yy = dgt_yy
     e_xy = 0.5 * (dgt_yx + dgt_xy)
     s_xx = mu * (e_xx + e_yy) + 2 * mu * e_xx
-    s_yy = mu * (e_xx + e_yy)+ 2 * mu * e_yy
+    s_yy = mu * (e_xx + e_yy) + 2 * mu * e_yy
     s_xy = 2 * mu * e_xy
     stress_okada_xx[i] = s_xx
     stress_okada_yy[i] = s_yy
     stress_okada_xy[i] = s_xy
 
-disp_okada =  np.array([disp_okada_x, disp_okada_y])
-stress_okada =  np.array([stress_okada_xx, stress_okada_yy, stress_okada_xy])
+disp_okada = np.array([disp_okada_x, disp_okada_y])
+stress_okada = np.array([stress_okada_xx, stress_okada_yy, stress_okada_xy])
 disp_resid = displacement_constant_slip - disp_okada
 stress_resid = stress_constant_slip - stress_okada
 
