@@ -1,10 +1,14 @@
 import copy
 import time
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from scipy.optimize import fsolve
 from scipy.integrate import ode, odeint
 
+
+matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 
 def constant_kernel(x, y, a, nu):
     """ From Starfield and Crouch, pages 49 and 82 """
@@ -1563,12 +1567,18 @@ def plot_fields(elements, x, y, displacement, stress, sup_title):
         plt.gca().set_aspect("equal")
         plt.xticks([x_lim[0], x_lim[1]])
         plt.yticks([y_lim[0], y_lim[1]])
-        plt.colorbar(fraction=0.046, pad=0.04)
 
     def plot_subplot(elements, x, y, idx, field, title):
         """ Common elements for each subplot - other than quiver """
         plt.subplot(2, 3, idx)
-        plt.contourf(x, y, field.reshape(x.shape), n_contours)
+        field_max = np.max(np.abs(field))
+        scale = 5e-1
+        plt.contourf(x, y, field.reshape(x.shape), n_contours, vmin=-scale * field_max, vmax=scale * field_max, cmap=plt.get_cmap("RdYlBu"))
+        plt.clim(-scale * field_max, scale * field_max)
+        plt.colorbar(fraction=0.046, pad=0.04, extend='both')
+
+        plt.contour(x, y, field.reshape(x.shape), n_contours, vmin=-scale * field_max, vmax=scale * field_max, linewidths=0.25, colors="k")
+        
         for element in elements:
             plt.plot(
                 [element["x1"], element["x2"]],
@@ -1599,8 +1609,10 @@ def plot_fields(elements, x, y, displacement, stress, sup_title):
     plt.quiver(
         x,
         y,
-        displacement[0, :].reshape(x.shape),
-        displacement[1, :].reshape(x.shape),
+        displacement[0],
+        displacement[1],
+
+
         units="width",
         color="b",
     )

@@ -45,7 +45,7 @@ for i in range(0, x1.size):
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
 
-bem2d.plot_element_geometry(elements_fault + elements_surface)
+# bem2d.plot_element_geometry(elements_fault + elements_surface)
 
 d1, s1, t1 = bem2d.constant_partials_all(elements_surface, elements_fault, mu, nu)
 d2, s2, t2 = bem2d.constant_partials_all(elements_surface, elements_surface, mu, nu)
@@ -135,7 +135,6 @@ plt.title(r"$u_y$")
 plt.legend()
 plt.tight_layout()
 
-
 def ben_plot_reorder(mat):
     fm2 = mat.reshape((mat.shape[0] // 2, 2, mat.shape[1] // 2, 2))
     fm3 = np.swapaxes(np.swapaxes(fm2, 0, 1), 2, 3).reshape(mat.shape)
@@ -146,39 +145,73 @@ def ben_plot_reorder(mat):
 # ben_plot_reorder(np.linalg.inv(t2) @ t1)
 plt.show(block=False)
 
-# # Predict internal displacements everywhere
-# fault_slip_ss = fault_slip[0::2]
-# fault_slip_ts = fault_slip[1::2]
+# Okada internak dispalcements
+displacement_okada = np.zeros((2, x.size))
+stress_okada = np.zeros((3, x.size))
+disp_okada_x = np.zeros(x.shape)
+disp_okada_y = np.zeros(x.shape)
 
-# displacement_full_space = np.zeros((2, x.size))
-# stress_full_space = np.zeros((3, x.size))
-# for i, element in enumerate(elements_fault):
-#     displacement, stress = bem2d.displacements_stresses_constant_linear(
-#         x,
-#         y,
-#         element["half_length"],
-#         mu,
-#         nu,
-#         "constant",
-#         "slip",
-#         fault_slip_ss[i],
-#         fault_slip_ts[i],
-#         element["x_center"],
-#         element["y_center"],
-#         element["rotation_matrix"],
-#         element["inverse_rotation_matrix"],
-#     )
-#     displacement_full_space += displacement
-#     stress_full_space += stress
+for i in range(0, x.size):
+    # Fault dipping at 45 degrees
+    _, u, _ = dc3dwrapper(
+        0.67,
+        [0, x[i] + 0.5, y[i]],
+        0.5,
+        45,  # 135
+        [-1000, 1000],
+        [-np.sqrt(2) / 2, np.sqrt(2) / 2],
+        [0.0, -1.0, 0.0],
+    )
+    disp_okada_x[i] = -u[1]
+    disp_okada_y[i] = -u[2]
 
-# bem2d.plot_fields(
-#     elements_surface + elements_fault,
-#     x.reshape(n_pts, n_pts),
-#     y.reshape(n_pts, n_pts),
-#     displacement_full_space,
-#     stress_full_space,
-#     "full space",
-# )
+displacement_okada[0, :] = disp_okada_x
+displacement_okada[1, :] = disp_okada_y
+
+
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_okada,
+    np.ones(stress_okada.shape),
+    "Okada",
+)
+
+
+# Predict internal displacements everywhere
+fault_slip_ss = fault_slip[0::2]
+fault_slip_ts = fault_slip[1::2]
+
+displacement_full_space = np.zeros((2, x.size))
+stress_full_space = np.zeros((3, x.size))
+for i, element in enumerate(elements_fault):
+    displacement, stress = bem2d.displacements_stresses_constant_linear(
+        x,
+        y,
+        element["half_length"],
+        mu,
+        nu,
+        "constant",
+        "slip",
+        -fault_slip_ss[i],
+        -fault_slip_ts[i],
+        element["x_center"],
+        element["y_center"],
+        element["rotation_matrix"],
+        element["inverse_rotation_matrix"],
+    )
+    displacement_full_space += displacement
+    stress_full_space += stress
+
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_full_space,
+    stress_full_space,
+    "full space",
+)
 
 # # Half space
 # fault_slip_x = disp_free_surface[1::2]
