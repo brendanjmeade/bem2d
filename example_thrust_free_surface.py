@@ -163,10 +163,8 @@ for i in range(0, x.size):
     )
     disp_okada_x[i] = -u[1]
     disp_okada_y[i] = -u[2]
-
 displacement_okada[0, :] = disp_okada_x
 displacement_okada[1, :] = disp_okada_y
-
 
 bem2d.plot_fields(
     elements_surface + elements_fault,
