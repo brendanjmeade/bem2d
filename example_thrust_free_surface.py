@@ -144,7 +144,7 @@ def ben_plot_reorder(mat):
 # ben_plot_reorder(np.linalg.inv(t2) @ t1)
 plt.show(block=False)
 
-# Okada internak dispalcements
+# Okada internal dispalcements
 displacement_okada = np.zeros((2, x.size))
 stress_okada = np.zeros((3, x.size))
 disp_okada_x = np.zeros(x.shape)
