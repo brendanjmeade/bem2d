@@ -55,16 +55,16 @@ d2_, s2_, t2_ = bem2d.quadratic_partials_all(elements_surface, elements_surface,
 # Constant case: Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
 fault_slip = np.zeros(2 * len(elements_fault))
-fault_slip[0::2] = 1.0
-fault_slip[1::2] = 0.0
+fault_slip[0::2] = np.sqrt(2)/2
+fault_slip[1::2] = -np.sqrt(2)/2
 disp_full_space = d1 @ fault_slip
 disp_free_surface = np.linalg.inv(t2) @ (t1 @ fault_slip)
 
 # Quadratic case: Predict surface displacements from unit strike slip forcing
 x_center_ = np.array([_["x_integration_points"] for _ in elements_surface]).flatten()
 fault_slip_ = np.zeros(6 * len(elements_fault))
-fault_slip_[0::2] = 1.0
-fault_slip_[1::2] = 0.0
+fault_slip_[0::2] = np.sqrt(2)/2
+fault_slip_[1::2] = -np.sqrt(2)/2
 disp_full_space_ = d1_ @ fault_slip_
 disp_free_surface_ = np.linalg.inv(t2_) @ (t1_ @ fault_slip_)
 
@@ -75,7 +75,7 @@ disp_okada_y = np.zeros(x_okada.shape)
 
 for i in range(0, x_okada.size):
     # Fault dipping at 45 degrees
-    _, u, _ = dc3dwrapper(
+    _, u, dgt = dc3dwrapper(
         0.67,
         [0, x_okada[i] + 0.5, 0],
         0.5,
@@ -152,7 +152,7 @@ disp_okada_y = np.zeros(x.shape)
 
 for i in range(0, x.size):
     # Fault dipping at 45 degrees
-    _, u, _ = dc3dwrapper(
+    _, u, dgt = dc3dwrapper(
         0.67,
         [0, x[i] + 0.5, y[i]],
         0.5,
@@ -247,7 +247,7 @@ bem2d.plot_fields(
     elements_surface + elements_fault,
     x.reshape(n_pts, n_pts),
     y.reshape(n_pts, n_pts),
-    -displacement_free_surface + displacement_full_space,
-    -stress_free_surface + stress_full_space,
+    displacement_free_surface + displacement_full_space,
+    stress_free_surface + stress_full_space,
     "fault + free surface",
 )

@@ -1486,6 +1486,11 @@ def displacements_stresses_constant_linear(
     x = rotated_coords[:, 0]
     y = rotated_coords[:, 1]
 
+    # Convert to global coordinates here.  Should this be elsewhere?
+    global_components = rotation_matrix @ np.array([x_component, y_component])
+    x_component = global_components[0]
+    y_component = global_components[1]
+    
     if shape_function == "constant":
         f = constant_kernel(x, y, a, nu)
     elif shape_function == "linear":
@@ -1530,6 +1535,11 @@ def displacements_stresses_quadratic(
     rotated_coords = np.matmul(np.vstack((x_trans, y_trans)).T, rotation_matrix)
     x = rotated_coords[:, 0]
     y = rotated_coords[:, 1]
+
+    # Convert to global coordinates here.  Should this be elsewhere?
+    global_components = rotation_matrix @ np.array([x_component, y_component])
+    x_component = global_components[0]
+    y_component = global_components[1]
 
     if type_ == "coincident":
         f_all = quadratic_kernel_coincident(a, nu)
