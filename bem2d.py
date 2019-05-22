@@ -2163,7 +2163,6 @@ def displacements_stresses_quadratic_farfield_coefficients(
     x_component = global_components[0]
     y_component = global_components[1]
 
-
     f_all = quadratic_kernel_farfield(x, y, a, nu)
     for i in range(0, 3):
         f = f_all[:, i, :]
@@ -2184,6 +2183,7 @@ def displacements_stresses_quadratic_farfield_coefficients(
         displacement_all += displacement * quadratic_coefficients[i]
         stress_all += stress * quadratic_coefficients[i]
     return displacement_all, stress_all
+
 
 def displacements_stresses_quadratic_NEW(
     x,
@@ -2233,11 +2233,9 @@ def displacements_stresses_quadratic_NEW(
         )
 
         # Multiply by coefficient for current shape function and sum
-        displacement_all += displacement # * quadratic_coefficients[i]
-        stress_all += stress #  * quadratic_coefficients[i]
+        displacement_all += displacement  # * quadratic_coefficients[i]
+        stress_all += stress  #  * quadratic_coefficients[i]
     return displacement_all, stress_all
-
-
 
 
 def slip_to_coefficients(x, y, a):

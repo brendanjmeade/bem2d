@@ -49,8 +49,12 @@ elements_fault = bem2d.standardize_elements(elements_fault)
 
 d1, s1, t1 = bem2d.constant_partials_all(elements_surface, elements_fault, mu, nu)
 d2, s2, t2 = bem2d.constant_partials_all(elements_surface, elements_surface, mu, nu)
-d1_quadratic, s1_quadratic, t1_quadratic = bem2d.quadratic_partials_all(elements_surface, elements_fault, mu, nu)
-d2_quadratic, s2_quadratic, t2_quadratic = bem2d.quadratic_partials_all(elements_surface, elements_surface, mu, nu)
+d1_quadratic, s1_quadratic, t1_quadratic = bem2d.quadratic_partials_all(
+    elements_surface, elements_fault, mu, nu
+)
+d2_quadratic, s2_quadratic, t2_quadratic = bem2d.quadratic_partials_all(
+    elements_surface, elements_surface, mu, nu
+)
 
 # Constant case: Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
@@ -63,12 +67,16 @@ disp_full_space = d1 @ fault_slip
 disp_free_surface = np.linalg.inv(t2) @ (t1 @ fault_slip)
 
 # Quadratic case: Predict surface displacements from unit strike slip forcing
-x_center_quadratic = np.array([_["x_integration_points"] for _ in elements_surface]).flatten()
+x_center_quadratic = np.array(
+    [_["x_integration_points"] for _ in elements_surface]
+).flatten()
 fault_slip_quadratic = np.zeros(6 * len(elements_fault))
 fault_slip_quadratic[0::2] = np.sqrt(2) / 2
 fault_slip_quadratic[1::2] = -np.sqrt(2) / 2
 disp_full_space_quadratic = d1_quadratic @ fault_slip_quadratic
-disp_free_surface_quadratic = np.linalg.inv(t2_quadratic) @ (t1_quadratic @ fault_slip_quadratic)
+disp_free_surface_quadratic = np.linalg.inv(t2_quadratic) @ (
+    t1_quadratic @ fault_slip_quadratic
+)
 
 # Okada solution for 45 degree dipping fault
 x_okada = np.linspace(-5, 5, 1000)
@@ -101,7 +109,11 @@ plt.plot(
     label="constant BEM",
 )
 plt.plot(
-    x_center_quadratic, disp_free_surface_quadratic[0::2], "r.", linewidth=0.5, label="quadratic BEM"
+    x_center_quadratic,
+    disp_free_surface_quadratic[0::2],
+    "r.",
+    linewidth=0.5,
+    label="quadratic BEM",
 )
 plt.xlim([-5, 5])
 plt.ylim([-1, 1])
@@ -123,7 +135,11 @@ plt.plot(
     label="constant BEM",
 )
 plt.plot(
-    x_center_quadratic, disp_free_surface_quadratic[1::2], "r.", linewidth=0.5, label="quadratic BEM"
+    x_center_quadratic,
+    disp_free_surface_quadratic[1::2],
+    "r.",
+    linewidth=0.5,
+    label="quadratic BEM",
 )
 
 plt.xlim([-5, 5])
@@ -189,7 +205,7 @@ bem2d.plot_fields(
 
 #
 # Internal evaluation for constant BEM
-# 
+#
 fault_slip_ss = fault_slip[0::2]
 fault_slip_ts = fault_slip[1::2]
 displacement_full_space = np.zeros((2, x.size))
@@ -274,15 +290,9 @@ bem2d.plot_fields(
 )
 
 
-
-
-
-
-
-
 #
 # Internal evaluation for Quadratic BEM
-# 
+#
 fault_slip_ss_quadratic = fault_slip_quadratic[0::2]
 fault_slip_ts_quadratic = fault_slip_quadratic[1::2]
 displacement_quadratic_elements = np.zeros((2, x.size))
@@ -363,4 +373,3 @@ bem2d.plot_fields(
 #     stress_free_surface + stress_full_space - stress_okada,
 #     "quadratic BEM - Okada",
 # )
-
