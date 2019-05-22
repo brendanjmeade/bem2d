@@ -73,17 +73,17 @@ disp_okada_y = np.zeros(x_okada.shape)
 
 for i in range(0, x_okada.size):
     # Fault dipping at 45 degrees
-    _, u, dgt = dc3dwrapper(
-        0.67,
+    _, u, _ = dc3dwrapper(
+        2.0 / 3.0,
         [0, x_okada[i] + 0.5, 0],
         0.5,
         45,  # 135
         [-1000, 1000],
         [-np.sqrt(2) / 2, np.sqrt(2) / 2],
-        [0.0, -1.0, 0.0],
+        [0.0, 1.0, 0.0],
     )
-    disp_okada_x[i] = -u[1]
-    disp_okada_y[i] = -u[2]
+    disp_okada_x[i] = u[1]
+    disp_okada_y[i] = u[2]
 
 plt.figure(figsize=(6, 8))
 plt.subplot(2, 1, 1)
@@ -143,29 +143,49 @@ displacement_okada = np.zeros((2, x.size))
 stress_okada = np.zeros((3, x.size))
 disp_okada_x = np.zeros(x.shape)
 disp_okada_y = np.zeros(x.shape)
+stress_okada_xx = np.zeros(x.shape)
+stress_okada_yy = np.zeros(x.shape)
+stress_okada_xy = np.zeros(x.shape)
 
 for i in range(0, x.size):
     # Fault dipping at 45 degrees
-    _, u, dgt = dc3dwrapper(
+    _, u, s = dc3dwrapper(
         2.0/3.0,
         [0, x[i] + 0.5, y[i]],
         0.5,
         45,  # 135
         [-1000, 1000],
         [-np.sqrt(2) / 2, np.sqrt(2) / 2],
-        [0.0, -1.0, 0.0],
+        [0.0, 1.0, 0.0],
     )
-    disp_okada_x[i] = -u[1]
-    disp_okada_y[i] = -u[2]
+    disp_okada_x[i] = u[1]
+    disp_okada_y[i] = u[2]
+    dgt_xx = s[1, 1]
+    dgt_yy = s[2, 2]
+    dgt_xy = s[1, 2]
+    dgt_yx = s[2, 1]
+    e_xx = dgt_xx
+    e_yy = dgt_yy
+    e_xy = 0.5 * (dgt_yx + dgt_xy)
+    s_xx = mu * (e_xx + e_yy) + 2 * mu * e_xx
+    s_yy = mu * (e_xx + e_yy) + 2 * mu * e_yy
+    s_xy = 2 * mu * e_xy
+    stress_okada_xx[i] = s_xx
+    stress_okada_yy[i] = s_yy
+    stress_okada_xy[i] = s_xy
+
 displacement_okada[0, :] = disp_okada_x
 displacement_okada[1, :] = disp_okada_y
+stress_okada[0, :] = stress_okada_xx
+stress_okada[1, :] = stress_okada_yy
+stress_okada[2, :] = stress_okada_xy
 
 bem2d.plot_fields(
     elements_surface + elements_fault,
     x.reshape(n_pts, n_pts),
     y.reshape(n_pts, n_pts),
     displacement_okada,
-    np.ones(stress_okada.shape),
+    stress_okada,
     "Okada",
 )
 
@@ -200,7 +220,7 @@ for i, element in enumerate(elements_fault):
 #     y.reshape(n_pts, n_pts),
 #     displacement_full_space,
 #     stress_full_space,
-#     "full space",
+#     "fault: full space",
 # )
 
 # Free surface
@@ -242,7 +262,7 @@ bem2d.plot_fields(
     y.reshape(n_pts, n_pts),
     displacement_free_surface + displacement_full_space,
     stress_free_surface + stress_full_space,
-    "fault + free surface",
+    "BEM: fault + free surface",
 )
 
 bem2d.plot_fields(
@@ -250,7 +270,7 @@ bem2d.plot_fields(
     x.reshape(n_pts, n_pts),
     y.reshape(n_pts, n_pts),
     displacement_free_surface + displacement_full_space - displacement_okada,
-    stress_free_surface + stress_full_space,
+    stress_free_surface + stress_full_space - stress_okada,
     "(fault + free surface) - Okada",
 )
 
