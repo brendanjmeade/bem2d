@@ -1549,7 +1549,7 @@ def displacements_stresses_quadratic(
         f_all = quadratic_kernel_farfield(x, y, a, nu)
 
     for i in range(0, 3):
-        f = f_all[:, i, :]  # Select all the fs for the current NNN
+        f = f_all[:, i, :]  # Select all the fs for the current node of element
 
         if element_type == "traction":
             displacement, stress = f_traction_to_displacement_stress(
@@ -2158,6 +2158,12 @@ def displacements_stresses_quadratic_farfield_coefficients(
     x = rotated_coords[:, 0]
     y = rotated_coords[:, 1]
 
+    # Convert to global coordinates here.  Should this be elsewhere?
+    global_components = rotation_matrix @ np.array([x_component, y_component])
+    x_component = global_components[0]
+    y_component = global_components[1]
+
+
     f_all = quadratic_kernel_farfield(x, y, a, nu)
     for i in range(0, 3):
         f = f_all[:, i, :]
@@ -2179,8 +2185,62 @@ def displacements_stresses_quadratic_farfield_coefficients(
         stress_all += stress * quadratic_coefficients[i]
     return displacement_all, stress_all
 
+def displacements_stresses_quadratic_NEW(
+    x,
+    y,
+    a,
+    mu,
+    nu,
+    element_type,
+    x_component,
+    y_component,
+    x_center,
+    y_center,
+    rotation_matrix,
+    inverse_rotation_matrix,
+):
+    """ This function implements variable slip on a quadratic element """
+    displacement_all = np.zeros((2, x.size))
+    stress_all = np.zeros((3, x.size))
 
-def shape_function_coefficients(x, y, a):
+    # Rotate and translate into local coordinate system
+    x = x - x_center
+    y = y - y_center
+    rotated_coords = np.matmul(np.vstack((x, y)).T, rotation_matrix)
+    x = rotated_coords[:, 0]
+    y = rotated_coords[:, 1]
+
+    # Convert to global coordinates here.  Should this be elsewhere?
+    for i in range(3):
+        global_components = rotation_matrix @ np.array([x_component[i], y_component[i]])
+        x_component[i] = global_components[0]
+        y_component[i] = global_components[1]
+
+    f_all = quadratic_kernel_farfield(x, y, a, nu)
+    for i in range(0, 3):
+        f = f_all[:, i, :]
+        if element_type == "traction":
+            displacement, stress = f_traction_to_displacement_stress(
+                x_component[i], y_component[i], f, y, mu, nu
+            )
+        elif element_type == "slip":
+            displacement, stress = f_slip_to_displacement_stress(
+                x_component[i], y_component[i], f, y, mu, nu
+            )
+
+        displacement, stress = rotate_displacement_stress(
+            displacement, stress, inverse_rotation_matrix
+        )
+
+        # Multiply by coefficient for current shape function and sum
+        displacement_all += displacement # * quadratic_coefficients[i]
+        stress_all += stress #  * quadratic_coefficients[i]
+    return displacement_all, stress_all
+
+
+
+
+def slip_to_coefficients(x, y, a):
     """ Go from fault slip to 3 quadratic shape function coefficients """
     partials = np.zeros((x.size, 3))
     partials[:, 0] = (x / a) * (9 * (x / a) / 8 - 3 / 4)
@@ -2188,6 +2248,16 @@ def shape_function_coefficients(x, y, a):
     partials[:, 2] = (x / a) * (9 * (x / a) / 8 + 3 / 4)
     coefficients = np.linalg.inv(partials) @ y
     return coefficients
+
+
+def coefficients_to_slip(x, y, a):
+    """ Go from quadratic coefficients to slip.  I think this is incorrect """
+    partials = np.zeros((x.size, 3))
+    partials[:, 0] = (x / a) * (9 * (x / a) / 8 - 3 / 4)
+    partials[:, 1] = (1 - 3 * (x / a) / 2) * (1 + 3 * (x / a) / 2)
+    partials[:, 2] = (x / a) * (9 * (x / a) / 8 + 3 / 4)
+    slip = partials @ y
+    return slip
 
 
 def main():
