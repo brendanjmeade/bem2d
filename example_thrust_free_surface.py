@@ -45,8 +45,6 @@ for i in range(0, x1.size):
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
 
-# bem2d.plot_element_geometry(elements_fault + elements_surface)
-
 d1, s1, t1 = bem2d.constant_partials_all(elements_surface, elements_fault, mu, nu)
 d2, s2, t2 = bem2d.constant_partials_all(elements_surface, elements_surface, mu, nu)
 d1_, s1_, t1_ = bem2d.quadratic_partials_all(elements_surface, elements_fault, mu, nu)
@@ -140,10 +138,6 @@ def ben_plot_reorder(mat):
     plt.matshow(np.log10(np.abs(fm3)))
     plt.title(r"$log_{10}$")
 
-
-# ben_plot_reorder(np.linalg.inv(t2) @ t1)
-plt.show(block=False)
-
 # Okada internal dispalcements
 displacement_okada = np.zeros((2, x.size))
 stress_okada = np.zeros((3, x.size))
@@ -153,7 +147,7 @@ disp_okada_y = np.zeros(x.shape)
 for i in range(0, x.size):
     # Fault dipping at 45 degrees
     _, u, dgt = dc3dwrapper(
-        0.67,
+        2.0/3.0,
         [0, x[i] + 0.5, y[i]],
         0.5,
         45,  # 135
@@ -176,10 +170,9 @@ bem2d.plot_fields(
 )
 
 
-# Predict internal displacements everywhere
+# Displacements from fault
 fault_slip_ss = fault_slip[0::2]
 fault_slip_ts = fault_slip[1::2]
-
 displacement_full_space = np.zeros((2, x.size))
 stress_full_space = np.zeros((3, x.size))
 for i, element in enumerate(elements_fault):
@@ -201,18 +194,18 @@ for i, element in enumerate(elements_fault):
     displacement_full_space += displacement
     stress_full_space += stress
 
-bem2d.plot_fields(
-    elements_surface + elements_fault,
-    x.reshape(n_pts, n_pts),
-    y.reshape(n_pts, n_pts),
-    displacement_full_space,
-    stress_full_space,
-    "full space",
-)
+# bem2d.plot_fields(
+#     elements_surface + elements_fault,
+#     x.reshape(n_pts, n_pts),
+#     y.reshape(n_pts, n_pts),
+#     displacement_full_space,
+#     stress_full_space,
+#     "full space",
+# )
 
-# Half space
-fault_slip_x = disp_free_surface[1::2]
-fault_slip_y = disp_free_surface[0::2]
+# Free surface
+fault_slip_x = disp_free_surface[0::2]
+fault_slip_y = disp_free_surface[1::2]
 displacement_free_surface = np.zeros((2, x.size))
 stress_free_surface = np.zeros((3, x.size))
 for i, element in enumerate(elements_surface):
@@ -234,14 +227,14 @@ for i, element in enumerate(elements_surface):
     displacement_free_surface += displacement
     stress_free_surface += stress
 
-bem2d.plot_fields(
-    elements_surface + elements_fault,
-    x.reshape(n_pts, n_pts),
-    y.reshape(n_pts, n_pts),
-    displacement_free_surface,
-    stress_free_surface,
-    "free surface",
-)
+# bem2d.plot_fields(
+#     elements_surface + elements_fault,
+#     x.reshape(n_pts, n_pts),
+#     y.reshape(n_pts, n_pts),
+#     displacement_free_surface,
+#     stress_free_surface,
+#     "free surface",
+# )
 
 bem2d.plot_fields(
     elements_surface + elements_fault,
@@ -251,3 +244,14 @@ bem2d.plot_fields(
     stress_free_surface + stress_full_space,
     "fault + free surface",
 )
+
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_free_surface + displacement_full_space - displacement_okada,
+    stress_free_surface + stress_full_space,
+    "(fault + free surface) - Okada",
+)
+
+plt.show(block=False)
