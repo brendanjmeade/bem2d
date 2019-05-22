@@ -53,16 +53,18 @@ d2_, s2_, t2_ = bem2d.quadratic_partials_all(elements_surface, elements_surface,
 # Constant case: Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
 fault_slip = np.zeros(2 * len(elements_fault))
-fault_slip[0::2] = np.sqrt(2)/2
-fault_slip[1::2] = -np.sqrt(2)/2
+fault_slip[0::2] = np.sqrt(2) / 2
+fault_slip[1::2] = (
+    -np.sqrt(2) / 2
+)  # TODO: I still don't liek this sign here.  Check or correct elsewhere?
 disp_full_space = d1 @ fault_slip
 disp_free_surface = np.linalg.inv(t2) @ (t1 @ fault_slip)
 
 # Quadratic case: Predict surface displacements from unit strike slip forcing
 x_center_ = np.array([_["x_integration_points"] for _ in elements_surface]).flatten()
 fault_slip_ = np.zeros(6 * len(elements_fault))
-fault_slip_[0::2] = np.sqrt(2)/2
-fault_slip_[1::2] = -np.sqrt(2)/2
+fault_slip_[0::2] = np.sqrt(2) / 2
+fault_slip_[1::2] = -np.sqrt(2) / 2
 disp_full_space_ = d1_ @ fault_slip_
 disp_free_surface_ = np.linalg.inv(t2_) @ (t1_ @ fault_slip_)
 
@@ -132,11 +134,6 @@ plt.title(r"$u_y$")
 plt.legend()
 plt.tight_layout()
 
-def ben_plot_reorder(mat):
-    fm2 = mat.reshape((mat.shape[0] // 2, 2, mat.shape[1] // 2, 2))
-    fm3 = np.swapaxes(np.swapaxes(fm2, 0, 1), 2, 3).reshape(mat.shape)
-    plt.matshow(np.log10(np.abs(fm3)))
-    plt.title(r"$log_{10}$")
 
 # Okada internal dispalcements
 displacement_okada = np.zeros((2, x.size))
@@ -150,7 +147,7 @@ stress_okada_xy = np.zeros(x.shape)
 for i in range(0, x.size):
     # Fault dipping at 45 degrees
     _, u, s = dc3dwrapper(
-        2.0/3.0,
+        2.0 / 3.0,
         [0, x[i] + 0.5, y[i]],
         0.5,
         45,  # 135
@@ -189,7 +186,6 @@ bem2d.plot_fields(
     "Okada",
 )
 
-
 # Displacements from fault
 fault_slip_ss = fault_slip[0::2]
 fault_slip_ts = fault_slip[1::2]
@@ -204,8 +200,8 @@ for i, element in enumerate(elements_fault):
         nu,
         "constant",
         "slip",
-        -fault_slip_ss[i],
-        -fault_slip_ts[i],
+        -fault_slip_ss[i],  # TODO: Don't like these negative signs
+        -fault_slip_ts[i],  # TODO: Don't like these negative signs
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -273,5 +269,3 @@ bem2d.plot_fields(
     stress_free_surface + stress_full_space - stress_okada,
     "(fault + free surface) - Okada",
 )
-
-plt.show(block=False)

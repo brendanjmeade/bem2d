@@ -8,7 +8,8 @@ from scipy.optimize import fsolve
 from scipy.integrate import ode, odeint
 
 
-matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
+matplotlib.rcParams["contour.negative_linestyle"] = "solid"
+
 
 def constant_kernel(x, y, a, nu):
     """ From Starfield and Crouch, pages 49 and 82 """
@@ -1490,7 +1491,7 @@ def displacements_stresses_constant_linear(
     global_components = rotation_matrix @ np.array([x_component, y_component])
     x_component = global_components[0]
     y_component = global_components[1]
-    
+
     if shape_function == "constant":
         f = constant_kernel(x, y, a, nu)
     elif shape_function == "linear":
@@ -1583,12 +1584,29 @@ def plot_fields(elements, x, y, displacement, stress, sup_title):
         plt.subplot(2, 3, idx)
         field_max = np.max(np.abs(field))
         scale = 5e-1
-        plt.contourf(x, y, field.reshape(x.shape), n_contours, vmin=-scale * field_max, vmax=scale * field_max, cmap=plt.get_cmap("RdYlBu"))
+        plt.contourf(
+            x,
+            y,
+            field.reshape(x.shape),
+            n_contours,
+            vmin=-scale * field_max,
+            vmax=scale * field_max,
+            cmap=plt.get_cmap("RdYlBu"),
+        )
         plt.clim(-scale * field_max, scale * field_max)
-        plt.colorbar(fraction=0.046, pad=0.04, extend='both')
+        plt.colorbar(fraction=0.046, pad=0.04, extend="both")
 
-        plt.contour(x, y, field.reshape(x.shape), n_contours, vmin=-scale * field_max, vmax=scale * field_max, linewidths=0.25, colors="k")
-        
+        plt.contour(
+            x,
+            y,
+            field.reshape(x.shape),
+            n_contours,
+            vmin=-scale * field_max,
+            vmax=scale * field_max,
+            linewidths=0.25,
+            colors="k",
+        )
+
         for element in elements:
             plt.plot(
                 [element["x1"], element["x2"]],
@@ -1616,16 +1634,7 @@ def plot_fields(elements, x, y, displacement, stress, sup_title):
             linewidth=1.0,
         )
 
-    plt.quiver(
-        x,
-        y,
-        displacement[0],
-        displacement[1],
-
-
-        units="width",
-        color="b",
-    )
+    plt.quiver(x, y, displacement[0], displacement[1], units="width", color="b")
 
     plt.title("vector displacement")
     plt.gca().set_aspect("equal")
@@ -1754,6 +1763,14 @@ def discretized_circle(radius, n_pts):
     x2 = np.roll(x1, -1)
     y2 = np.roll(y1, -1)
     return x1, y1, x2, y2
+
+
+def ben_plot_reorder(mat):
+    """ Plot partials with with x, y components spatially seperated rather than interleaved """
+    fm2 = mat.reshape((mat.shape[0] // 2, 2, mat.shape[1] // 2, 2))
+    fm3 = np.swapaxes(np.swapaxes(fm2, 0, 1), 2, 3).reshape(mat.shape)
+    plt.matshow(np.log10(np.abs(fm3)))
+    plt.title(r"$log_{10}$")
 
 
 def discretized_line(x_start, y_start, x_end, y_end, n_elements):
