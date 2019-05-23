@@ -141,10 +141,10 @@ n_contours = 10
 field = np.log10(np.sqrt(ux_plot ** 2 + uy_plot ** 2))
 field_max = np.max(np.abs(field))
 scale = 1
-plt.contourf(x, y, field.reshape(x.shape), n_contours, cmap=plt.get_cmap("plasma"))
+plt.contourf(x, y, field.reshape(x.shape), n_contours, cmap=plt.get_cmap("inferno"))
 plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$\log_{10} \mathbf{u}$")
 
-plt.contour(x, y, field.reshape(x.shape), n_contours, linewidths=0.25, colors="gray")
+plt.contour(x, y, field.reshape(x.shape), n_contours, linewidths=0.25, colors="k")
 
 plt.fill(x_fill, y_fill, "w", zorder=30)
 
@@ -153,7 +153,7 @@ for element in elements_fault + elements_surface:
         [element["x1"], element["x2"]],
         [element["y1"], element["y2"]],
         "-k",
-        linewidth=1.0,
+        linewidth=2.0,
     )
 
 x_lim = np.array([x.min(), x.max()])
