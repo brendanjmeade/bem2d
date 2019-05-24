@@ -13,8 +13,8 @@ plt.close("all")
 mu = 30e9
 nu = 0.25
 n_pts = 50
-width = 5
-x = np.linspace(-10, 10, n_pts)
+width = 5e3
+x = np.linspace(-10e3, 10e3, n_pts)
 y = np.linspace(-width, width, n_pts)
 x, y = np.meshgrid(x, y)
 x = x.flatten()
@@ -23,12 +23,13 @@ y = y.flatten()
 # Define elements
 elements_surface = []
 elements_fault = []
+elements_detachment = []
 element = {}
 
 # Traction free surface
-x1, y1, x2, y2 = bem2d.discretized_line(-10, 0, 10, 0, 20)
-y1 = -np.arctan(x1)
-y2 = -np.arctan(x2)
+x1, y1, x2, y2 = bem2d.discretized_line(-10e3, 0, 10e3, 0, 20)
+y1 = -1e3 * np.arctan(x1 / 1e3)
+y2 = -1e3 * np.arctan(x2 / 1e3)
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
@@ -41,20 +42,20 @@ elements_surface = bem2d.standardize_elements(elements_surface)
 x_surface = np.unique([x1, x2])
 x_fill = np.zeros(x_surface.size + 3)
 x_fill[0 : x_surface.size] = x_surface
-x_fill[x_surface.size + 0] = 10
-x_fill[x_surface.size + 1] = -10
-x_fill[x_surface.size + 2] = -10
+x_fill[x_surface.size + 0] = 10e3
+x_fill[x_surface.size + 1] = -10e3
+x_fill[x_surface.size + 2] = -10e3
 
 y_surface = np.unique([y1, y2])
 y_surface = np.flip(y_surface, 0)
 y_fill = np.zeros(y_surface.size + 3)
 y_fill[0 : x_surface.size] = y_surface
-y_fill[x_surface.size + 0] = 5
-y_fill[x_surface.size + 1] = 5
+y_fill[x_surface.size + 0] = 5e3
+y_fill[x_surface.size + 1] = 5e3
 y_fill[x_surface.size + 2] = np.min(y_surface)
 
 # Constant slip fault
-x1, y1, x2, y2 = bem2d.discretized_line(-1, -1, 0, 0, 1)
+x1, y1, x2, y2 = bem2d.discretized_line(-1e3, -1e3, 0, 0, 1)
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
@@ -63,6 +64,18 @@ for i in range(0, x1.size):
     element["name"] = "fault"
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
+
+# Constant slip fault
+x1, y1, x2, y2 = bem2d.discretized_line(-1e3, -1e3, -7e3, -4e3, 1)
+for i in range(0, x1.size):
+    element["x1"] = x1[i]
+    element["y1"] = y1[i]
+    element["x2"] = x2[i]
+    element["y2"] = y2[i]
+    element["name"] = "detachment"
+    elements_detachment.append(element.copy())
+elements_detachment = bem2d.standardize_elements(elements_detachment)
+
 
 d1_quadratic, s1_quadratic, t1_quadratic = bem2d.quadratic_partials_all(
     elements_surface, elements_fault, mu, nu
@@ -147,7 +160,7 @@ plt.contour(x, y, field.reshape(x.shape), n_contours, linewidths=0.25, colors="k
 
 plt.fill(x_fill, y_fill, "w", zorder=30)
 
-for element in elements_fault + elements_surface:
+for element in elements_fault + elements_surface + elements_detachment:
     plt.plot(
         [element["x1"], element["x2"]],
         [element["y1"], element["y2"]],
