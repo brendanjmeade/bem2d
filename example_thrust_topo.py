@@ -154,8 +154,8 @@ field = np.log10(np.sqrt(ux_plot ** 2 + uy_plot ** 2))
 field_max = np.max(np.abs(field))
 scale = 1
 plt.contourf(x, y, field.reshape(x.shape), n_contours, cmap=plt.get_cmap("YlGnBu_r"))
-plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$\log_{10} \mathbf{u}$")
-
+# plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$\log_{10} \mathbf{u}$")
+plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$\log_{10} ||u_i||$")
 plt.contour(x, y, field.reshape(x.shape), n_contours, linewidths=0.25, colors="k")
 
 plt.fill(x_fill, y_fill, "w", zorder=30)
