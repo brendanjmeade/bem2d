@@ -12,9 +12,9 @@ plt.close("all")
 # Material properties and observation grid
 mu = 30e9
 nu = 0.25
-n_pts = 200
+n_pts = 50
 width = 5
-x = np.linspace(-width, width, n_pts)
+x = np.linspace(-10, 10, n_pts)
 y = np.linspace(-width, width, n_pts)
 x, y = np.meshgrid(x, y)
 x = x.flatten()
@@ -26,7 +26,7 @@ elements_fault = []
 element = {}
 
 # Traction free surface
-x1, y1, x2, y2 = bem2d.discretized_line(-5, 0, 5, 0, 100)
+x1, y1, x2, y2 = bem2d.discretized_line(-10, 0, 10, 0, 20)
 y1 = -np.arctan(x1)
 y2 = -np.arctan(x2)
 for i in range(0, x1.size):
@@ -41,9 +41,9 @@ elements_surface = bem2d.standardize_elements(elements_surface)
 x_surface = np.unique([x1, x2])
 x_fill = np.zeros(x_surface.size + 3)
 x_fill[0 : x_surface.size] = x_surface
-x_fill[x_surface.size + 0] = 5
-x_fill[x_surface.size + 1] = -5
-x_fill[x_surface.size + 2] = -5
+x_fill[x_surface.size + 0] = 10
+x_fill[x_surface.size + 1] = -10
+x_fill[x_surface.size + 2] = -10
 
 y_surface = np.unique([y1, y2])
 y_surface = np.flip(y_surface, 0)
@@ -63,7 +63,6 @@ for i in range(0, x1.size):
     element["name"] = "fault"
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
-
 
 d1_quadratic, s1_quadratic, t1_quadratic = bem2d.quadratic_partials_all(
     elements_surface, elements_fault, mu, nu
@@ -141,7 +140,7 @@ n_contours = 10
 field = np.log10(np.sqrt(ux_plot ** 2 + uy_plot ** 2))
 field_max = np.max(np.abs(field))
 scale = 1
-plt.contourf(x, y, field.reshape(x.shape), n_contours, cmap=plt.get_cmap("inferno"))
+plt.contourf(x, y, field.reshape(x.shape), n_contours, cmap=plt.get_cmap("YlGnBu_r"))
 plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$\log_{10} \mathbf{u}$")
 
 plt.contour(x, y, field.reshape(x.shape), n_contours, linewidths=0.25, colors="k")
