@@ -2084,21 +2084,33 @@ def f_traction_to_displacement_stress(x_component, y_component, f, y, mu, nu):
     """ This is the generalization from Starfield and Crouch """
     displacement = np.zeros((2, y.size))
     stress = np.zeros((3, y.size))
+
+    # The sign change here is to:
+    # 1 - Ensure consistenty with Okada convention
+    # 2 - For a horizontal/flat fault make the upper half move in the +x direction
+    x_component = -1 * x_component
+    y_component = -1 * y_component
+
     displacement[0, :] = x_component / (2 * mu) * (
         (3 - 4 * nu) * f[0, :] + y * f[1, :]
     ) + y_component / (2 * mu) * (-y * f[2, :])
+
     displacement[1, :] = x_component / (2 * mu) * (-y * f[2, :]) + y_component / (
         2 * mu
     ) * ((3 - 4 * nu) * f[0, :] - y * f[1, :])
+
     stress[0, :] = x_component * (
         (3 - 2 * nu) * f[2, :] + y * f[3, :]
     ) + y_component * (2 * nu * f[1, :] + y * f[4, :])
+
     stress[1, :] = x_component * (
         -1 * (1 - 2 * nu) * f[2, :] + y * f[3, :]
     ) + y_component * (2 * (1 - nu) * f[1, :] - y * f[4, :])
+
     stress[2, :] = x_component * (
         2 * (1 - nu) * f[1, :] + y * f[4, :]
     ) + y_component * ((1 - 2 * nu) * f[2, :] - y * f[3, :])
+    
     return displacement, stress
 
 
@@ -2106,6 +2118,12 @@ def f_slip_to_displacement_stress(x_component, y_component, f, y, mu, nu):
     """ This is the generalization from Starfield and Crouch """
     displacement = np.zeros((2, y.size))
     stress = np.zeros((3, y.size))
+
+    # The sign change here is to:
+    # 1 - Ensure consistenty with Okada convention
+    # 2 - For a horizontal/flat fault make the upper half move in the +x direction
+    x_component = -1 * x_component
+    y_component = -1 * y_component
 
     displacement[0, :] = x_component * (
         2 * (1 - nu) * f[1, :] - y * f[4, :]

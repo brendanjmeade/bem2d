@@ -12,7 +12,7 @@ plt.close("all")
 # Material properties and observation grid
 mu = 30e9
 nu = 0.25
-n_pts = 50
+n_pts = 100
 width = 5e3
 x = np.linspace(-10e3, 10e3, n_pts)
 y = np.linspace(-width, width, n_pts)
@@ -23,7 +23,6 @@ y = y.flatten()
 # Define elements
 elements_surface = []
 elements_fault = []
-elements_detachment = []
 element = {}
 
 # Traction free surface
@@ -65,18 +64,6 @@ for i in range(0, x1.size):
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
 
-# Constant slip fault
-x1, y1, x2, y2 = bem2d.discretized_line(-1e3, -1e3, -7e3, -4e3, 1)
-for i in range(0, x1.size):
-    element["x1"] = x1[i]
-    element["y1"] = y1[i]
-    element["x2"] = x2[i]
-    element["y2"] = y2[i]
-    element["name"] = "detachment"
-    elements_detachment.append(element.copy())
-elements_detachment = bem2d.standardize_elements(elements_detachment)
-
-
 d1_quadratic, s1_quadratic, t1_quadratic = bem2d.quadratic_partials_all(
     elements_surface, elements_fault, mu, nu
 )
@@ -90,7 +77,7 @@ x_center_quadratic = np.array(
 ).flatten()
 fault_slip_quadratic = np.zeros(6 * len(elements_fault))
 fault_slip_quadratic[0::2] = np.sqrt(2) / 2
-fault_slip_quadratic[1::2] = -np.sqrt(2) / 2
+fault_slip_quadratic[1::2] = -np.sqrt(2) / 2 # TODO: WHY does this have to be negative?  Seems like -y direction
 disp_full_space_quadratic = d1_quadratic @ fault_slip_quadratic
 disp_free_surface_quadratic = np.linalg.inv(t2_quadratic) @ (
     t1_quadratic @ fault_slip_quadratic
@@ -99,8 +86,8 @@ disp_free_surface_quadratic = np.linalg.inv(t2_quadratic) @ (
 # Internal evaluation for Quadratic BEM
 fault_slip_ss_quadratic = fault_slip_quadratic[0::2]
 fault_slip_ts_quadratic = fault_slip_quadratic[1::2]
-displacement_quadratic_elements = np.zeros((2, x.size))
-stress_quadratic_elements = np.zeros((3, x.size))
+displacement_fault = np.zeros((2, x.size))
+stress_fault = np.zeros((3, x.size))
 for i, element in enumerate(elements_fault):
     displacement, stress = bem2d.displacements_stresses_quadratic_NEW(
         x,
@@ -109,22 +96,31 @@ for i, element in enumerate(elements_fault):
         mu,
         nu,
         "slip",
-        -fault_slip_ss_quadratic[i * 3 : (i + 1) * 3],
-        -fault_slip_ts_quadratic[i * 3 : (i + 1) * 3],
+        fault_slip_ss_quadratic[i * 3 : (i + 1) * 3],
+        fault_slip_ts_quadratic[i * 3 : (i + 1) * 3],
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
         element["inverse_rotation_matrix"],
     )
-    displacement_quadratic_elements += displacement
-    stress_quadratic_elements += stress
+    displacement_fault += displacement
+    stress_fault += stress
 
+bem2d.plot_fields(
+    elements_fault,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_fault,
+    stress_fault,
+    "fault only",
+)
+plt.show(block=False)
 
 # Free surface
 surface_slip_x_quadratic = disp_free_surface_quadratic[0::2]
 surface_slip_y_quadratic = disp_free_surface_quadratic[1::2]
-displacement_free_surface_quadratic = np.zeros((2, x.size))
-stress_free_surface_quadratic = np.zeros((3, x.size))
+displacement_free_surface = np.zeros((2, x.size))
+stress_free_surface = np.zeros((3, x.size))
 for i, element in enumerate(elements_surface):
     displacement, stress = bem2d.displacements_stresses_quadratic_NEW(
         x,
@@ -133,34 +129,52 @@ for i, element in enumerate(elements_surface):
         mu,
         nu,
         "slip",
-        surface_slip_x_quadratic[i * 3 : (i + 1) * 3],
-        surface_slip_y_quadratic[i * 3 : (i + 1) * 3],
+        -surface_slip_x_quadratic[i * 3 : (i + 1) * 3], # TODO: Why are these negative???
+        -surface_slip_y_quadratic[i * 3 : (i + 1) * 3], # TODO: Why are these negative???
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
         element["inverse_rotation_matrix"],
     )
-    displacement_free_surface_quadratic += displacement
-    stress_free_surface_quadratic += stress
+    displacement_free_surface += displacement
+    stress_free_surface += stress
+
+bem2d.plot_fields(
+    elements_surface,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_free_surface,
+    stress_free_surface,
+    "free surface",
+)
 
 
-displacement_free_surface_quadratic + displacement_quadratic_elements
-ux_plot = (displacement_free_surface_quadratic + displacement_quadratic_elements)[0, :]
-uy_plot = (displacement_free_surface_quadratic + displacement_quadratic_elements)[1, :]
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_free_surface + displacement_fault,
+    stress_free_surface + stress_fault,
+    "fault + free surface",
+)
+
+
+ux_plot = (displacement_free_surface + displacement_fault)[0, :]
+uy_plot = (displacement_free_surface + displacement_fault)[1, :]
 x = x.reshape(n_pts, n_pts)
 y = y.reshape(n_pts, n_pts)
 n_contours = 10
 field = np.log10(np.sqrt(ux_plot ** 2 + uy_plot ** 2))
 field_max = np.max(np.abs(field))
 scale = 1
+
+plt.figure()
 plt.contourf(x, y, field.reshape(x.shape), n_contours, cmap=plt.get_cmap("YlGnBu_r"))
-# plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$\log_{10} \mathbf{u}$")
 plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$\log_{10} ||u_i||$")
 plt.contour(x, y, field.reshape(x.shape), n_contours, linewidths=0.25, colors="k")
-
 plt.fill(x_fill, y_fill, "w", zorder=30)
 
-for element in elements_fault + elements_surface + elements_detachment:
+for element in (elements_fault + elements_surface):
     plt.plot(
         [element["x1"], element["x2"]],
         [element["y1"], element["y2"]],
@@ -175,5 +189,4 @@ plt.xticks([x_lim[0], 0, x_lim[1]])
 plt.yticks([y_lim[0], 0, y_lim[1]])
 plt.xlabel("x (km)")
 plt.ylabel("y (km)")
-
 plt.show(block=False)
