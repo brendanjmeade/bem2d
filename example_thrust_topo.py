@@ -12,7 +12,7 @@ plt.close("all")
 # Material properties and observation grid
 mu = 30e9
 nu = 0.25
-n_pts = 100
+n_pts = 200
 width = 5e3
 x = np.linspace(-10e3, 10e3, n_pts)
 y = np.linspace(-width, width, n_pts)
@@ -77,7 +77,7 @@ x_center_quadratic = np.array(
 ).flatten()
 fault_slip_quadratic = np.zeros(6 * len(elements_fault))
 fault_slip_quadratic[0::2] = np.sqrt(2) / 2
-fault_slip_quadratic[1::2] = -np.sqrt(2) / 2 # TODO: WHY does this have to be negative?  Seems like -y direction
+fault_slip_quadratic[1::2] = np.sqrt(2) / 2 # TODO: WHY does this have to be negative?  Seems like -y direction
 disp_full_space_quadratic = d1_quadratic @ fault_slip_quadratic
 disp_free_surface_quadratic = np.linalg.inv(t2_quadratic) @ (
     t1_quadratic @ fault_slip_quadratic
@@ -129,8 +129,8 @@ for i, element in enumerate(elements_surface):
         mu,
         nu,
         "slip",
-        -surface_slip_x_quadratic[i * 3 : (i + 1) * 3], # TODO: Why are these negative???
-        -surface_slip_y_quadratic[i * 3 : (i + 1) * 3], # TODO: Why are these negative???
+        surface_slip_x_quadratic[i * 3 : (i + 1) * 3], # TODO: Why are these negative???
+        surface_slip_y_quadratic[i * 3 : (i + 1) * 3], # TODO: Why are these negative???
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],

@@ -1488,7 +1488,7 @@ def displacements_stresses_constant_linear(
     y = rotated_coords[:, 1]
 
     # Convert to global coordinates here.  Should this be elsewhere?
-    global_components = rotation_matrix @ np.array([x_component, y_component])
+    global_components = inverse_rotation_matrix @ np.array([x_component, y_component])
     x_component = global_components[0]
     y_component = global_components[1]
 
@@ -2110,7 +2110,7 @@ def f_traction_to_displacement_stress(x_component, y_component, f, y, mu, nu):
     stress[2, :] = x_component * (
         2 * (1 - nu) * f[1, :] + y * f[4, :]
     ) + y_component * ((1 - 2 * nu) * f[2, :] - y * f[3, :])
-    
+
     return displacement, stress
 
 
@@ -2230,7 +2230,7 @@ def displacements_stresses_quadratic_NEW(
 
     # Convert to global coordinates here.  Should this be elsewhere?
     for i in range(3):
-        global_components = rotation_matrix @ np.array([x_component[i], y_component[i]])
+        global_components = inverse_rotation_matrix @ np.array([x_component[i], y_component[i]])
         x_component[i] = global_components[0]
         y_component[i] = global_components[1]
 

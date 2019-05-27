@@ -27,7 +27,7 @@ for i in range(0, x1.size):
 elements = bem2d.standardize_elements(elements)
 
 # Observation coordinates for far-field calculation
-n_pts = 30
+n_pts = 50
 width = 20000
 x = np.linspace(-width, width, n_pts)
 y = np.linspace(-width, width, n_pts)
@@ -155,7 +155,7 @@ for i, element in enumerate(elements):
         "constant",
         "slip",
         np.sqrt(2) / 2,
-        -np.sqrt(2) / 2,
+        np.sqrt(2) / 2,
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -187,10 +187,10 @@ for i in range(0, x.size):
         2.0 / 3.0,
         [0, x[i], y[i] - big_deep],
         big_deep,
-        0,
+        45,
         [-1e10, 1e10],
-        [-L, L],
-        [0.0, 1.0, 0.0],
+        [-L * np.sqrt(2), L * np.sqrt(2)],
+        [0.0, 2.0, 0.0], # TODO: What is this factor of 2!!!
     )
 
     disp_okada_x[i] = u[1]
