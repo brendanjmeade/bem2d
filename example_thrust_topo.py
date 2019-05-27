@@ -26,7 +26,7 @@ elements_fault = []
 element = {}
 
 # Traction free surface
-x1, y1, x2, y2 = bem2d.discretized_line(-10e3, 0, 10e3, 0, 20)
+x1, y1, x2, y2 = bem2d.discretized_line(-10e3, 0, 10e3, 0, 50)
 y1 = -1e3 * np.arctan(x1 / 1e3)
 y2 = -1e3 * np.arctan(x2 / 1e3)
 for i in range(0, x1.size):
@@ -77,7 +77,7 @@ x_center_quadratic = np.array(
 ).flatten()
 fault_slip_quadratic = np.zeros(6 * len(elements_fault))
 fault_slip_quadratic[0::2] = np.sqrt(2) / 2
-fault_slip_quadratic[1::2] = np.sqrt(2) / 2 # TODO: WHY does this have to be negative?  Seems like -y direction
+fault_slip_quadratic[1::2] = np.sqrt(2) / 2
 disp_full_space_quadratic = d1_quadratic @ fault_slip_quadratic
 disp_free_surface_quadratic = np.linalg.inv(t2_quadratic) @ (
     t1_quadratic @ fault_slip_quadratic
@@ -129,8 +129,8 @@ for i, element in enumerate(elements_surface):
         mu,
         nu,
         "slip",
-        surface_slip_x_quadratic[i * 3 : (i + 1) * 3], # TODO: Why are these negative???
-        surface_slip_y_quadratic[i * 3 : (i + 1) * 3], # TODO: Why are these negative???
+        surface_slip_x_quadratic[i * 3 : (i + 1) * 3],
+        surface_slip_y_quadratic[i * 3 : (i + 1) * 3],
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -148,7 +148,6 @@ bem2d.plot_fields(
     "free surface",
 )
 
-
 bem2d.plot_fields(
     elements_surface + elements_fault,
     x.reshape(n_pts, n_pts),
@@ -158,19 +157,17 @@ bem2d.plot_fields(
     "fault + free surface",
 )
 
-
 ux_plot = (displacement_free_surface + displacement_fault)[0, :]
 uy_plot = (displacement_free_surface + displacement_fault)[1, :]
 x = x.reshape(n_pts, n_pts)
 y = y.reshape(n_pts, n_pts)
 n_contours = 10
-field = np.log10(np.sqrt(ux_plot ** 2 + uy_plot ** 2))
+field = (np.sqrt(ux_plot ** 2 + uy_plot ** 2))
 field_max = np.max(np.abs(field))
-scale = 1
 
 plt.figure()
-plt.contourf(x, y, field.reshape(x.shape), n_contours, cmap=plt.get_cmap("YlGnBu_r"))
-plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$\log_{10} ||u_i||$")
+plt.contourf(x, y, field.reshape(x.shape), n_contours, cmap=plt.get_cmap("plasma"))
+plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$||u_i||$")
 plt.contour(x, y, field.reshape(x.shape), n_contours, linewidths=0.25, colors="k")
 plt.fill(x_fill, y_fill, "w", zorder=30)
 
