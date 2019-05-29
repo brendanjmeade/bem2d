@@ -1739,8 +1739,10 @@ def standardize_elements(elements):
         if "ux_local" in element:
             u_local = np.array([element["ux_local"], element["uy_local"]])
             u_global = element["rotation_matrix"] @ u_local
-            element["ux_global"] = u_global[0]
-            element["uy_global"] = u_global[1]
+            element["ux_global_constant"] = u_global[0]
+            element["uy_global_constant"] = u_global[1]
+            element["ux_global_quadratic"] = np.repeat(u_global[0], 3)
+            element["uy_global_quadratic"] = np.repeat(u_global[1], 3)
 
     return elements
 
