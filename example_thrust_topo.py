@@ -53,16 +53,36 @@ y_fill[x_surface.size + 0] = 5e3
 y_fill[x_surface.size + 1] = 5e3
 y_fill[x_surface.size + 2] = np.min(y_surface)
 
-# Constant slip fault
-x1, y1, x2, y2 = bem2d.discretized_line(-1e3, -1e3, 0, 0, 1)
+# # Constant slip fault
+# x1, y1, x2, y2 = bem2d.discretized_line(-1e3, -1e3, 0, 0, 2)
+# for i in range(0, x1.size):
+#     element["x1"] = x1[i]
+#     element["y1"] = y1[i]
+#     element["x2"] = x2[i]
+#     element["y2"] = y2[i]
+#     element["name"] = "fault"
+#     element["ux_local"] = 1 # strike_slip forcing
+#     element["uy_local"] = 0 # tensile-forcing
+#     elements_fault.append(element.copy())
+# elements_fault = bem2d.standardize_elements(elements_fault)
+
+# Constant slip curved fault
+x1, y1, x2, y2 = bem2d.discretized_line(-7e3, 0, 0e3, 0, 20)
+y1 = 3e3 * np.arctan(x1 / 1e3)
+y2 = 3e3 * np.arctan(x2 / 1e3)
+
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
     element["x2"] = x2[i]
     element["y2"] = y2[i]
     element["name"] = "fault"
+    element["ux_local"] = 1 # strike_slip forcing
+    element["uy_local"] = 0 # tensile-forcing
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
+
+
 
 d1_quadratic, s1_quadratic, t1_quadratic = bem2d.quadratic_partials_all(
     elements_surface, elements_fault, mu, nu
@@ -75,9 +95,21 @@ d2_quadratic, s2_quadratic, t2_quadratic = bem2d.quadratic_partials_all(
 x_center_quadratic = np.array(
     [_["x_integration_points"] for _ in elements_surface]
 ).flatten()
+ux_global = np.array(
+    [_["ux_global"] for _ in elements_fault]
+).flatten()
+uy_global = np.array(
+    [_["uy_global"] for _ in elements_fault]
+).flatten()
+ux_global = np.repeat(ux_global, 3) # Repeat for quadratic case
+uy_global = np.repeat(uy_global, 3) # Repeat for quadratic case
+
 fault_slip_quadratic = np.zeros(6 * len(elements_fault))
-fault_slip_quadratic[0::2] = np.sqrt(2) / 2
-fault_slip_quadratic[1::2] = np.sqrt(2) / 2
+# fault_slip_quadratic[0::2] = np.sqrt(2) / 2
+# fault_slip_quadratic[1::2] = np.sqrt(2) / 2
+fault_slip_quadratic[0::2] = ux_global
+fault_slip_quadratic[1::2] = uy_global
+
 disp_full_space_quadratic = d1_quadratic @ fault_slip_quadratic
 disp_free_surface_quadratic = np.linalg.inv(t2_quadratic) @ (
     t1_quadratic @ fault_slip_quadratic

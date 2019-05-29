@@ -1733,6 +1733,15 @@ def standardize_elements(elements):
                 element["y_center"] + (2 / 3 * dy / 2),
             ]
         )
+
+        # If a local boundary condition is giving convert to global
+        # TODO: This is just for convenience there should be flags for real BCs
+        if "ux_local" in element:
+            u_local = np.array([element["ux_local"], element["uy_local"]])
+            u_global = element["rotation_matrix"] @ u_local
+            element["ux_global"] = u_global[0]
+            element["uy_global"] = u_global[1]
+
     return elements
 
 
