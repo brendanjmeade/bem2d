@@ -7,7 +7,7 @@ from importlib import reload
 bem2d = reload(bem2d)
 plt.close("all")
 
-PLOT_ALL = False
+PLOT_ELEMENTS = False
 
 # Material properties
 mu = 30e9
@@ -19,7 +19,7 @@ elements_fault = []
 element = {}
 
 # Create topographic free surface elements
-x1, y1, x2, y2 = bem2d.discretized_line(-10e3, 0, 10e3, 0, 20)
+x1, y1, x2, y2 = bem2d.discretized_line(-10e3, 0, 10e3, 0, 100)
 y1 = -1e3 * np.arctan(x1 / 1e3)
 y2 = -1e3 * np.arctan(x2 / 1e3)
 for i in range(0, x1.size):
@@ -32,10 +32,9 @@ for i in range(0, x1.size):
 elements_surface = bem2d.standardize_elements(elements_surface)
 
 # Create constant slip curved fault
-scale_fault = 3e3
-x1, y1, x2, y2 = bem2d.discretized_line(-7e3, 0, 0e3, 0, 20)
-y1 = scale_fault * np.arctan(x1 / 1e3)
-y2 = scale_fault * np.arctan(x2 / 1e3)
+x1, y1, x2, y2 = bem2d.discretized_line(-7e3, 0, 0, 0, 100)
+y1 = 3e3 * np.arctan(x1 / 1e3)
+y2 = 3e3 * np.arctan(x2 / 1e3)
 for i in range(0, x1.size):
     element["x1"] = x1[i]
     element["y1"] = y1[i]
@@ -68,10 +67,9 @@ displacement_free_surface = np.linalg.inv(traction_partials_surface_from_surface
 )
 
 # Observation points for internal evaluation and visualization
-n_pts = 50
-width = 5e3
+n_pts = 200
 x_plot = np.linspace(-10e3, 10e3, n_pts)
-y_plot = np.linspace(-width, width, n_pts)
+y_plot = np.linspace(-5e3, 5e3, n_pts)
 x_plot, y_plot = np.meshgrid(x_plot, y_plot)
 x_plot = x_plot.flatten()
 y_plot = y_plot.flatten()
@@ -118,7 +116,7 @@ for i, element in enumerate(elements_surface):
     displacement_from_topography += displacement
     stress_from_topography += stress
 
-if PLOT_ALL:
+if PLOT_ELEMENTS:
     bem2d.plot_fields(
         elements_fault,
         x_plot.reshape(n_pts, n_pts),
@@ -143,58 +141,94 @@ if PLOT_ALL:
         y_plot.reshape(n_pts, n_pts),
         displacement_from_topography + displacement_from_fault,
         stress_from_topography + stress_from_fault,
-        "fault + topography",
+        "topography + fault",
     )
 
-# Pretty plot
+# Pretty of displacements and stresses
+def common_plot_elements():
+    # Create a white fill over portion of the figure above the free surface
+    x_surface = np.unique(
+        [[_["x1"] for _ in elements_surface], [_["x2"] for _ in elements_surface]]
+    )
+    x_fill = np.append(x_surface, [10e3, -10e3, -10e3])
+    y_surface = np.unique(
+        [[_["y1"] for _ in elements_surface], [_["y2"] for _ in elements_surface]]
+    )
+    y_surface = np.flip(y_surface, 0)
+    y_fill = np.append(y_surface, [5e3, 5e3, np.min(y_surface)])
+    plt.fill(x_fill, y_fill, "w", zorder=30)
+
+    for element in elements_fault + elements_surface:
+        plt.plot(
+            [element["x1"], element["x2"]],
+            [element["y1"], element["y2"]],
+            "-k",
+            linewidth=1.0,
+            zorder=50,
+        )
+
+    x_lim = np.array([x_plot.min(), x_plot.max()])
+    y_lim = np.array([y_plot.min(), y_plot.max()])
+    plt.xticks([x_lim[0], 0, x_lim[1]])
+    plt.yticks([y_lim[0], 0, y_lim[1]])
+    plt.gca().set_aspect("equal")
+    plt.xlabel("$x$ (m)")
+    plt.ylabel("$y$ (m)")
+
+
 ux_plot = (displacement_from_topography + displacement_from_fault)[0, :]
 uy_plot = (displacement_from_topography + displacement_from_fault)[1, :]
-n_contours = 10
-field = np.sqrt(ux_plot ** 2 + uy_plot ** 2)
+u_plot_field = np.sqrt(ux_plot ** 2 + uy_plot ** 2) # displacement magnitude
 
-plt.figure()
+sxx_plot = (stress_from_topography + stress_from_fault)[0, :]
+syy_plot = (stress_from_topography + stress_from_fault)[1, :]
+sxy_plot = (stress_from_topography + stress_from_fault)[2, :]
+I1 = sxx_plot + syy_plot # 1st invariant
+I2 = sxx_plot * syy_plot - sxy_plot ** 2 # 2nd invariant
+J2 = (I1 ** 2) / 3.0 - I2 # 2nd invariant (deviatoric)
+s_plot_field = np.log10(np.abs(J2))
+
+n_contours = 5
+plt.figure(figsize=(6, 8))
+plt.subplot(2, 1, 1)
 plt.contourf(
     x_plot.reshape(n_pts, n_pts),
     y_plot.reshape(n_pts, n_pts),
-    field.reshape(n_pts, n_pts),
+    u_plot_field.reshape(n_pts, n_pts),
     n_contours,
     cmap=plt.get_cmap("plasma"),
 )
-plt.colorbar(fraction=0.046, pad=0.04, extend="both", label=r"$||u_i||$")
+plt.colorbar(fraction=0.046, pad=0.04, extend="both", label="$||u_i||$ (m)")
 plt.contour(
     x_plot.reshape(n_pts, n_pts),
     y_plot.reshape(n_pts, n_pts),
-    field.reshape(n_pts, n_pts),
+    u_plot_field.reshape(n_pts, n_pts),
     n_contours,
     linewidths=0.25,
     colors="k",
 )
+common_plot_elements()
+plt.title("displacement magnitude")
 
-# Create a white fill over portion of the figure above the free surface
-x_surface = np.unique(
-    [[_["x1"] for _ in elements_surface], [_["x2"] for _ in elements_surface]]
+plt.subplot(2, 1, 2)
+plt.contourf(
+    x_plot.reshape(n_pts, n_pts),
+    y_plot.reshape(n_pts, n_pts),
+    s_plot_field.reshape(n_pts, n_pts),
+    n_contours,
+    cmap=plt.get_cmap("hot_r"),
 )
-x_fill = np.append(x_surface, [10e3, -10e3, -10e3])
-y_surface = np.unique(
-    [[_["y1"] for _ in elements_surface], [_["y2"] for _ in elements_surface]]
+plt.colorbar(fraction=0.046, pad=0.04, extend="both", label="$log_{10}|\mathrm{J}_2|$ (Pa$^2$)")
+plt.contour(
+    x_plot.reshape(n_pts, n_pts),
+    y_plot.reshape(n_pts, n_pts),
+    s_plot_field.reshape(n_pts, n_pts),
+    n_contours,
+    linewidths=0.25,
+    colors="k",
 )
-y_surface = np.flip(y_surface, 0)
-y_fill = np.append(y_surface, [5e3, 5e3, np.min(y_surface)])
-plt.fill(x_fill, y_fill, "w", zorder=30)
+common_plot_elements()
+plt.title("second stress invariant (deviatoric)")
 
-for element in elements_fault + elements_surface:
-    plt.plot(
-        [element["x1"], element["x2"]],
-        [element["y1"], element["y2"]],
-        "-k",
-        linewidth=1.0,
-    )
 
-x_lim = np.array([x_plot.min(), x_plot.max()])
-y_lim = np.array([y_plot.min(), y_plot.max()])
-plt.xticks([x_lim[0], 0, x_lim[1]])
-plt.yticks([y_lim[0], 0, y_lim[1]])
-plt.gca().set_aspect("equal")
-plt.xlabel("$x$ (km)")
-plt.ylabel("$y$ (km)")
 plt.show(block=False)
