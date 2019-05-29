@@ -57,8 +57,12 @@ _, _, traction_partials_surface_from_surface = bem2d.quadratic_partials_all(
 
 # Solve the BEM problem
 fault_slip = np.zeros(6 * len(elements_fault))
-fault_slip[0::2] = np.array([_["ux_global_quadratic"] for _ in elements_fault]).flatten()
-fault_slip[1::2] = np.array([_["uy_global_quadratic"] for _ in elements_fault]).flatten()
+fault_slip[0::2] = np.array(
+    [_["ux_global_quadratic"] for _ in elements_fault]
+).flatten()
+fault_slip[1::2] = np.array(
+    [_["uy_global_quadratic"] for _ in elements_fault]
+).flatten()
 displacement_free_surface = np.linalg.inv(traction_partials_surface_from_surface) @ (
     traction_partials_surface_from_fault @ fault_slip
 )
@@ -167,22 +171,23 @@ plt.contour(
 )
 
 # Creite a white fill over portion of the figure above the free surface
-x_surface = np.unique([[_["x1"] for _ in elements_surface], [_["x2"] for _ in elements_surface]])
+x_surface = np.unique(
+    [[_["x1"] for _ in elements_surface], [_["x2"] for _ in elements_surface]]
+)
 x_fill = np.zeros(x_surface.size + 3)
 x_fill[0 : x_surface.size] = x_surface
 x_fill[x_surface.size + 0] = 10e3
 x_fill[x_surface.size + 1] = -10e3
 x_fill[x_surface.size + 2] = -10e3
-
-y_surface = np.unique([[_["y1"] for _ in elements_surface], [_["y2"] for _ in elements_surface]])
+y_surface = np.unique(
+    [[_["y1"] for _ in elements_surface], [_["y2"] for _ in elements_surface]]
+)
 y_surface = np.flip(y_surface, 0)
 y_fill = np.zeros(y_surface.size + 3)
 y_fill[0 : x_surface.size] = y_surface
 y_fill[x_surface.size + 0] = 5e3
 y_fill[x_surface.size + 1] = 5e3
 y_fill[x_surface.size + 2] = np.min(y_surface)
-
-
 plt.fill(x_fill, y_fill, "w", zorder=30)
 
 for element in elements_fault + elements_surface:
