@@ -170,24 +170,16 @@ plt.contour(
     colors="k",
 )
 
-# Creite a white fill over portion of the figure above the free surface
+# Create a white fill over portion of the figure above the free surface
 x_surface = np.unique(
     [[_["x1"] for _ in elements_surface], [_["x2"] for _ in elements_surface]]
 )
-x_fill = np.zeros(x_surface.size + 3)
-x_fill[0 : x_surface.size] = x_surface
-x_fill[x_surface.size + 0] = 10e3
-x_fill[x_surface.size + 1] = -10e3
-x_fill[x_surface.size + 2] = -10e3
+x_fill = np.append(x_surface, [10e3, -10e3, -10e3])
 y_surface = np.unique(
     [[_["y1"] for _ in elements_surface], [_["y2"] for _ in elements_surface]]
 )
 y_surface = np.flip(y_surface, 0)
-y_fill = np.zeros(y_surface.size + 3)
-y_fill[0 : x_surface.size] = y_surface
-y_fill[x_surface.size + 0] = 5e3
-y_fill[x_surface.size + 1] = 5e3
-y_fill[x_surface.size + 2] = np.min(y_surface)
+y_fill = np.append(y_surface, [5e3, 5e3, np.min(y_surface)])
 plt.fill(x_fill, y_fill, "w", zorder=30)
 
 for element in elements_fault + elements_surface:
