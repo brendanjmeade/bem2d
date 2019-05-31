@@ -46,7 +46,6 @@ for i in range(0, x1.size):
     element["ux_global_quadratic"] = np.array([1, 1, 1])  # strike-slip forcing
     element["uy_global_quadratic"] = np.array([0, 0, 0])  # tensile-forcing
 
-
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
 
@@ -182,14 +181,14 @@ def common_plot_elements():
 
 ux_plot = (displacement_from_topography + displacement_from_fault)[0, :]
 uy_plot = (displacement_from_topography + displacement_from_fault)[1, :]
-u_plot_field = np.sqrt(ux_plot ** 2 + uy_plot ** 2) # displacement magnitude
+u_plot_field = np.sqrt(ux_plot ** 2 + uy_plot ** 2)  # displacement magnitude
 
 sxx_plot = (stress_from_topography + stress_from_fault)[0, :]
 syy_plot = (stress_from_topography + stress_from_fault)[1, :]
 sxy_plot = (stress_from_topography + stress_from_fault)[2, :]
-I1 = sxx_plot + syy_plot # 1st invariant
-I2 = sxx_plot * syy_plot - sxy_plot ** 2 # 2nd invariant
-J2 = (I1 ** 2) / 3.0 - I2 # 2nd invariant (deviatoric)
+I1 = sxx_plot + syy_plot  # 1st invariant
+I2 = sxx_plot * syy_plot - sxy_plot ** 2  # 2nd invariant
+J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
 s_plot_field = np.log10(np.abs(J2))
 
 n_contours = 5
@@ -222,7 +221,9 @@ plt.contourf(
     n_contours,
     cmap=plt.get_cmap("hot_r"),
 )
-plt.colorbar(fraction=0.046, pad=0.04, extend="both", label="$log_{10}|\mathrm{J}_2|$ (Pa$^2$)")
+plt.colorbar(
+    fraction=0.046, pad=0.04, extend="both", label="$log_{10}|\mathrm{J}_2|$ (Pa$^2$)"
+)
 plt.contour(
     x_plot.reshape(n_pts, n_pts),
     y_plot.reshape(n_pts, n_pts),
@@ -236,14 +237,9 @@ plt.title("second stress invariant (deviatoric)")
 plt.show(block=False)
 
 
-
 # Resolve tractions on fault
-x_fault = np.array(
-    [_["x_integration_points"] for _ in elements_fault]
-).flatten()
-y_fault = np.array(
-    [_["y_integration_points"] for _ in elements_fault]
-).flatten()
+x_fault = np.array([_["x_integration_points"] for _ in elements_fault]).flatten()
+y_fault = np.array([_["y_integration_points"] for _ in elements_fault]).flatten()
 print(y_fault)
 y_fault_orig = y_fault.copy()
 y_offset = np.array([-5000, -500, -50, 0, 50, 500, 5000])
@@ -289,14 +285,19 @@ for j in range(y_offset.size):
     total_stress = stress_on_fault_from_fault + stress_on_fault_from_surface
     tractions = np.zeros((2, x_fault.size))
     for i in range(x_fault.size):
-        tractions[:, i] = bem2d.stress_to_traction(total_stress[:,i], np.array([elements_fault[i//3]["x_normal"], elements_fault[i//3]["y_normal"]]))
+        tractions[:, i] = bem2d.stress_to_traction(
+            total_stress[:, i],
+            np.array(
+                [elements_fault[i // 3]["x_normal"], elements_fault[i // 3]["y_normal"]]
+            ),
+        )
 
     plt.figure()
     plt.plot(tractions[0, :], "-r", label="tx")
     plt.plot(tractions[1, :], "-k", label="ty")
-    plt.plot(total_stress[0, :], "-b", label = "sxx")
-    plt.plot(total_stress[1, :], "--b", label = "syy")
-    plt.plot(total_stress[2, :], "-.b", label = "sxy")
+    plt.plot(total_stress[0, :], "-b", label="sxx")
+    plt.plot(total_stress[1, :], "--b", label="syy")
+    plt.plot(total_stress[2, :], "-.b", label="sxy")
     plt.legend()
     plt.title("y offset = " + str(y_offset[j]))
     plt.show(block=False)

@@ -128,11 +128,8 @@ if angle == 0:
     )
 
 
-
-
-
 if angle == 45:
-# 45 degree dipping fault
+    # 45 degree dipping fault
 
     x1, y1, x2, y2 = bem2d.discretized_line(-L, -L, L, L, n_elements)
     for i in range(0, x1.size):
