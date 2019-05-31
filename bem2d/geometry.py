@@ -97,6 +97,17 @@ def discretized_line(x_start, y_start, x_end, y_end, n_elements):
     y2 = y[1:]
     return x1, y1, x2, y2
 
+def line_to_elements(x1, y1, x2, y2):
+    elements = []
+    for i in range(0, x1.size):
+        elements.append(dict(
+            x1 = x1[i],
+            y1 = y1[i],
+            x2 = x2[i],
+            y2 = y2[i],
+        ))
+    elements = standardize_elements(elements)
+    return elements
 
 def stress_to_traction(stress, normal_vector):
     """ Compute tractions from stress tensor and normal vector """

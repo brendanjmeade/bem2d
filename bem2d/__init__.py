@@ -13,3 +13,12 @@ from .quadratic import *
 from .geometry import *
 from .plot_fncs import *
 from .constant_linear import *
+
+def reload():
+    from importlib import reload
+    import bem2d
+    reload(bem2d.quadratic)
+    reload(bem2d.plot_fncs)
+    reload(bem2d.geometry)
+    reload(bem2d.constant_linear)
+    reload(bem2d)

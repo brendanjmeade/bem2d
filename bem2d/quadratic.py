@@ -1561,3 +1561,34 @@ def displacements_stresses_quadratic_NEW(
         displacement_all += displacement  # * quadratic_coefficients[i]
         stress_all += stress  #  * quadratic_coefficients[i]
     return displacement_all, stress_all
+
+#TODO: allow obs_pts instead of obs_elements
+def matrix_integral(
+    obs_elements, src_elements, mu, nu, forcing_type
+):
+    return quadratic_partials_all(obs_elements, src_elements, mu, nu)
+
+
+def integrate(
+    obs_pts, src_elements, mu, nu, forcing_type, forcing
+):
+    disp = np.zeros((2, obs_pts.shape[0]))
+    stress = np.zeros((3, obs_pts.shape[0]))
+    for i, element in enumerate(src_elements):
+        disp_el, stress_el = displacements_stresses_quadratic_NEW(
+            obs_pts[:,0],
+            obs_pts[:,1],
+            element["half_length"],
+            mu,
+            nu,
+            forcing_type,
+            forcing[0::2][i * 3 : (i + 1) * 3],
+            forcing[1::2][i * 3 : (i + 1) * 3],
+            element["x_center"],
+            element["y_center"],
+            element["rotation_matrix"],
+            element["inverse_rotation_matrix"],
+        )
+        disp += disp_el
+        stress += stress_el
+    return disp, stress

@@ -2,9 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import bem2d
-from importlib import reload
+bem2d.reload()
 
-bem2d = reload(bem2d)
 plt.close("all")
 
 PLOT_ELEMENTS = False
