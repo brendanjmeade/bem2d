@@ -2240,21 +2240,21 @@ def displacements_stresses_quadratic_NEW(
     y = rotated_coords[:, 1]
 
     # Convert to global coordinates here.  Should this be elsewhere?
+    global_components = np.empty((3,2))
     for i in range(3):
-        global_components = inverse_rotation_matrix @ np.array([x_component[i], y_component[i]])
-        x_component[i] = global_components[0]
-        y_component[i] = global_components[1]
-
+        global_components[i, 0], global_components[i, 1] = \
+            inverse_rotation_matrix @ np.array([x_component[i], y_component[i]])
+        
     f_all = quadratic_kernel_farfield(x, y, a, nu)
     for i in range(0, 3):
         f = f_all[:, i, :]
         if element_type == "traction":
             displacement, stress = f_traction_to_displacement_stress(
-                x_component[i], y_component[i], f, y, mu, nu
+                global_components[i, 0], global_components[i, 1], f, y, mu, nu
             )
         elif element_type == "slip":
             displacement, stress = f_slip_to_displacement_stress(
-                x_component[i], y_component[i], f, y, mu, nu
+                global_components[i, 0], global_components[i, 1], f, y, mu, nu
             )
 
         displacement, stress = rotate_displacement_stress(

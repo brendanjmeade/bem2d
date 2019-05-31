@@ -19,7 +19,7 @@ elements_fault = []
 element = {}
 
 # Create topographic free surface elements
-x1, y1, x2, y2 = bem2d.discretized_line(-10e3, 0, 10e3, 0, 100)
+x1, y1, x2, y2 = bem2d.discretized_line(-10e3, 0, 10e3, 0, 60)
 y1 = -1e3 * np.arctan(x1 / 1e3)
 y2 = -1e3 * np.arctan(x2 / 1e3)
 for i in range(0, x1.size):
@@ -32,7 +32,7 @@ for i in range(0, x1.size):
 elements_surface = bem2d.standardize_elements(elements_surface)
 
 # Create constant slip curved fault
-x1, y1, x2, y2 = bem2d.discretized_line(-7e3, 0, 0, 0, 100)
+x1, y1, x2, y2 = bem2d.discretized_line(-7e3, 0e3, 0, 0, 30)
 y1 = 3e3 * np.arctan(x1 / 1e3)
 y2 = 3e3 * np.arctan(x2 / 1e3)
 for i in range(0, x1.size):
@@ -41,8 +41,12 @@ for i in range(0, x1.size):
     element["x2"] = x2[i]
     element["y2"] = y2[i]
     element["name"] = "fault"
-    element["ux_local"] = 1  # strike-slip forcing
-    element["uy_local"] = 0  # tensile-forcing
+    # element["ux_local"] = 1  # strike-slip forcing
+    # element["uy_local"] = 0  # tensile-forcing
+    element["ux_global_quadratic"] = np.array([1, 1, 1])  # strike-slip forcing
+    element["uy_global_quadratic"] = np.array([0, 0, 0])  # tensile-forcing
+
+
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
 
@@ -67,7 +71,7 @@ displacement_free_surface = np.linalg.inv(traction_partials_surface_from_surface
 )
 
 # Observation points for internal evaluation and visualization
-n_pts = 200
+n_pts = 50
 x_plot = np.linspace(-10e3, 10e3, n_pts)
 y_plot = np.linspace(-5e3, 5e3, n_pts)
 x_plot, y_plot = np.meshgrid(x_plot, y_plot)
@@ -229,6 +233,70 @@ plt.contour(
 )
 common_plot_elements()
 plt.title("second stress invariant (deviatoric)")
-
-
 plt.show(block=False)
+
+
+
+# Resolve tractions on fault
+x_fault = np.array(
+    [_["x_integration_points"] for _ in elements_fault]
+).flatten()
+y_fault = np.array(
+    [_["y_integration_points"] for _ in elements_fault]
+).flatten()
+print(y_fault)
+y_fault_orig = y_fault.copy()
+y_offset = np.array([-5000, -500, -50, 0, 50, 500, 5000])
+for j in range(y_offset.size):
+    y_fault = y_fault_orig + y_offset[j]
+
+    stress_on_fault_from_fault = np.zeros((3, x_fault.size))
+    for i, element in enumerate(elements_fault):
+        _, stress = bem2d.displacements_stresses_quadratic_NEW(
+            x_fault,
+            y_fault,
+            element["half_length"],
+            mu,
+            nu,
+            "slip",
+            fault_slip[0::2][i * 3 : (i + 1) * 3],
+            fault_slip[1::2][i * 3 : (i + 1) * 3],
+            element["x_center"],
+            element["y_center"],
+            element["rotation_matrix"],
+            element["inverse_rotation_matrix"],
+        )
+        stress_on_fault_from_fault += stress
+
+    stress_on_fault_from_surface = np.zeros((3, x_fault.size))
+    for i, element in enumerate(elements_surface):
+        _, stress = bem2d.displacements_stresses_quadratic_NEW(
+            x_fault,
+            y_fault,
+            element["half_length"],
+            mu,
+            nu,
+            "slip",
+            displacement_free_surface[0::2][i * 3 : (i + 1) * 3],
+            displacement_free_surface[1::2][i * 3 : (i + 1) * 3],
+            element["x_center"],
+            element["y_center"],
+            element["rotation_matrix"],
+            element["inverse_rotation_matrix"],
+        )
+        stress_on_fault_from_surface += stress
+
+    total_stress = stress_on_fault_from_fault + stress_on_fault_from_surface
+    tractions = np.zeros((2, x_fault.size))
+    for i in range(x_fault.size):
+        tractions[:, i] = bem2d.stress_to_traction(total_stress[:,i], np.array([elements_fault[i//3]["x_normal"], elements_fault[i//3]["y_normal"]]))
+
+    plt.figure()
+    plt.plot(tractions[0, :], "-r", label="tx")
+    plt.plot(tractions[1, :], "-k", label="ty")
+    plt.plot(total_stress[0, :], "-b", label = "sxx")
+    plt.plot(total_stress[1, :], "--b", label = "syy")
+    plt.plot(total_stress[2, :], "-.b", label = "sxy")
+    plt.legend()
+    plt.title("y offset = " + str(y_offset[j]))
+    plt.show(block=False)
