@@ -238,10 +238,6 @@ plt.show(block=False)
 # Resolve tractions on fault
 x_fault = np.array([_["x_integration_points"] for _ in elements_fault]).flatten()
 y_fault = np.array([_["y_integration_points"] for _ in elements_fault]).flatten()
-<<<<<<< HEAD
-=======
-
->>>>>>> cfe667cedf3e43809a173e41dfcb95d957f31936
 stress_on_fault_from_fault = np.zeros((3, x_fault.size))
 for i, element in enumerate(elements_fault):
     _, stress = bem2d.displacements_stresses_quadratic_NEW(
@@ -289,7 +285,6 @@ for i in range(x_fault.size):
     )
 
 plt.figure()
-<<<<<<< HEAD
 LINE_WIDTH = 1.0
 plt.plot(tractions[0, :], "-r", linewidth=LINE_WIDTH, label="$t_x$")
 plt.plot(tractions[1, :], "-k", linewidth=LINE_WIDTH, label="$t_y$")
@@ -299,12 +294,5 @@ plt.plot(total_stress[2, :], "-.b", linewidth=LINE_WIDTH, label=r"$\sigma_{xy}$"
 plt.xlabel("fault node index")
 plt.ylabel("stress, traction (Pa)")
 plt.title("Stresses are continuous but tractions are not.  Good.")
-=======
-plt.plot(tractions[0, :], "-r", label="tx")
-plt.plot(tractions[1, :], "-k", label="ty")
-plt.plot(total_stress[0, :], "-b", label="sxx")
-plt.plot(total_stress[1, :], "--b", label="syy")
-plt.plot(total_stress[2, :], "-.b", label="sxy")
->>>>>>> cfe667cedf3e43809a173e41dfcb95d957f31936
 plt.legend()
 plt.show(block=False)
