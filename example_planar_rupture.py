@@ -251,6 +251,7 @@ initial_conditions_quadratic[1::3] = displacement_fault_quadratic[1::2]
 initial_conditions_quadratic[2::3] = state_fault_quadratic
 print(initial_conditions_quadratic)
 
+import ipdb; ipdb.set_trace()
 
 # Integrate to build time series
 # history = odeint(calc_derivatives, initial_conditions, time_interval, rtol=1e-12, atol=1e-12, mxstep=5000)

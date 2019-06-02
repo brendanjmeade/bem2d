@@ -1,4 +1,7 @@
 import numpy as np
+from .quadratic import f_slip_to_displacement_stress
+from .quadratic import f_traction_to_displacement_stress
+from .geometry import rotate_displacement_stress, stress_to_traction
 
 def displacements_stresses_constant_linear(
     x,
