@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import bem2d
+
 bem2d.reload()
 
 plt.close("all")
@@ -81,6 +82,7 @@ def common_plot_elements():
     plt.gca().set_aspect("equal")
     plt.xlabel("$x$ (m)")
     plt.ylabel("$y$ (m)")
+
 
 ux_plot = (displacement_from_topo + displacement_from_fault)[0, :]
 uy_plot = (displacement_from_topo + displacement_from_fault)[1, :]
