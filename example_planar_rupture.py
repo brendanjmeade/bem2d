@@ -323,10 +323,26 @@ tractions_quadratic = slip_to_traction_quadratic @ slip_quadratic
 slip_constant = np.zeros(2 * n_elements)
 slip_constant[0::2] = 1
 tractions_constant = slip_to_traction @ slip_constant
-plt.plot(index[2::3], tractions_constant[0::2], "--r", label="$t_x$ (constant)", linewidth=0.5)
-plt.plot(index[2::3], tractions_constant[1::2], "--k", label="$t_y$ (constant)", linewidth=0.5)
-plt.plot(index, tractions_quadratic[0::2], "-r", label="$t_x$ (quadratic)", linewidth=0.5)
-plt.plot(index, tractions_quadratic[1::2], "-k", label="$t_y$ (quadratic)", linewidth=0.5)
+plt.plot(
+    index[2::3],
+    tractions_constant[0::2],
+    "--r",
+    label="$t_x$ (constant)",
+    linewidth=0.5,
+)
+plt.plot(
+    index[2::3],
+    tractions_constant[1::2],
+    "--k",
+    label="$t_y$ (constant)",
+    linewidth=0.5,
+)
+plt.plot(
+    index, tractions_quadratic[0::2], "-r", label="$t_x$ (quadratic)", linewidth=0.5
+)
+plt.plot(
+    index, tractions_quadratic[1::2], "-k", label="$t_y$ (quadratic)", linewidth=0.5
+)
 plt.xlabel("indexed position along fault")
 plt.ylabel("traction (Pa)")
 plt.title("tractions (strike-slip motion only)")
