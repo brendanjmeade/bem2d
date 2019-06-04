@@ -38,9 +38,9 @@ slip_to_displacement, slip_to_traction = bem2d.constant_linear_partials(
 )
 
 # Quadratic slip partial derivative
-# slip_to_displacement_quadratic, slip_to_stress_quadratic, slip_to_traction_quadratic = bem2d.quadratic_partials_all(
-#     elements_fault, elements_fault, mu, nu
-# )
+slip_to_displacement_quadratic, slip_to_stress_quadratic, slip_to_traction_quadratic = bem2d.quadratic_partials_all(
+    elements_fault, elements_fault, mu, nu
+)
 
 sm = 3e10  # Shear modulus (Pa)
 density = 2700  # rock density (kg/m^3)
@@ -252,18 +252,33 @@ for i in range(n_tests):
     t = np.random.rand(1)
     _ = calc_derivatives(x_and_state, t)
 end_time = time.time()
-print("constant")
+print("(constant derivative evaluation)")
 print("--- %s seconds ---" % (end_time - start_time))
 
-# start_time = time.time()
-# for i in range(n_tests):
-#     x_and_state = np.random.rand(9 * n_elements)
-#     t = np.random.rand(1)
-#     _ = calc_derivatives_quadratic(x_and_state, t)
-# end_time = time.time()
-# print("quadratic")
-# print("--- %s seconds ---" % (end_time - start_time))
+start_time = time.time()
+for i in range(n_tests):
+    slip = np.random.rand(2 * n_elements)
+    _ = slip_to_traction * slip
+end_time = time.time()
+print("constant (matrix vector multiply)")
+print("--- %s seconds ---" % (end_time - start_time))
 
+start_time = time.time()
+for i in range(n_tests):
+    x_and_state = np.random.rand(9 * n_elements)
+    t = np.random.rand(1)
+    _ = calc_derivatives_quadratic(x_and_state, t)
+end_time = time.time()
+print("quadratic (derivative evaluation)")
+print("--- %s seconds ---" % (end_time - start_time))
+
+start_time = time.time()
+for i in range(n_tests):
+    slip = np.random.rand(6 * n_elements)
+    _ = slip_to_traction_quadratic * slip
+end_time = time.time()
+print("quadratic (matrix vector multiply)")
+print("--- %s seconds ---" % (end_time - start_time))
 
 
 # Integrate to build time series
