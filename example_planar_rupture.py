@@ -20,7 +20,7 @@ element = {}
 L = 10000
 mu = 3e10
 nu = 0.25
-x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 50)
+x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 150)
 
 for i in range(0, x1.size):
     element["x1"] = x1[i]
@@ -36,24 +36,10 @@ slip_to_displacement, slip_to_traction = bem2d.constant_linear_partials(
     elements_fault, elements_fault, "slip", mu, nu
 )
 
-# Quadratic slip partial derivative
-slip_to_displacement_quadratic, slip_to_stress_quadratic, slip_to_traction_quadratic = bem2d.quadratic_partials_all(
-    elements_fault, elements_fault, mu, nu
-)
-
-plt.matshow(slip_to_displacement)
-plt.colorbar()
-plt.title("slip to displacement (constant)")
-plt.matshow(slip_to_traction)
-plt.colorbar()
-plt.title("slip to traction (constant)")
-plt.matshow(slip_to_displacement_quadratic)
-plt.colorbar()
-plt.title("slip to displacement (quadratic)")
-plt.matshow(slip_to_traction_quadratic)
-plt.colorbar()
-plt.title("slip to traction (quadratic)")
-plt.show(block=False)
+# # Quadratic slip partial derivative
+# slip_to_displacement_quadratic, slip_to_stress_quadratic, slip_to_traction_quadratic = bem2d.quadratic_partials_all(
+#     elements_fault, elements_fault, mu, nu
+# )
 
 sm = 3e10  # Shear modulus (Pa)
 density = 2700  # rock density (kg/m^3)
@@ -187,7 +173,6 @@ def calc_derivatives(x_and_state, t):
 
     # Store the velocity to use it next time for warm-start the velocity solver
     calc_derivatives.sliding_velocity_old = sliding_velocity
-
     dx_dt = -sliding_velocity
     dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
     # TODO: FIX TO USE VELOCITY MAGNITUDE
@@ -260,31 +245,9 @@ initial_conditions_quadratic[2::3] = state_fault_quadratic
 # import ipdb; ipdb.set_trace()
 
 # Integrate to build time series
-# history = odeint(calc_derivatives, initial_conditions, time_interval, rtol=1e-12, atol=1e-12, mxstep=5000)
-# history = odeint(
-#     calc_derivatives,
-#     initial_conditions,
-#     time_interval,
-#     rtol=1e-4,
-#     atol=1e-4,
-#     mxstep=5000,
-#     printmessg=True,
-# )
-
-# # Plot time series
-# plt.figure()
-# for i in range(n_elements):
-#     plt.plot(history[:, 3 * i], label=str(i), linewidth=0.5)
-#     # plt.figure()
-#     # plt.plot(history[:,2])
-# plt.legend()
-# plt.show(block=False)
-
-
-# Quadratic integrations
 history = odeint(
-    calc_derivatives_quadratic,
-    initial_conditions_quadratic,
+    calc_derivatives,
+    initial_conditions,
     time_interval,
     rtol=1e-4,
     atol=1e-4,
@@ -295,23 +258,57 @@ history = odeint(
 # Plot time series
 plt.figure(figsize=(6, 9))
 plt.subplot(3, 1, 1)
-for i in range(3 * n_elements):
-    plt.plot(time_interval_yrs, history[:, (3 * i)], label=str(i), linewidth=0.5)
+for i in range(n_elements):
+    plt.plot(time_interval_yrs, history[:, 3 * i], label=str(i), linewidth=0.5)
 plt.xlabel("years")
 plt.ylabel("$u_x$")
 
 plt.subplot(3, 1, 2)
-for i in range(3 * n_elements):
+for i in range(n_elements):
     plt.plot(time_interval_yrs, history[:, (3 * i) + 1], label=str(i), linewidth=0.5)
 plt.xlabel("years")
 plt.ylabel("$u_y$")
 
 plt.subplot(3, 1, 3)
-for i in range(3 * n_elements):
+for i in range(n_elements):
     plt.plot(time_interval_yrs, history[:, (3 * i) + 2], label=str(i), linewidth=0.5)
 plt.xlabel("years")
 plt.ylabel("state")
 plt.show(block=False)
+
+
+
+# Quadratic integrations
+# history = odeint(
+#     calc_derivatives_quadratic,
+#     initial_conditions_quadratic,
+#     time_interval,
+#     rtol=1e-4,
+#     atol=1e-4,
+#     mxstep=5000,
+#     printmessg=True,
+# )
+
+# # Plot time series
+# plt.figure(figsize=(6, 9))
+# plt.subplot(3, 1, 1)
+# for i in range(3 * n_elements):
+#     plt.plot(time_interval_yrs, history[:, (3 * i)], label=str(i), linewidth=0.5)
+# plt.xlabel("years")
+# plt.ylabel("$u_x$")
+
+# plt.subplot(3, 1, 2)
+# for i in range(3 * n_elements):
+#     plt.plot(time_interval_yrs, history[:, (3 * i) + 1], label=str(i), linewidth=0.5)
+# plt.xlabel("years")
+# plt.ylabel("$u_y$")
+
+# plt.subplot(3, 1, 3)
+# for i in range(3 * n_elements):
+#     plt.plot(time_interval_yrs, history[:, (3 * i) + 2], label=str(i), linewidth=0.5)
+# plt.xlabel("years")
+# plt.ylabel("state")
+# plt.show(block=False)
 
 
 # Plot resolved tracions
