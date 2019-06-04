@@ -3,7 +3,7 @@ import numpy as np
 import bem2d
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
-from scipy.integrate import ode, odeint
+from scipy.integrate import ode, odeint, RK45
 from importlib import reload
 
 bem2d = reload(bem2d)
@@ -151,7 +151,7 @@ def steady_state_quadratic(velocities):
 state_0_quadratic = steady_state_quadratic(initial_velocity_quadratic)
 
 
-def calc_derivatives(x_and_state, t):
+def calc_derivatives(t, x_and_state):
     """ Derivatives to feed to ODE integrator """
     calc_derivatives.idx += 1
     if calc_derivatives.idx % 100 == 0:
@@ -244,44 +244,44 @@ initial_conditions_quadratic[1::3] = displacement_fault_quadratic[1::2]
 initial_conditions_quadratic[2::3] = state_fault_quadratic
 
 # Time the derivayive calculation
-n_tests = 1000
+def benchmark_derivative_evaluation():
+    n_tests = 1000
+    start_time = time.time()
+    for i in range(n_tests):
+        x_and_state = np.random.rand(3 * n_elements)
+        t = np.random.rand(1)
+        _ = calc_derivatives(x_and_state, t)
+    end_time = time.time()
+    print("(constant derivative evaluation)")
+    print("--- %s seconds ---" % (end_time - start_time))
 
-start_time = time.time()
-for i in range(n_tests):
-    x_and_state = np.random.rand(3 * n_elements)
-    t = np.random.rand(1)
-    _ = calc_derivatives(x_and_state, t)
-end_time = time.time()
-print("(constant derivative evaluation)")
-print("--- %s seconds ---" % (end_time - start_time))
+    start_time = time.time()
+    for i in range(n_tests):
+        slip = np.random.rand(2 * n_elements)
+        _ = slip_to_traction * slip
+    end_time = time.time()
+    print("constant (matrix vector multiply)")
+    print("--- %s seconds ---" % (end_time - start_time))
 
-start_time = time.time()
-for i in range(n_tests):
-    slip = np.random.rand(2 * n_elements)
-    _ = slip_to_traction * slip
-end_time = time.time()
-print("constant (matrix vector multiply)")
-print("--- %s seconds ---" % (end_time - start_time))
+    start_time = time.time()
+    for i in range(n_tests):
+        x_and_state = np.random.rand(9 * n_elements)
+        t = np.random.rand(1)
+        _ = calc_derivatives_quadratic(x_and_state, t)
+    end_time = time.time()
+    print("quadratic (derivative evaluation)")
+    print("--- %s seconds ---" % (end_time - start_time))
 
-start_time = time.time()
-for i in range(n_tests):
-    x_and_state = np.random.rand(9 * n_elements)
-    t = np.random.rand(1)
-    _ = calc_derivatives_quadratic(x_and_state, t)
-end_time = time.time()
-print("quadratic (derivative evaluation)")
-print("--- %s seconds ---" % (end_time - start_time))
-
-start_time = time.time()
-for i in range(n_tests):
-    slip = np.random.rand(6 * n_elements)
-    _ = slip_to_traction_quadratic * slip
-end_time = time.time()
-print("quadratic (matrix vector multiply)")
-print("--- %s seconds ---" % (end_time - start_time))
+    start_time = time.time()
+    for i in range(n_tests):
+        slip = np.random.rand(6 * n_elements)
+        _ = slip_to_traction_quadratic * slip
+    end_time = time.time()
+    print("quadratic (matrix vector multiply)")
+    print("--- %s seconds ---" % (end_time - start_time))
 
 
-# Integrate to build time series
+# # Integrate to build time series
 # history = odeint(
 #     calc_derivatives,
 #     initial_conditions,
@@ -291,6 +291,33 @@ print("--- %s seconds ---" % (end_time - start_time))
 #     mxstep=5000,
 #     printmessg=True,
 # )
+
+
+# Integrate to build time series
+# history_RK45 = RK45(
+#     calc_derivatives,
+#     time_interval.min(),
+#     initial_conditions,
+#     time_interval.max(),
+#     rtol=1e-4,
+#     atol=1e-4,
+#     mxstep=5000,
+# )
+
+history_RK45 = RK45(
+    calc_derivatives_quadratic,
+    time_interval.min(),
+    initial_conditions_quadratic,
+    time_interval.max(),
+    rtol=1e-4,
+    atol=1e-4,
+    mxstep=5000,
+)
+
+while history_RK45.t < time_interval.max():
+    history_RK45.step()
+
+
 
 # # Plot time series
 # plt.figure(figsize=(6, 9))
@@ -349,36 +376,37 @@ print("--- %s seconds ---" % (end_time - start_time))
 
 
 # Plot resolved tracions
-plt.figure()
-index = np.arange(0, 3 * n_elements)
-slip_quadratic = np.zeros(6 * n_elements)
-slip_quadratic[0::2] = 1
-tractions_quadratic = slip_to_traction_quadratic @ slip_quadratic
-slip_constant = np.zeros(2 * n_elements)
-slip_constant[0::2] = 1
-tractions_constant = slip_to_traction @ slip_constant
-plt.plot(
-    index[2::3],
-    tractions_constant[0::2],
-    "--r",
-    label="$t_x$ (constant)",
-    linewidth=0.5,
-)
-plt.plot(
-    index[2::3],
-    tractions_constant[1::2],
-    "--k",
-    label="$t_y$ (constant)",
-    linewidth=0.5,
-)
-plt.plot(
-    index, tractions_quadratic[0::2], "-r", label="$t_x$ (quadratic)", linewidth=0.5
-)
-plt.plot(
-    index, tractions_quadratic[1::2], "-k", label="$t_y$ (quadratic)", linewidth=0.5
-)
-plt.xlabel("indexed position along fault")
-plt.ylabel("traction (Pa)")
-plt.title("tractions (strike-slip motion only)")
-plt.legend()
-plt.show(block=False)
+def plot_tractions():
+    plt.figure()
+    index = np.arange(0, 3 * n_elements)
+    slip_quadratic = np.zeros(6 * n_elements)
+    slip_quadratic[0::2] = 1
+    tractions_quadratic = slip_to_traction_quadratic @ slip_quadratic
+    slip_constant = np.zeros(2 * n_elements)
+    slip_constant[0::2] = 1
+    tractions_constant = slip_to_traction @ slip_constant
+    plt.plot(
+        index[2::3],
+        tractions_constant[0::2],
+        "--r",
+        label="$t_x$ (constant)",
+        linewidth=0.5,
+    )
+    plt.plot(
+        index[2::3],
+        tractions_constant[1::2],
+        "--k",
+        label="$t_y$ (constant)",
+        linewidth=0.5,
+    )
+    plt.plot(
+        index, tractions_quadratic[0::2], "-r", label="$t_x$ (quadratic)", linewidth=0.5
+    )
+    plt.plot(
+        index, tractions_quadratic[1::2], "-k", label="$t_y$ (quadratic)", linewidth=0.5
+    )
+    plt.xlabel("indexed position along fault")
+    plt.ylabel("traction (Pa)")
+    plt.title("tractions (strike-slip motion only)")
+    plt.legend()
+    plt.show(block=False)
