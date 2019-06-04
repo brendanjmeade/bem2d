@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import bem2d
 import matplotlib.pyplot as plt
@@ -20,7 +21,7 @@ element = {}
 L = 10000
 mu = 3e10
 nu = 0.25
-x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 150)
+x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 50)
 
 for i in range(0, x1.size):
     element["x1"] = x1[i]
@@ -36,7 +37,7 @@ slip_to_displacement, slip_to_traction = bem2d.constant_linear_partials(
     elements_fault, elements_fault, "slip", mu, nu
 )
 
-# # Quadratic slip partial derivative
+# Quadratic slip partial derivative
 # slip_to_displacement_quadratic, slip_to_stress_quadratic, slip_to_traction_quadratic = bem2d.quadratic_partials_all(
 #     elements_fault, elements_fault, mu, nu
 # )
@@ -242,39 +243,60 @@ initial_conditions_quadratic[0::3] = displacement_fault_quadratic[0::2]
 initial_conditions_quadratic[1::3] = displacement_fault_quadratic[1::2]
 initial_conditions_quadratic[2::3] = state_fault_quadratic
 
-# import ipdb; ipdb.set_trace()
+# Time the derivayive calculation
+n_tests = 1000
+
+start_time = time.time()
+for i in range(n_tests):
+    x_and_state = np.random.rand(3 * n_elements)
+    t = np.random.rand(1)
+    _ = calc_derivatives(x_and_state, t)
+end_time = time.time()
+print("constant")
+print("--- %s seconds ---" % (end_time - start_time))
+
+# start_time = time.time()
+# for i in range(n_tests):
+#     x_and_state = np.random.rand(9 * n_elements)
+#     t = np.random.rand(1)
+#     _ = calc_derivatives_quadratic(x_and_state, t)
+# end_time = time.time()
+# print("quadratic")
+# print("--- %s seconds ---" % (end_time - start_time))
+
+
 
 # Integrate to build time series
-history = odeint(
-    calc_derivatives,
-    initial_conditions,
-    time_interval,
-    rtol=1e-4,
-    atol=1e-4,
-    mxstep=5000,
-    printmessg=True,
-)
+# history = odeint(
+#     calc_derivatives,
+#     initial_conditions,
+#     time_interval,
+#     rtol=1e-4,
+#     atol=1e-4,
+#     mxstep=5000,
+#     printmessg=True,
+# )
 
-# Plot time series
-plt.figure(figsize=(6, 9))
-plt.subplot(3, 1, 1)
-for i in range(n_elements):
-    plt.plot(time_interval_yrs, history[:, 3 * i], label=str(i), linewidth=0.5)
-plt.xlabel("years")
-plt.ylabel("$u_x$")
+# # Plot time series
+# plt.figure(figsize=(6, 9))
+# plt.subplot(3, 1, 1)
+# for i in range(n_elements):
+#     plt.plot(time_interval_yrs, history[:, 3 * i], label=str(i), linewidth=0.5)
+# plt.xlabel("years")
+# plt.ylabel("$u_x$")
 
-plt.subplot(3, 1, 2)
-for i in range(n_elements):
-    plt.plot(time_interval_yrs, history[:, (3 * i) + 1], label=str(i), linewidth=0.5)
-plt.xlabel("years")
-plt.ylabel("$u_y$")
+# plt.subplot(3, 1, 2)
+# for i in range(n_elements):
+#     plt.plot(time_interval_yrs, history[:, (3 * i) + 1], label=str(i), linewidth=0.5)
+# plt.xlabel("years")
+# plt.ylabel("$u_y$")
 
-plt.subplot(3, 1, 3)
-for i in range(n_elements):
-    plt.plot(time_interval_yrs, history[:, (3 * i) + 2], label=str(i), linewidth=0.5)
-plt.xlabel("years")
-plt.ylabel("state")
-plt.show(block=False)
+# plt.subplot(3, 1, 3)
+# for i in range(n_elements):
+#     plt.plot(time_interval_yrs, history[:, (3 * i) + 2], label=str(i), linewidth=0.5)
+# plt.xlabel("years")
+# plt.ylabel("state")
+# plt.show(block=False)
 
 
 
