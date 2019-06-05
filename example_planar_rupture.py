@@ -189,7 +189,7 @@ calc_derivatives.idx = 0
 calc_derivatives.sliding_velocity_old = initial_velocity
 
 
-def calc_derivatives_quadratic(x_and_state, t):
+def calc_derivatives_quadratic(t, x_and_state):
     """ Derivatives to feed to ODE integrator """
     calc_derivatives_quadratic.idx += 1
     if calc_derivatives_quadratic.idx % 100 == 0:
