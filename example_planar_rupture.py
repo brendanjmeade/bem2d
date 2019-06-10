@@ -64,6 +64,7 @@ initial_velocity_quadratic = np.zeros(6 * n_elements)
 initial_velocity_quadratic[0::2] = Vp / 1000.0
 
 
+@profile
 def calc_frictional_stress(velocity, normal_stress, state):
     """ Rate-state friction law w/ Rice et al 2001 regularization so that
     it is nonsingular at V = 0.  The frictional stress is equal to the
@@ -72,15 +73,24 @@ def calc_frictional_stress(velocity, normal_stress, state):
     frictional_stress = friction * normal_stress
     return frictional_stress
 
+@profile
+def calc_frictional_stress(velocity, normal_stress, state):
+    """ Rate-state friction law w/ Rice et al 2001 regularization so that
+    it is nonsingular at V = 0.  The frictional stress is equal to the
+    friction coefficient * the normal stress """
+    friction = a * np.arcsinh(velocity / (2 * V0) * np.exp(state / a))
+    frictional_stress = friction * normal_stress
+    return frictional_stress
 
 def calc_state(velocity, state):
     """ State evolution law - aging law """
     return (b * V0 / Dc) * (np.exp((f0 - state) / b) - (velocity / V0))
 
-
+@profile
 def current_velocity(tau_qs, state, V_old):
     """ Solve the algebraic part of the DAE system """
 
+    @profile
     def f(V, tau_local, normal_stress, state_local):
         return (
             tau_local - eta * V - calc_frictional_stress(V, normal_stress, state_local)
@@ -88,21 +98,31 @@ def current_velocity(tau_qs, state, V_old):
 
     # For each element do the f(V) solve
     current_velocities = np.zeros(2 * n_elements)
-    for i in range(0, n_elements):
-        shear_stress = tau_qs[2 * i]
-        normal_stress = sigma_n
-        velocity_mag = fsolve(
-            f, V_old[2 * i], args=(shear_stress, normal_stress, state[i])
-        )[0]
-        # ONLY FOR FLAT GEOMETERY with y = 0 on all elements
-        current_velocities[2 * i] = velocity_mag
-        current_velocities[2 * i + 1] = 0
+    velocity_mag = fsolve(
+        f, V_old[0::2], args=(tau_qs[0::2], sigma_n * np.ones(n_elements), state)
+    )
+    # ONLY FOR FLAT GEOMETERY with y = 0 on all elements
+    current_velocities[0::2] = velocity_mag
+    current_velocities[1::2] = 0
+
+    # # For each element do the f(V) solve
+    # current_velocities = np.zeros(2 * n_elements)
+    # for i in range(0, n_elements):
+    #     shear_stress = tau_qs[2 * i]
+    #     normal_stress = sigma_n
+    #     velocity_mag = fsolve(
+    #         f, V_old[2 * i], args=(shear_stress, normal_stress, state[i])
+    #     )[0]
+    #     # ONLY FOR FLAT GEOMETERY with y = 0 on all elements
+    #     current_velocities[2 * i] = velocity_mag
+    #     current_velocities[2 * i + 1] = 0
     return current_velocities
 
-
+@profile
 def current_velocity_quadratic(tau_qs, state, V_old):
     """ Solve the algebraic part of the DAE system """
 
+    @profile
     def f(V, tau_local, normal_stress, state_local):
         return (
             tau_local - eta * V - calc_frictional_stress(V, normal_stress, state_local)
@@ -121,17 +141,18 @@ def current_velocity_quadratic(tau_qs, state, V_old):
 
 def steady_state(velocities):
     """ Steady state...state """
-    steady_state_state = np.zeros(n_elements)
+    # steady_state_state = np.zeros(n_elements)
 
     def f(state, v):
         return calc_state(v, state)
 
-    for i in range(0, n_elements):
-        # TODO: FIX FOR NON XAXIS FAULT, USE VELOCITY MAGNITUDE
-        steady_state_state[i] = fsolve(f, 0.0, args=(velocities[2 * i],))[0]
+    x_vels = velocities[0::2]
+    steady_state_state = fsolve(f, np.zeros(x_vels.shape), args=(x_vels,))[0]
+
+    # for i in range(0, n_elements):
+    #     # TODO: FIX FOR NON XAXIS FAULT, USE VELOCITY MAGNITUDE
+    #     steady_state_state[i] = fsolve(f, 0.0, args=(velocities[2 * i],))[0]
     return steady_state_state
-
-
 state_0 = steady_state(initial_velocity)
 
 
@@ -150,7 +171,7 @@ def steady_state_quadratic(velocities):
 
 state_0_quadratic = steady_state_quadratic(initial_velocity_quadratic)
 
-
+@profile
 def calc_derivatives(t, x_and_state):
     """ Derivatives to feed to ODE integrator """
     calc_derivatives.idx += 1
@@ -185,10 +206,43 @@ def calc_derivatives(t, x_and_state):
     return derivatives
 
 
+def calc_derivatives_ode(t, x_and_state):
+    """ Derivatives to feed to ODE integrator """
+    calc_derivatives.idx += 1
+    if calc_derivatives.idx % 100 == 0:
+        print("time =", t / secs_per_year)
+
+    ux = x_and_state[0::3]
+    uy = x_and_state[1::3]
+    state = x_and_state[2::3]
+    x = np.zeros(ux.size + uy.size)
+    x[0::2] = ux
+    x[1::2] = uy
+
+    # Current shear stress on fault (slip->traction)
+    tau_qs = slip_to_traction @ x
+
+    # Solve for the current velocity...This is the algebraic part
+    sliding_velocity = current_velocity(
+        tau_qs, state, calc_derivatives.sliding_velocity_old
+    )
+
+    # Store the velocity to use it next time for warm-start the velocity solver
+    calc_derivatives.sliding_velocity_old = sliding_velocity
+    dx_dt = -sliding_velocity
+    dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
+    # TODO: FIX TO USE VELOCITY MAGNITUDE
+    dstate_dt = calc_state(sliding_velocity[0::2], state)
+    derivatives = np.zeros(dx_dt.size + dstate_dt.size)
+    derivatives[0::3] = dx_dt[0::2]
+    derivatives[1::3] = dx_dt[1::2]
+    derivatives[2::3] = dstate_dt
+    return derivatives
+
 calc_derivatives.idx = 0
 calc_derivatives.sliding_velocity_old = initial_velocity
 
-
+@profile
 def calc_derivatives_quadratic(t, x_and_state):
     """ Derivatives to feed to ODE integrator """
     calc_derivatives_quadratic.idx += 1
@@ -245,12 +299,12 @@ initial_conditions_quadratic[2::3] = state_fault_quadratic
 
 # Time the derivayive calculation
 def benchmark_derivative_evaluation():
-    n_tests = 1000
+    n_tests = 10
     start_time = time.time()
     for i in range(n_tests):
         x_and_state = np.random.rand(3 * n_elements)
         t = np.random.rand(1)
-        _ = calc_derivatives(x_and_state, t)
+        _ = calc_derivatives(t, x_and_state)
     end_time = time.time()
     print("(constant derivative evaluation)")
     print("--- %s seconds ---" % (end_time - start_time))
@@ -263,23 +317,24 @@ def benchmark_derivative_evaluation():
     print("constant (matrix vector multiply)")
     print("--- %s seconds ---" % (end_time - start_time))
 
-    start_time = time.time()
-    for i in range(n_tests):
-        x_and_state = np.random.rand(9 * n_elements)
-        t = np.random.rand(1)
-        _ = calc_derivatives_quadratic(x_and_state, t)
-    end_time = time.time()
-    print("quadratic (derivative evaluation)")
-    print("--- %s seconds ---" % (end_time - start_time))
+    # start_time = time.time()
+    # for i in range(n_tests):
+    #     x_and_state = np.random.rand(9 * n_elements)
+    #     t = np.random.rand(1)
+    #     _ = calc_derivatives_quadratic(t, x_and_state)
+    # end_time = time.time()
+    # print("quadratic (derivative evaluation)")
+    # print("--- %s seconds ---" % (end_time - start_time))
 
-    start_time = time.time()
-    for i in range(n_tests):
-        slip = np.random.rand(6 * n_elements)
-        _ = slip_to_traction_quadratic * slip
-    end_time = time.time()
-    print("quadratic (matrix vector multiply)")
-    print("--- %s seconds ---" % (end_time - start_time))
-
+    # start_time = time.time()
+    # for i in range(n_tests):
+    #     slip = np.random.rand(6 * n_elements)
+    #     _ = slip_to_traction_quadratic * slip
+    # end_time = time.time()
+    # print("quadratic (matrix vector multiply)")
+    # print("--- %s seconds ---" % (end_time - start_time))
+benchmark_derivative_evaluation()
+    
 
 # # Integrate to build time series
 # history = odeint(
@@ -304,18 +359,18 @@ def benchmark_derivative_evaluation():
 #     mxstep=5000,
 # )
 
-history_RK45 = RK45(
-    calc_derivatives_quadratic,
-    time_interval.min(),
-    initial_conditions_quadratic,
-    time_interval.max(),
-    rtol=1e-4,
-    atol=1e-4,
-    mxstep=5000,
-)
+# history_RK45 = RK45(
+#     calc_derivatives_quadratic,
+#     time_interval.min(),
+#     initial_conditions_quadratic,
+#     time_interval.max(),
+#     rtol=1e-4,
+#     atol=1e-4,
+#     mxstep=5000,
+# )
 
-while history_RK45.t < time_interval.max():
-    history_RK45.step()
+# while history_RK45.t < time_interval.max():
+#     history_RK45.step()
 
 
 
@@ -375,38 +430,38 @@ while history_RK45.t < time_interval.max():
 # plt.show(block=False)
 
 
-# Plot resolved tracions
-def plot_tractions():
-    plt.figure()
-    index = np.arange(0, 3 * n_elements)
-    slip_quadratic = np.zeros(6 * n_elements)
-    slip_quadratic[0::2] = 1
-    tractions_quadratic = slip_to_traction_quadratic @ slip_quadratic
-    slip_constant = np.zeros(2 * n_elements)
-    slip_constant[0::2] = 1
-    tractions_constant = slip_to_traction @ slip_constant
-    plt.plot(
-        index[2::3],
-        tractions_constant[0::2],
-        "--r",
-        label="$t_x$ (constant)",
-        linewidth=0.5,
-    )
-    plt.plot(
-        index[2::3],
-        tractions_constant[1::2],
-        "--k",
-        label="$t_y$ (constant)",
-        linewidth=0.5,
-    )
-    plt.plot(
-        index, tractions_quadratic[0::2], "-r", label="$t_x$ (quadratic)", linewidth=0.5
-    )
-    plt.plot(
-        index, tractions_quadratic[1::2], "-k", label="$t_y$ (quadratic)", linewidth=0.5
-    )
-    plt.xlabel("indexed position along fault")
-    plt.ylabel("traction (Pa)")
-    plt.title("tractions (strike-slip motion only)")
-    plt.legend()
-    plt.show(block=False)
+# # Plot resolved tracions
+# def plot_tractions():
+#     plt.figure()
+#     index = np.arange(0, 3 * n_elements)
+#     slip_quadratic = np.zeros(6 * n_elements)
+#     slip_quadratic[0::2] = 1
+#     tractions_quadratic = slip_to_traction_quadratic @ slip_quadratic
+#     slip_constant = np.zeros(2 * n_elements)
+#     slip_constant[0::2] = 1
+#     tractions_constant = slip_to_traction @ slip_constant
+#     plt.plot(
+#         index[2::3],
+#         tractions_constant[0::2],
+#         "--r",
+#         label="$t_x$ (constant)",
+#         linewidth=0.5,
+#     )
+#     plt.plot(
+#         index[2::3],
+#         tractions_constant[1::2],
+#         "--k",
+#         label="$t_y$ (constant)",
+#         linewidth=0.5,
+#     )
+#     plt.plot(
+#         index, tractions_quadratic[0::2], "-r", label="$t_x$ (quadratic)", linewidth=0.5
+#     )
+#     plt.plot(
+#         index, tractions_quadratic[1::2], "-k", label="$t_y$ (quadratic)", linewidth=0.5
+#     )
+#     plt.xlabel("indexed position along fault")
+#     plt.ylabel("traction (Pa)")
+#     plt.title("tractions (strike-slip motion only)")
+#     plt.legend()
+#     plt.show(block=False)
