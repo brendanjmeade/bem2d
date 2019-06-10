@@ -24,7 +24,7 @@ element = {}
 L = 10000
 mu = 3e10
 nu = 0.25
-x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 100)
+x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 50)
 
 for i in range(0, x1.size):
     element["x1"] = x1[i]
@@ -148,7 +148,9 @@ def current_velocity(tau_qs, state, V_old):
 
 def current_velocity_quadratic(tau_qs, state, V_old):
     """ Solve the algebraic part of the DAE system """
-    current_velocities2 = np.empty(6 * n_elements)
+    #TODO: use correct element normals!! assemble element_normals vector of shape (n_elements, 2) but do it outside this function
+
+    current_velocities = np.empty(6 * n_elements)
 
     a_dofs = a * np.ones(3 * n_elements)
     additional_normal_stress = sigma_n * np.ones(3 * n_elements)
@@ -158,11 +160,11 @@ def current_velocity_quadratic(tau_qs, state, V_old):
     tol = 1e-12
     maxiter = 50
     bem2d.newton_rate_state.rate_state_solver(
-        element_normals, tau_qs, state, current_velocities2,
+        element_normals, tau_qs, state, current_velocities,
         a_dofs, eta, V0, 0.0, additional_normal_stress,
         tol, maxiter, 3
     )
-    return current_velocities2
+    return current_velocities
     # def f(V, tau_local, normal_stress, state_local):
     #     return (
     #         tau_local - eta * V - calc_frictional_stress(V, normal_stress, state_local)
@@ -309,7 +311,8 @@ def calc_derivatives_quadratic(x_and_state, t):
     dx_dt = -sliding_velocity_quadratic
     dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
     # TODO: FIX TO USE VELOCITY MAGNITUDE
-    dstate_dt = calc_state(sliding_velocity_quadratic[0::2], state)
+    vel_mags = np.linalg.norm(sliding_velocity_quadratic.reshape((-1,2)), axis = 1)
+    dstate_dt = calc_state(vel_mags, state)
     derivatives = np.zeros(dx_dt.size + dstate_dt.size)
     derivatives[0::3] = dx_dt[0::2]
     derivatives[1::3] = dx_dt[1::2]
@@ -403,76 +406,83 @@ def benchmark_derivative_evaluation():
 #     mxstep=5000,
 # )
 
-# history_RK45 = RK45(
+history_RK45 = RK45(
+    lambda t, x_and_state: calc_derivatives_quadratic(x_and_state, t),
+    0,
+    initial_conditions_quadratic,
+    1e100,
+    rtol=1e-4,
+    atol=1e-4
+)
+
+# while history_RK45.t < time_interval.max():
+history_RK45_t = []
+history_RK45_y = []
+for i in range(20000):
+    if history_RK45.t > 800 * secs_per_year:
+        break
+    history_RK45.step()
+    history_RK45_t.append(history_RK45.t)
+    history_RK45_y.append(history_RK45.y.copy())
+    
+history_RK45_t = np.array(history_RK45_t)
+history_RK45_y = np.array(history_RK45_y)
+
+# Plot time series
+plt.figure(figsize=(6, 9))
+plt.subplot(3, 1, 1)
+for i in range(n_elements):
+    plt.plot(history_RK45_t, history_RK45_y[:, 3 * i], label=str(i), linewidth=0.5)
+plt.xlabel("years")
+plt.ylabel("$u_x$")
+
+plt.subplot(3, 1, 2)
+for i in range(n_elements):
+    plt.plot(history_RK45_t, history_RK45_y[:, (3 * i) + 1], label=str(i), linewidth=0.5)
+plt.xlabel("years")
+plt.ylabel("$u_y$")
+
+plt.subplot(3, 1, 3)
+for i in range(n_elements):
+    plt.plot(history_RK45_t, history_RK45_y[:, (3 * i) + 2], label=str(i), linewidth=0.5)
+plt.xlabel("years")
+plt.ylabel("state")
+plt.show(block=False)
+
+
+
+# # Quadratic integrations
+# history = odeint(
 #     calc_derivatives_quadratic,
-#     time_interval.min(),
 #     initial_conditions_quadratic,
-#     time_interval.max(),
+#     time_interval,
 #     rtol=1e-4,
 #     atol=1e-4,
 #     mxstep=5000,
+#     printmessg=True,
 # )
 
-# while history_RK45.t < time_interval.max():
-#     history_RK45.step()
-
-
-
+# print("finished integration")
 # # Plot time series
 # plt.figure(figsize=(6, 9))
 # plt.subplot(3, 1, 1)
-# for i in range(n_elements):
-#     plt.plot(time_interval_yrs, history[:, 3 * i], label=str(i), linewidth=0.5)
+# for i in range(3 * n_elements):
+#     plt.plot(time_interval_yrs, history[:, (3 * i)], label=str(i), linewidth=0.5)
 # plt.xlabel("years")
 # plt.ylabel("$u_x$")
 
 # plt.subplot(3, 1, 2)
-# for i in range(n_elements):
+# for i in range(3 * n_elements):
 #     plt.plot(time_interval_yrs, history[:, (3 * i) + 1], label=str(i), linewidth=0.5)
 # plt.xlabel("years")
 # plt.ylabel("$u_y$")
 
 # plt.subplot(3, 1, 3)
-# for i in range(n_elements):
+# for i in range(3 * n_elements):
 #     plt.plot(time_interval_yrs, history[:, (3 * i) + 2], label=str(i), linewidth=0.5)
 # plt.xlabel("years")
 # plt.ylabel("state")
 # plt.show(block=False)
-
-
-
-# Quadratic integrations
-history = odeint(
-    calc_derivatives_quadratic,
-    initial_conditions_quadratic,
-    time_interval,
-    rtol=1e-4,
-    atol=1e-4,
-    mxstep=5000,
-    printmessg=True,
-)
-
-print("finished integration")
-# Plot time series
-plt.figure(figsize=(6, 9))
-plt.subplot(3, 1, 1)
-for i in range(3 * n_elements):
-    plt.plot(time_interval_yrs, history[:, (3 * i)], label=str(i), linewidth=0.5)
-plt.xlabel("years")
-plt.ylabel("$u_x$")
-
-plt.subplot(3, 1, 2)
-for i in range(3 * n_elements):
-    plt.plot(time_interval_yrs, history[:, (3 * i) + 1], label=str(i), linewidth=0.5)
-plt.xlabel("years")
-plt.ylabel("$u_y$")
-
-plt.subplot(3, 1, 3)
-for i in range(3 * n_elements):
-    plt.plot(time_interval_yrs, history[:, (3 * i) + 2], label=str(i), linewidth=0.5)
-plt.xlabel("years")
-plt.ylabel("state")
-plt.show(block=False)
 
 
 # # Plot resolved tracions

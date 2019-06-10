@@ -78,24 +78,25 @@ auto newton_rs(double tau_qs, double eta, double sigma_n,
 Vec2 solve_for_dof_mag(const Vec2 &traction_vec, double state, const Vec2 &normal,
                        const std::function<double(double, double)> rs_solver)
 {
-    // const double eps = 1e-14;
-    // auto normal_stress_vec = projection(traction_vec, normal);
-    // auto shear_traction_vec = sub(traction_vec, normal_stress_vec);
+    const double eps = 1e-14;
+    auto normal_stress_vec = projection(traction_vec, normal);
+    auto shear_traction_vec = sub(traction_vec, normal_stress_vec);
 
-    // double normal_mag = length(normal_stress_vec);
-    // double shear_mag = length(shear_traction_vec);
-    // if (shear_mag < eps) {
-    //     return {0,0};
-    // }
-    double shear_mag = traction_vec[0];
-    double normal_mag = 0.0;
+    double normal_mag = length(normal_stress_vec);
+    double shear_mag = length(shear_traction_vec);
+    if (shear_mag < eps)
+    {
+        return {0, 0};
+    }
+    // double shear_mag = traction_vec[0]; Uncomment to go back to x-axis only.s
+    // double normal_mag = 0.0;
 
     double V_mag = rs_solver(shear_mag, normal_mag);
 
-    return {V_mag, 0.0};
+    //return {V_mag, 0.0}; Uncomment to go back to x-axis only.
 
-    // auto shear_dir = div(shear_traction_vec, shear_mag);
-    // return mult(shear_dir, V_mag);
+    auto shear_dir = div(shear_traction_vec, shear_mag);
+    return mult(shear_dir, V_mag);
 }
 
 void rate_state_solver(NPArray<double> element_normals, NPArray<double> traction,
@@ -127,11 +128,11 @@ void rate_state_solver(NPArray<double> element_normals, NPArray<double> traction
             auto rs_solver_fnc = [&](double shear_mag, double normal_mag) {
                 auto solve_result = newton_rs(
                     shear_mag, eta,
-                    // normal_mag + normal_stress_ptr[dof],
-                    normal_stress_ptr[dof],
+                    normal_mag + normal_stress_ptr[dof],
+                    // normal_stress_ptr[dof], // This line ignores the time varying elastic normal stresses.
+                    // and only uses the constant offset normal stress.
                     state, a_ptr[dof], V0, C, 0.0, tol, maxiter);
                 assert(solve_result.second);
-                /* std::cout << "C++: " << shear_mag << " " << solve_result.first << " " << eta << " " << normal_stress_ptr[dof] << " " << state << " " << a_ptr[dof] << " " << V0 << " " << C << " " << std::endl; */
                 return solve_result.first;
             };
 
