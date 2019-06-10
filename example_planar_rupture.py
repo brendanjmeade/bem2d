@@ -24,7 +24,7 @@ element = {}
 L = 10000
 mu = 3e10
 nu = 0.25
-x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 50)
+x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 100)
 
 for i in range(0, x1.size):
     element["x1"] = x1[i]
@@ -53,7 +53,7 @@ Vp = 1e-9  # Rate of plate motion
 sigma_n = 50e6  # Normal stress (Pa)
 a = 0.015  # direct velocity strengthening effect
 b = 0.02  # state-based velocity weakening effect
-Dc = 0.1  # state evolution length scale (m)
+Dc = 0.05  # state evolution length scale (m)
 f0 = 0.6  # baseline coefficient of friction
 V0 = 1e-6  # when V = V0, f = f0, V is (m/s)
 secs_per_year = 365 * 24 * 60 * 60
@@ -67,7 +67,6 @@ initial_velocity_quadratic = np.zeros(6 * n_elements)
 initial_velocity_quadratic[0::2] = Vp / 1000.0
 
 
-@profile
 def calc_frictional_stress(velocity, normal_stress, state):
     """ Rate-state friction law w/ Rice et al 2001 regularization so that
     it is nonsingular at V = 0.  The frictional stress is equal to the
@@ -76,7 +75,7 @@ def calc_frictional_stress(velocity, normal_stress, state):
     frictional_stress = friction * normal_stress
     return frictional_stress
 
-@profile
+
 def calc_frictional_stress(velocity, normal_stress, state):
     """ Rate-state friction law w/ Rice et al 2001 regularization so that
     it is nonsingular at V = 0.  The frictional stress is equal to the
@@ -95,9 +94,7 @@ additional_normal_stress = sigma_n * np.ones(n_elements)
 element_normals = np.zeros((n_elements, 2))
 element_normals[:, 1] = 1.0
 
-@profile
 def current_velocity(tau_qs, state, V_old):
-
     current_velocities2 = np.empty(n_elements * 2)
     tol = 1e-12
     maxiter = 50
@@ -110,8 +107,6 @@ def current_velocity(tau_qs, state, V_old):
 
 
     """ Solve the algebraic part of the DAE system """
-
-    @profile
     def f(V, tau_local, normal_stress, state_local):
         return (
             tau_local - eta * V - calc_frictional_stress(V, normal_stress, state_local)
@@ -150,25 +145,38 @@ def current_velocity(tau_qs, state, V_old):
     np.testing.assert_almost_equal(current_velocities, current_velocities2.flatten())
     return current_velocities
 
-@profile
+
 def current_velocity_quadratic(tau_qs, state, V_old):
     """ Solve the algebraic part of the DAE system """
+    current_velocities2 = np.empty(6 * n_elements)
 
-    @profile
-    def f(V, tau_local, normal_stress, state_local):
-        return (
-            tau_local - eta * V - calc_frictional_stress(V, normal_stress, state_local)
-        )
+    a_dofs = a * np.ones(3 * n_elements)
+    additional_normal_stress = sigma_n * np.ones(3 * n_elements)
+    element_normals = np.zeros((n_elements, 2))
+    element_normals[:, 1] = 1.0
 
-    # For each node do the f(V) solve
-    current_velocities = np.zeros(6 * n_elements)
-    for i in range(0, 3 * n_elements):
-        velocity_mag = fsolve(f, V_old[2 * i], args=(tau_qs[2 * i], sigma_n, state[i]))[
-            0
-        ]
-        current_velocities[2 * i] = velocity_mag
-        current_velocities[2 * i + 1] = 0  # Assuming x-direction only
-    return current_velocities
+    tol = 1e-12
+    maxiter = 50
+    bem2d.newton_rate_state.rate_state_solver(
+        element_normals, tau_qs, state, current_velocities2,
+        a_dofs, eta, V0, 0.0, additional_normal_stress,
+        tol, maxiter, 3
+    )
+    return current_velocities2
+    # def f(V, tau_local, normal_stress, state_local):
+    #     return (
+    #         tau_local - eta * V - calc_frictional_stress(V, normal_stress, state_local)
+    #     )
+
+    # # For each node do the f(V) solve
+    # current_velocities = np.zeros(6 * n_elements)
+    # for i in range(0, 3 * n_elements):
+    #     velocity_mag = fsolve(f, V_old[2 * i], args=(tau_qs[2 * i], sigma_n, state[i]))[
+    #         0
+    #     ]
+    #     current_velocities[2 * i] = velocity_mag
+    #     current_velocities[2 * i + 1] = 0  # Assuming x-direction only
+    # return current_velocities
 
 
 def steady_state(velocities):
@@ -203,8 +211,8 @@ def steady_state_quadratic(velocities):
 
 state_0_quadratic = steady_state_quadratic(initial_velocity_quadratic)
 
-@profile
-def calc_derivatives(t, x_and_state):
+
+def calc_derivatives(x_and_state, t):
     """ Derivatives to feed to ODE integrator """
     calc_derivatives.idx += 1
     if calc_derivatives.idx % 100 == 0:
@@ -238,44 +246,43 @@ def calc_derivatives(t, x_and_state):
     return derivatives
 
 
-def calc_derivatives_ode(t, x_and_state):
-    """ Derivatives to feed to ODE integrator """
-    calc_derivatives.idx += 1
-    if calc_derivatives.idx % 100 == 0:
-        print("time =", t / secs_per_year)
+# def calc_derivatives_ode(t, x_and_state):
+#     """ Derivatives to feed to ODE integrator """
+#     calc_derivatives.idx += 1
+#     if calc_derivatives.idx % 100 == 0:
+#         print("time =", t / secs_per_year)
 
-    ux = x_and_state[0::3]
-    uy = x_and_state[1::3]
-    state = x_and_state[2::3]
-    x = np.zeros(ux.size + uy.size)
-    x[0::2] = ux
-    x[1::2] = uy
+#     ux = x_and_state[0::3]
+#     uy = x_and_state[1::3]
+#     state = x_and_state[2::3]
+#     x = np.zeros(ux.size + uy.size)
+#     x[0::2] = ux
+#     x[1::2] = uy
 
-    # Current shear stress on fault (slip->traction)
-    tau_qs = slip_to_traction @ x
+#     # Current shear stress on fault (slip->traction)
+#     tau_qs = slip_to_traction @ x
 
-    # Solve for the current velocity...This is the algebraic part
-    sliding_velocity = current_velocity(
-        tau_qs, state, calc_derivatives.sliding_velocity_old
-    )
+#     # Solve for the current velocity...This is the algebraic part
+#     sliding_velocity = current_velocity(
+#         tau_qs, state, calc_derivatives.sliding_velocity_old
+#     )
 
-    # Store the velocity to use it next time for warm-start the velocity solver
-    calc_derivatives.sliding_velocity_old = sliding_velocity
-    dx_dt = -sliding_velocity
-    dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
-    # TODO: FIX TO USE VELOCITY MAGNITUDE
-    dstate_dt = calc_state(sliding_velocity[0::2], state)
-    derivatives = np.zeros(dx_dt.size + dstate_dt.size)
-    derivatives[0::3] = dx_dt[0::2]
-    derivatives[1::3] = dx_dt[1::2]
-    derivatives[2::3] = dstate_dt
-    return derivatives
+#     # Store the velocity to use it next time for warm-start the velocity solver
+#     calc_derivatives.sliding_velocity_old = sliding_velocity
+#     dx_dt = -sliding_velocity
+#     dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
+#     # TODO: FIX TO USE VELOCITY MAGNITUDE
+#     dstate_dt = calc_state(sliding_velocity[0::2], state)
+#     derivatives = np.zeros(dx_dt.size + dstate_dt.size)
+#     derivatives[0::3] = dx_dt[0::2]
+#     derivatives[1::3] = dx_dt[1::2]
+#     derivatives[2::3] = dstate_dt
+#     return derivatives
 
 calc_derivatives.idx = 0
 calc_derivatives.sliding_velocity_old = initial_velocity
 
-@profile
-def calc_derivatives_quadratic(t, x_and_state):
+def calc_derivatives_quadratic(x_and_state, t):
     """ Derivatives to feed to ODE integrator """
     calc_derivatives_quadratic.idx += 1
     if calc_derivatives_quadratic.idx % 100 == 0:
@@ -354,23 +361,23 @@ def benchmark_derivative_evaluation():
     print("constant (matrix vector multiply)")
     print("--- %s seconds ---" % (end_time - start_time))
 
-    # start_time = time.time()
-    # for i in range(n_tests):
-    #     x_and_state = np.random.rand(9 * n_elements)
-    #     t = np.random.rand(1)
-    #     _ = calc_derivatives_quadratic(t, x_and_state)
-    # end_time = time.time()
-    # print("quadratic (derivative evaluation)")
-    # print("--- %s seconds ---" % (end_time - start_time))
+    start_time = time.time()
+    for i in range(n_tests):
+        x_and_state = np.random.rand(9 * n_elements)
+        t = np.random.rand(1)
+        _ = calc_derivatives_quadratic(t, x_and_state)
+    end_time = time.time()
+    print("quadratic (derivative evaluation)")
+    print("--- %s seconds ---" % (end_time - start_time))
 
-    # start_time = time.time()
-    # for i in range(n_tests):
-    #     slip = np.random.rand(6 * n_elements)
-    #     _ = slip_to_traction_quadratic * slip
-    # end_time = time.time()
-    # print("quadratic (matrix vector multiply)")
-    # print("--- %s seconds ---" % (end_time - start_time))
-benchmark_derivative_evaluation()
+    start_time = time.time()
+    for i in range(n_tests):
+        slip = np.random.rand(6 * n_elements)
+        _ = slip_to_traction_quadratic * slip
+    end_time = time.time()
+    print("quadratic (matrix vector multiply)")
+    print("--- %s seconds ---" % (end_time - start_time))
+# benchmark_derivative_evaluation()
 
 
 # # Integrate to build time series
@@ -435,36 +442,37 @@ benchmark_derivative_evaluation()
 
 
 # Quadratic integrations
-# history = odeint(
-#     calc_derivatives_quadratic,
-#     initial_conditions_quadratic,
-#     time_interval,
-#     rtol=1e-4,
-#     atol=1e-4,
-#     mxstep=5000,
-#     printmessg=True,
-# )
+history = odeint(
+    calc_derivatives_quadratic,
+    initial_conditions_quadratic,
+    time_interval,
+    rtol=1e-4,
+    atol=1e-4,
+    mxstep=5000,
+    printmessg=True,
+)
 
-# # Plot time series
-# plt.figure(figsize=(6, 9))
-# plt.subplot(3, 1, 1)
-# for i in range(3 * n_elements):
-#     plt.plot(time_interval_yrs, history[:, (3 * i)], label=str(i), linewidth=0.5)
-# plt.xlabel("years")
-# plt.ylabel("$u_x$")
+print("finished integration")
+# Plot time series
+plt.figure(figsize=(6, 9))
+plt.subplot(3, 1, 1)
+for i in range(3 * n_elements):
+    plt.plot(time_interval_yrs, history[:, (3 * i)], label=str(i), linewidth=0.5)
+plt.xlabel("years")
+plt.ylabel("$u_x$")
 
-# plt.subplot(3, 1, 2)
-# for i in range(3 * n_elements):
-#     plt.plot(time_interval_yrs, history[:, (3 * i) + 1], label=str(i), linewidth=0.5)
-# plt.xlabel("years")
-# plt.ylabel("$u_y$")
+plt.subplot(3, 1, 2)
+for i in range(3 * n_elements):
+    plt.plot(time_interval_yrs, history[:, (3 * i) + 1], label=str(i), linewidth=0.5)
+plt.xlabel("years")
+plt.ylabel("$u_y$")
 
-# plt.subplot(3, 1, 3)
-# for i in range(3 * n_elements):
-#     plt.plot(time_interval_yrs, history[:, (3 * i) + 2], label=str(i), linewidth=0.5)
-# plt.xlabel("years")
-# plt.ylabel("state")
-# plt.show(block=False)
+plt.subplot(3, 1, 3)
+for i in range(3 * n_elements):
+    plt.plot(time_interval_yrs, history[:, (3 * i) + 2], label=str(i), linewidth=0.5)
+plt.xlabel("years")
+plt.ylabel("state")
+plt.show(block=False)
 
 
 # # Plot resolved tracions
