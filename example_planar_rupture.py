@@ -6,6 +6,9 @@ from scipy.optimize import fsolve
 from scipy.integrate import ode, odeint, RK45
 from importlib import reload
 
+import cppimport.import_hook
+import bem2d.newton_rate_state
+
 bem2d = reload(bem2d)
 plt.close("all")
 
@@ -86,8 +89,26 @@ def calc_state(velocity, state):
     """ State evolution law - aging law """
     return (b * V0 / Dc) * (np.exp((f0 - state) / b) - (velocity / V0))
 
+
+a_dofs = a * np.ones(n_elements)
+additional_normal_stress = sigma_n * np.ones(n_elements)
+element_normals = np.zeros((n_elements, 2))
+element_normals[:, 1] = 1.0
+
 @profile
 def current_velocity(tau_qs, state, V_old):
+
+    current_velocities2 = np.empty(n_elements * 2)
+    tol = 1e-12
+    maxiter = 50
+    bem2d.newton_rate_state.rate_state_solver(
+        element_normals, tau_qs, state, current_velocities2,
+        a_dofs, eta, V0, 0.0, additional_normal_stress,
+        tol, maxiter, 1
+    )
+    return current_velocities2
+
+
     """ Solve the algebraic part of the DAE system """
 
     @profile
@@ -96,26 +117,37 @@ def current_velocity(tau_qs, state, V_old):
             tau_local - eta * V - calc_frictional_stress(V, normal_stress, state_local)
         )
 
+    def fp(V, tau_local, normal_stress, state_local):
+        expsa = np.exp(state_local / a);
+        Q = (V * expsa) / (2 * V0);
+        return -eta - a * expsa * normal_stress / (2 * V0 * np.sqrt(1 + (Q * Q)));
+
     # For each element do the f(V) solve
-    current_velocities = np.zeros(2 * n_elements)
-    velocity_mag = fsolve(
-        f, V_old[0::2], args=(tau_qs[0::2], sigma_n * np.ones(n_elements), state)
-    )
+    # current_velocities = np.zeros(2 * n_elements)
+    # velocity_mag = fsolve(
+    #     f, V_old[0::2], args=(tau_qs[0::2], sigma_n * np.ones(n_elements), state)
+    # )
     # ONLY FOR FLAT GEOMETERY with y = 0 on all elements
-    current_velocities[0::2] = velocity_mag
-    current_velocities[1::2] = 0
+    # current_velocities[0::2] = velocity_mag
+    # current_velocities[1::2] = 0
 
     # # For each element do the f(V) solve
-    # current_velocities = np.zeros(2 * n_elements)
-    # for i in range(0, n_elements):
-    #     shear_stress = tau_qs[2 * i]
-    #     normal_stress = sigma_n
-    #     velocity_mag = fsolve(
-    #         f, V_old[2 * i], args=(shear_stress, normal_stress, state[i])
-    #     )[0]
-    #     # ONLY FOR FLAT GEOMETERY with y = 0 on all elements
-    #     current_velocities[2 * i] = velocity_mag
-    #     current_velocities[2 * i + 1] = 0
+    current_velocities = np.zeros(2 * n_elements)
+    for i in range(0, n_elements):
+        shear_stress = tau_qs[2 * i]
+        normal_stress = sigma_n
+        velocity_mag = fsolve(
+            f, V_old[2 * i], args=(shear_stress, normal_stress, state[i]),
+            fprime = fp,
+            full_output = True,
+            xtol = 1e-13
+        )
+        # ONLY FOR FLAT GEOMETERY with y = 0 on all elements
+        current_velocities[2 * i] = velocity_mag[0]
+        current_velocities[2 * i + 1] = 0
+        print("Python: ", shear_stress, velocity_mag, eta, sigma_n, state[i], a, V0, 0.0)
+
+    np.testing.assert_almost_equal(current_velocities, current_velocities2.flatten())
     return current_velocities
 
 @profile
@@ -299,7 +331,12 @@ initial_conditions_quadratic[2::3] = state_fault_quadratic
 
 # Time the derivayive calculation
 def benchmark_derivative_evaluation():
-    n_tests = 10
+    x_and_state = np.random.rand(3 * n_elements)
+    t = np.random.rand(1)
+    _ = calc_derivatives(t, x_and_state)
+
+    n_tests = 100
+
     start_time = time.time()
     for i in range(n_tests):
         x_and_state = np.random.rand(3 * n_elements)
@@ -334,7 +371,7 @@ def benchmark_derivative_evaluation():
     # print("quadratic (matrix vector multiply)")
     # print("--- %s seconds ---" % (end_time - start_time))
 benchmark_derivative_evaluation()
-    
+
 
 # # Integrate to build time series
 # history = odeint(
