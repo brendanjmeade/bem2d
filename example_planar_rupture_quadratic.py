@@ -3,7 +3,7 @@ import numpy as np
 import bem2d
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
-from scipy.integrate import RK45
+import scipy.integrate
 from importlib import reload
 
 import cppimport.import_hook
@@ -11,6 +11,13 @@ import bem2d.newton_rate_state
 
 bem2d = reload(bem2d)
 plt.close("all")
+
+# TODO: Remove extra "_quadratic"
+# TODO: Work through vector block motion for non planar
+# TODO: Try inclined fault
+# TODO: Material parameters for each fault element
+# TODO: Group other parameters into dictionary
+# TODO: Passing of element normals (Before loop)
 
 elements_fault = []
 element = {}
@@ -132,6 +139,8 @@ def calc_derivatives_quadratic(x_and_state, t):
     derivatives[1::3] = dx_dt[1::2]
     derivatives[2::3] = dstate_dt
     return derivatives
+
+
 calc_derivatives_quadratic.sliding_velocity_old = initial_velocity
 
 
@@ -139,7 +148,7 @@ calc_derivatives_quadratic.sliding_velocity_old = initial_velocity
 initial_conditions = np.zeros(9 * n_elements)
 initial_conditions[2::3] = steady_state(initial_velocity) * np.ones(3 * n_elements)
 
-history = RK45(
+history = scipy.integrate.RK45(
     lambda t, x_and_state: calc_derivatives_quadratic(x_and_state, t),
     0,
     initial_conditions,
