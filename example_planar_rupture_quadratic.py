@@ -2,7 +2,8 @@ import time
 import numpy as np
 import bem2d
 import matplotlib.pyplot as plt
-from scipy.optimize import fsolve
+# from scipy.optimize import fsolve
+import scipy.optimize
 import scipy.integrate
 from importlib import reload
 
@@ -19,6 +20,9 @@ plt.close("all")
 # TODO: Passing of element normals (Before loop)
 # TODO: Put as many functions as possible inside calc_derivatives
 
+TOL = 1e-12
+MAXITER = 50
+
 elements_fault = []
 element = {}
 L = 10000
@@ -31,6 +35,7 @@ for i in range(0, x1.size):
     elements_fault.append(element.copy())
 elements_fault = bem2d.standardize_elements(elements_fault)
 n_elements = len(elements_fault)
+n_nodes = 3 * n_elements
 
 
 mu = 3e10  # Shear modulus (Pa)
@@ -49,70 +54,39 @@ secs_per_year = 365 * 24 * 60 * 60
 time_interval_yrs = np.linspace(0.0, 600.0, 5001)
 time_interval = time_interval_yrs * secs_per_year
 
-# Initially, the slider is moving at 1/1000th the plate rate.
-initial_velocity = np.zeros(6 * n_elements)
-initial_velocity[0::2] = Vp / 1000.0
 
+# Calculate slip to traction partials on the fault
 _, _, slip_to_traction = bem2d.quadratic_partials_all(
     elements_fault, elements_fault, mu, nu
 )
 
 
 def calc_frictional_stress(velocity, normal_stress, state):
-    """ Rate-state friction law w/ Rice et al 2001 regularization so that
+    """ Rate-state friction law w/ Rice et al. (2001) regularization so that
     it is nonsingular at V = 0.  The frictional stress is equal to the
     friction coefficient * the normal stress """
     return normal_stress * a * np.arcsinh(velocity / (2 * V0) * np.exp(state / a))
 
 
 def calc_state(velocity, state):
-    """ State evolution law - aging law """
+    """ State evolution law : aging law """
     return b * V0 / Dc * (np.exp((f0 - state) / b) - (velocity / V0))
-
-
-def current_velocity(tau_qs, state):
-    """ Solve the algebraic part of the DAE system """
-    # TODO: use correct element normals!! assemble element_normals vector of shape (n_elements, 2) but do it outside this function
-    current_velocities = np.empty(6 * n_elements)
-    a_dofs = a * np.ones(3 * n_elements)
-    additional_normal_stress = sigma_n * np.ones(3 * n_elements)
-    element_normals = np.zeros((n_elements, 2))
-    element_normals[:, 1] = 1.0
-
-    tol = 1e-12
-    maxiter = 50
-    bem2d.newton_rate_state.rate_state_solver(
-        element_normals,
-        tau_qs,
-        state,
-        current_velocities,
-        a_dofs,
-        eta,
-        V0,
-        0.0,
-        additional_normal_stress,
-        tol,
-        maxiter,
-        3,
-    )
-    return current_velocities
 
 
 def steady_state(velocities):
     """ Steady state for initial condition """
-    steady_state_state = np.zeros(3 * n_elements)
-
     def f(state, v):
         return calc_state(v, state)
 
-    for i in range(3 * n_elements):
-        # TODO: FIX FOR NON XAXIS FAULT, USE VELOCITY MAGNITUDE
-        steady_state_state[i] = fsolve(f, 0.0, args=(velocities[2 * i],))[0]
+    steady_state_state = np.zeros(n_nodes)
+    for i in range(n_nodes):
+        steady_state_state[i] = scipy.optimize.fsolve(f, 0.0, args=(velocities[i],))[0]
     return steady_state_state
 
 
 def calc_derivatives(x_and_state, t):
     """ Derivatives to feed to ODE integrator """
+
     state = x_and_state[2::3]
     x = np.zeros(2 * state.size)
     x[0::2] = x_and_state[0::3]
@@ -122,6 +96,30 @@ def calc_derivatives(x_and_state, t):
     tau_qs = slip_to_traction @ x
 
     # Solve for the current velocity...This is the algebraic part
+    def current_velocity(tau_qs, state):
+        """ Solve the algebraic part of the DAE system """
+        # TODO: use correct element normals!! assemble element_normals vector of shape (n_elements, 2) but do it outside this function
+        current_velocities = np.empty(6 * n_elements)
+        a_dofs = a * np.ones(3 * n_elements)
+        additional_normal_stress = sigma_n * np.ones(3 * n_elements)
+        element_normals = np.zeros((n_elements, 2))
+        element_normals[:, 1] = 1.0
+
+        bem2d.newton_rate_state.rate_state_solver(
+            element_normals,
+            tau_qs,
+            state,
+            current_velocities,
+            a_dofs,
+            eta,
+            V0,
+            0.0,
+            additional_normal_stress,
+            TOL,
+            MAXITER,
+            3,
+        )
+        return current_velocities
     sliding_velocity = current_velocity(tau_qs, state)
 
     dx_dt = -sliding_velocity
@@ -136,22 +134,28 @@ def calc_derivatives(x_and_state, t):
     return derivatives
 
 
-# Set initial conditions and time integration
+# Set initial conditions and time integrate
+initial_velocity_x = Vp / 1000.0 * np.ones(n_nodes)
+initial_velocity_y = 0.0 * np.ones(n_nodes)
 initial_conditions = np.zeros(9 * n_elements)
-initial_conditions[2::3] = steady_state(initial_velocity) * np.ones(3 * n_elements)
+initial_conditions[0::3] = initial_velocity_x
+initial_conditions[1::3] = initial_velocity_y
+initial_conditions[2::3] = steady_state(initial_velocity_x)
+
 
 history = scipy.integrate.RK45(
     lambda t, x_and_state: calc_derivatives(x_and_state, t),
-    0,
+    time_interval.min(),
     initial_conditions,
-    1e100,
+    time_interval.max(),
     rtol=1e-4,
     atol=1e-4,
 )
 
 history_t = [history.t]
 history_y = [history.y.copy()]
-while history.t <= time_interval.max():
+while history.t < time_interval.max():
+    history.step()
     print(
         f"t = {history.t / secs_per_year:05.6f}"
         + " of "
@@ -159,7 +163,6 @@ while history.t <= time_interval.max():
         + f" ({100 * history.t / time_interval.max():.3f}"
         + "%)"
     )
-    history.step()
     history_t.append(history.t)
     history_y.append(history.y.copy())
 history_t = np.array(history_t)
