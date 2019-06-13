@@ -18,7 +18,6 @@ plt.close("all")
 # TODO: Material parameters for each fault element
 # TODO: Group other parameters into dictionary
 # TODO: Passing of element normals (Before loop)
-# TODO: Put as many functions as possible inside calc_derivatives
 
 TOL = 1e-12
 MAXITER = 50
@@ -90,7 +89,7 @@ def calc_derivatives(t, x_and_state):
     # Solve for the current velocity...This is the algebraic part
     # TODO: use correct element normals!! assemble element_normals vector of shape (n_elements, 2) but do it outside this function
     current_velocity = np.empty(2 * n_nodes)
-    a_dofs = a * np.ones(3 * n_elements)
+    a_dofs = a * np.ones(n_nodes)
     additional_normal_stress = sigma_n * np.ones(n_nodes)
     element_normals = np.zeros((n_elements, 2))
     element_normals[:, 1] = 1.0
@@ -125,7 +124,7 @@ def calc_derivatives(t, x_and_state):
 # Set initial conditions and time integrate
 initial_velocity_x = Vp / 1000.0 * np.ones(n_nodes)
 initial_velocity_y = 0.0 * np.ones(n_nodes)
-initial_conditions = np.zeros(9 * n_elements)
+initial_conditions = np.zeros(3 * n_nodes)
 initial_conditions[0::3] = initial_velocity_x
 initial_conditions[1::3] = initial_velocity_y
 initial_conditions[2::3] = steady_state(initial_velocity_x)
@@ -139,9 +138,9 @@ solver = scipy.integrate.RK23(
     atol=1e-4,
 )
 
-history_t = [solver.t]
-history_y = [solver.y.copy()]
-start_time = time.time()
+solution = {}
+solution["t"] = [solver.t]
+solution["y"] = [solver.y.copy()]
 while solver.t < time_interval.max():
     solver.step()
     print(
@@ -151,19 +150,17 @@ while solver.t < time_interval.max():
         + f" ({100 * solver.t / time_interval.max():.3f}"
         + "%)"
     )
-    history_t.append(solver.t)
-    history_y.append(solver.y.copy())
-end_time = time.time()
-print(end_time - start_time)
-history_t = np.array(history_t)
-history_y = np.array(history_y)
+    solution["t"].append(solver.t)
+    solution["y"].append(solver.y.copy())
+solution["t"] = np.array(solution["t"])
+solution["y"] = np.array(solution["y"])
 
 # Plot time integrated time series
 plt.figure(figsize=(6, 9))
 y_labels = ["$u_x$ (m)", "$u_y$ (m)", "state"]
 for i in range(len(y_labels)):
     plt.subplot(3, 1, i + 1)
-    plt.plot(history_t / secs_per_year, history_y[:, i::3], linewidth=0.5)
+    plt.plot(solution["t"] / secs_per_year, solution["y"][:, i::3], linewidth=0.5)
     plt.ylabel(y_labels[i])
 plt.xlabel("$t$ (years)")
 plt.show(block=False)
