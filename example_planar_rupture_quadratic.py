@@ -42,18 +42,18 @@ time_interval = time_interval_yrs * secs_per_year
 
 # Crete fault elements
 ELEMENTS_FAULT = []
-element = {}
+ELEMENT = {}
 L = 10000
 x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 50)
 for i in range(0, x1.size):
-    element["x1"] = x1[i]
-    element["y1"] = y1[i]
-    element["x2"] = x2[i]
-    element["y2"] = y2[i]
-    element["a"] = a
-    element["b"] = b
-    element["sigma_n"] = sigma_n
-    ELEMENTS_FAULT.append(element.copy())
+    ELEMENT["x1"] = x1[i]
+    ELEMENT["y1"] = y1[i]
+    ELEMENT["x2"] = x2[i]
+    ELEMENT["y2"] = y2[i]
+    ELEMENT["a"] = a
+    ELEMENT["b"] = b
+    ELEMENT["sigma_n"] = sigma_n
+    ELEMENTS_FAULT.append(ELEMENT.copy())
 ELEMENTS_FAULT = bem2d.standardize_elements(ELEMENTS_FAULT)
 N_ELEMENTS = len(ELEMENTS_FAULT)
 N_NODES = 3 * N_ELEMENTS
@@ -85,12 +85,10 @@ def calc_state(state, velocity):
     return b * v_0 / Dc * (np.exp((f0 - state) / b) - (velocity / v_0))
 
 
-def steady_state(velocities):
-    """ Steady state for initial condition """
-    steady_state_state = np.zeros(N_NODES)
-    for i in range(N_NODES):
-        steady_state_state[i] = scipy.optimize.fsolve(calc_state, 0.0, args=(velocities[i]))[0]
-    return steady_state_state
+def steady_state(velocities):  # Can I vectorize this?
+    """ Steady-state state for initial condition """
+    state = scipy.optimize.fsolve(calc_state, 0.5 * np.ones(N_NODES), args=(velocities))
+    return state
 
 
 def calc_derivatives(t, x_and_state):
@@ -123,7 +121,7 @@ def calc_derivatives(t, x_and_state):
     dx_dt = -current_velocity  # Is the negative sign for slip deficit convention?
     dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
     vel_mags = np.linalg.norm(current_velocity.reshape((-1, 2)), axis=1)
-    dstate_dt = calc_state(state, vel_mags)    
+    dstate_dt = calc_state(state, vel_mags)
     derivatives = np.zeros(dx_dt.size + dstate_dt.size)
     derivatives[0::3] = dx_dt[0::2]
     derivatives[1::3] = dx_dt[1::2]
