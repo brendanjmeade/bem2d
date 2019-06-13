@@ -84,6 +84,7 @@ def calc_frictional_stress(velocity, normal_stress, state):
     frictional_stress = friction * normal_stress
     return frictional_stress
 
+
 def calc_state(velocity, state):
     """ State evolution law - aging law """
     return (b * V0 / Dc) * (np.exp((f0 - state) / b) - (velocity / V0))
@@ -94,28 +95,38 @@ additional_normal_stress = sigma_n * np.ones(n_elements)
 element_normals = np.zeros((n_elements, 2))
 element_normals[:, 1] = 1.0
 
+
 def current_velocity(tau_qs, state, V_old):
     current_velocities2 = np.empty(n_elements * 2)
     tol = 1e-12
     maxiter = 50
     bem2d.newton_rate_state.rate_state_solver(
-        element_normals, tau_qs, state, current_velocities2,
-        a_dofs, eta, V0, 0.0, additional_normal_stress,
-        tol, maxiter, 1
+        element_normals,
+        tau_qs,
+        state,
+        current_velocities2,
+        a_dofs,
+        eta,
+        V0,
+        0.0,
+        additional_normal_stress,
+        tol,
+        maxiter,
+        1,
     )
     return current_velocities2
 
-
     """ Solve the algebraic part of the DAE system """
+
     def f(V, tau_local, normal_stress, state_local):
         return (
             tau_local - eta * V - calc_frictional_stress(V, normal_stress, state_local)
         )
 
     def fp(V, tau_local, normal_stress, state_local):
-        expsa = np.exp(state_local / a);
-        Q = (V * expsa) / (2 * V0);
-        return -eta - a * expsa * normal_stress / (2 * V0 * np.sqrt(1 + (Q * Q)));
+        expsa = np.exp(state_local / a)
+        Q = (V * expsa) / (2 * V0)
+        return -eta - a * expsa * normal_stress / (2 * V0 * np.sqrt(1 + (Q * Q)))
 
     # For each element do the f(V) solve
     # current_velocities = np.zeros(2 * n_elements)
@@ -132,15 +143,19 @@ def current_velocity(tau_qs, state, V_old):
         shear_stress = tau_qs[2 * i]
         normal_stress = sigma_n
         velocity_mag = fsolve(
-            f, V_old[2 * i], args=(shear_stress, normal_stress, state[i]),
-            fprime = fp,
-            full_output = True,
-            xtol = 1e-13
+            f,
+            V_old[2 * i],
+            args=(shear_stress, normal_stress, state[i]),
+            fprime=fp,
+            full_output=True,
+            xtol=1e-13,
         )
         # ONLY FOR FLAT GEOMETERY with y = 0 on all elements
         current_velocities[2 * i] = velocity_mag[0]
         current_velocities[2 * i + 1] = 0
-        print("Python: ", shear_stress, velocity_mag, eta, sigma_n, state[i], a, V0, 0.0)
+        print(
+            "Python: ", shear_stress, velocity_mag, eta, sigma_n, state[i], a, V0, 0.0
+        )
 
     np.testing.assert_almost_equal(current_velocities, current_velocities2.flatten())
     return current_velocities
@@ -148,7 +163,7 @@ def current_velocity(tau_qs, state, V_old):
 
 def current_velocity_quadratic(tau_qs, state, V_old):
     """ Solve the algebraic part of the DAE system """
-    #TODO: use correct element normals!! assemble element_normals vector of shape (n_elements, 2) but do it outside this function
+    # TODO: use correct element normals!! assemble element_normals vector of shape (n_elements, 2) but do it outside this function
 
     current_velocities = np.empty(6 * n_elements)
 
@@ -160,9 +175,18 @@ def current_velocity_quadratic(tau_qs, state, V_old):
     tol = 1e-12
     maxiter = 50
     bem2d.newton_rate_state.rate_state_solver(
-        element_normals, tau_qs, state, current_velocities,
-        a_dofs, eta, V0, 0.0, additional_normal_stress,
-        tol, maxiter, 3
+        element_normals,
+        tau_qs,
+        state,
+        current_velocities,
+        a_dofs,
+        eta,
+        V0,
+        0.0,
+        additional_normal_stress,
+        tol,
+        maxiter,
+        3,
     )
     return current_velocities
     # def f(V, tau_local, normal_stress, state_local):
@@ -195,6 +219,8 @@ def steady_state(velocities):
     #     # TODO: FIX FOR NON XAXIS FAULT, USE VELOCITY MAGNITUDE
     #     steady_state_state[i] = fsolve(f, 0.0, args=(velocities[2 * i],))[0]
     return steady_state_state
+
+
 state_0 = steady_state(initial_velocity)
 
 
@@ -284,6 +310,7 @@ def calc_derivatives(x_and_state, t):
 calc_derivatives.idx = 0
 calc_derivatives.sliding_velocity_old = initial_velocity
 
+
 def calc_derivatives_quadratic(x_and_state, t):
     """ Derivatives to feed to ODE integrator """
     calc_derivatives_quadratic.idx += 1
@@ -311,7 +338,7 @@ def calc_derivatives_quadratic(x_and_state, t):
     dx_dt = -sliding_velocity_quadratic
     dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
     # TODO: FIX TO USE VELOCITY MAGNITUDE
-    vel_mags = np.linalg.norm(sliding_velocity_quadratic.reshape((-1,2)), axis = 1)
+    vel_mags = np.linalg.norm(sliding_velocity_quadratic.reshape((-1, 2)), axis=1)
     dstate_dt = calc_state(vel_mags, state)
     derivatives = np.zeros(dx_dt.size + dstate_dt.size)
     derivatives[0::3] = dx_dt[0::2]
@@ -380,6 +407,8 @@ def benchmark_derivative_evaluation():
     end_time = time.time()
     print("quadratic (matrix vector multiply)")
     print("--- %s seconds ---" % (end_time - start_time))
+
+
 # benchmark_derivative_evaluation()
 
 
@@ -412,7 +441,7 @@ history_RK45 = RK45(
     initial_conditions_quadratic,
     1e100,
     rtol=1e-4,
-    atol=1e-4
+    atol=1e-4,
 )
 
 # while history_RK45.t < time_interval.max():
@@ -424,7 +453,7 @@ for i in range(20000):
     history_RK45.step()
     history_RK45_t.append(history_RK45.t)
     history_RK45_y.append(history_RK45.y.copy())
-    
+
 history_RK45_t = np.array(history_RK45_t)
 history_RK45_y = np.array(history_RK45_y)
 
@@ -438,17 +467,20 @@ plt.ylabel("$u_x$")
 
 plt.subplot(3, 1, 2)
 for i in range(n_elements):
-    plt.plot(history_RK45_t, history_RK45_y[:, (3 * i) + 1], label=str(i), linewidth=0.5)
+    plt.plot(
+        history_RK45_t, history_RK45_y[:, (3 * i) + 1], label=str(i), linewidth=0.5
+    )
 plt.xlabel("years")
 plt.ylabel("$u_y$")
 
 plt.subplot(3, 1, 3)
 for i in range(n_elements):
-    plt.plot(history_RK45_t, history_RK45_y[:, (3 * i) + 2], label=str(i), linewidth=0.5)
+    plt.plot(
+        history_RK45_t, history_RK45_y[:, (3 * i) + 2], label=str(i), linewidth=0.5
+    )
 plt.xlabel("years")
 plt.ylabel("state")
 plt.show(block=False)
-
 
 
 # # Quadratic integrations
