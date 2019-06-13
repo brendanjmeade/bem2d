@@ -84,7 +84,7 @@ def steady_state(velocities):
     return steady_state_state
 
 
-def calc_derivatives(x_and_state, t):
+def calc_derivatives(t, x_and_state):
     """ Derivatives to feed to ODE integrator """
 
     state = x_and_state[2::3]
@@ -144,7 +144,7 @@ initial_conditions[2::3] = steady_state(initial_velocity_x)
 
 
 history = scipy.integrate.RK45(
-    lambda t, x_and_state: calc_derivatives(x_and_state, t),
+    calc_derivatives,
     time_interval.min(),
     initial_conditions,
     time_interval.max(),
