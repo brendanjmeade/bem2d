@@ -9,15 +9,13 @@ import cppimport.import_hook
 import bem2d
 import bem2d.newton_rate_state
 
-
 bem2d = reload(bem2d)
 plt.close("all")
 
-# TODO: Work through vector block motion for non planar
+# TODO: Work through vector block motion for non-planar
 # TODO: Try inclined fault
 # TODO: Material parameters for each fault element
 # TODO: Group other parameters into dictionary
-# TODO: Passing of element normals (Before loop)
 
 # DAE solver parameters
 TOL = 1e-12
@@ -43,7 +41,7 @@ time_interval_yrs = np.linspace(0.0, 600.0, 5001)
 time_interval = time_interval_yrs * secs_per_year
 
 # Crete fault elements
-elements_fault = []
+ELEMENTS_FAULT = []
 element = {}
 L = 10000
 x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, 50)
@@ -53,31 +51,32 @@ for i in range(0, x1.size):
     element["x2"] = x2[i]
     element["y2"] = y2[i]
     element["a"] = a
+    element["b"] = b
     element["sigma_n"] = sigma_n
-    elements_fault.append(element.copy())
-elements_fault = bem2d.standardize_elements(elements_fault)
-n_elements = len(elements_fault)
-n_nodes = 3 * n_elements
+    ELEMENTS_FAULT.append(element.copy())
+ELEMENTS_FAULT = bem2d.standardize_elements(ELEMENTS_FAULT)
+N_ELEMENTS = len(ELEMENTS_FAULT)
+N_NODES = 3 * N_ELEMENTS
 
 # Extract parameters for later use as arrays
 ELEMENTS_FAULT_ARRAYS = {}
 ELEMENTS_FAULT_ARRAYS["a"] = np.array(
-    [np.tile(_["a"], 3) for _ in elements_fault]
+    [np.tile(_["a"], 3) for _ in ELEMENTS_FAULT]
 ).flatten()
 ELEMENTS_FAULT_ARRAYS["additional_normal_stress"] = np.array(
-    [np.tile(_["sigma_n"], 3) for _ in elements_fault]
+    [np.tile(_["sigma_n"], 3) for _ in ELEMENTS_FAULT]
 ).flatten()
-ELEMENTS_FAULT_ARRAYS["element_normals"] = np.empty((n_elements, 2))
+ELEMENTS_FAULT_ARRAYS["element_normals"] = np.empty((N_ELEMENTS, 2))
 ELEMENTS_FAULT_ARRAYS["element_normals"][:, 0] = np.array(
-    [_["x_normal"] for _ in elements_fault]
+    [_["x_normal"] for _ in ELEMENTS_FAULT]
 ).flatten()
 ELEMENTS_FAULT_ARRAYS["element_normals"][:, 1] = np.array(
-    [_["y_normal"] for _ in elements_fault]
+    [_["y_normal"] for _ in ELEMENTS_FAULT]
 ).flatten()
 
 # Calculate slip to traction partials on the fault
-_, _, slip_to_traction = bem2d.quadratic_partials_all(
-    elements_fault, elements_fault, mu, nu
+_, _, SLIP_TO_TRACTION = bem2d.quadratic_partials_all(
+    ELEMENTS_FAULT, ELEMENTS_FAULT, mu, nu
 )
 
 
@@ -92,8 +91,8 @@ def steady_state(velocities):
     def f(state, v):  # Is this function neccsary?
         return calc_state(v, state)
 
-    steady_state_state = np.zeros(n_nodes)
-    for i in range(n_nodes):
+    steady_state_state = np.zeros(N_NODES)
+    for i in range(N_NODES):
         steady_state_state[i] = scipy.optimize.fsolve(f, 0.0, args=(velocities[i],))[0]
     return steady_state_state
 
@@ -106,15 +105,15 @@ def calc_derivatives(t, x_and_state):
     x[1::2] = x_and_state[1::3]
 
     # Current shear stress on fault (slip->traction)
-    tractions = slip_to_traction @ x
+    tractions = SLIP_TO_TRACTION @ x
 
     # Solve for the current velocity...This is the algebraic part
-    current_velocity = np.empty(2 * n_nodes)
+    current_velocity = np.empty(2 * N_NODES)
     bem2d.newton_rate_state.rate_state_solver(
         ELEMENTS_FAULT_ARRAYS["element_normals"],
         tractions,
         state,
-        current_velocity,  # Modified in place
+        current_velocity,  # Modified in place and returns velocity solution
         ELEMENTS_FAULT_ARRAYS["a"],
         eta,
         V0,
@@ -137,14 +136,14 @@ def calc_derivatives(t, x_and_state):
 
 
 # Set initial conditions and time integrate
-initial_velocity_x = Vp / 1000.0 * np.ones(n_nodes)
-initial_velocity_y = 0.0 * np.ones(n_nodes)
-initial_conditions = np.zeros(3 * n_nodes)
+initial_velocity_x = Vp / 1000.0 * np.ones(N_NODES)
+initial_velocity_y = 0.0 * np.ones(N_NODES)
+initial_conditions = np.zeros(3 * N_NODES)
 initial_conditions[0::3] = initial_velocity_x
 initial_conditions[1::3] = initial_velocity_y
 initial_conditions[2::3] = steady_state(initial_velocity_x)
 
-solver = scipy.integrate.RK23(
+SOLVER = scipy.integrate.RK23(
     calc_derivatives,
     time_interval.min(),
     initial_conditions,
@@ -153,29 +152,52 @@ solver = scipy.integrate.RK23(
     atol=1e-4,
 )
 
-solution = {}
-solution["t"] = [solver.t]
-solution["y"] = [solver.y.copy()]
-while solver.t < time_interval.max():
-    solver.step()
+SOLUTION = {}
+SOLUTION["t"] = [SOLVER.t]
+SOLUTION["y"] = [SOLVER.y.copy()]
+while SOLVER.t < time_interval.max():
+    SOLVER.step()
     print(
-        f"t = {solver.t / secs_per_year:05.6f}"
+        f"t = {SOLVER.t / secs_per_year:05.6f}"
         + " of "
         + f"{time_interval.max() / secs_per_year:05.6f}"
-        + f" ({100 * solver.t / time_interval.max():.3f}"
+        + f" ({100 * SOLVER.t / time_interval.max():.3f}"
         + "%)"
     )
-    solution["t"].append(solver.t)
-    solution["y"].append(solver.y.copy())
-solution["t"] = np.array(solution["t"])
-solution["y"] = np.array(solution["y"])
+    SOLUTION["t"].append(SOLVER.t)
+    SOLUTION["y"].append(SOLVER.y.copy())
+SOLUTION["t"] = np.array(SOLUTION["t"])
+SOLUTION["y"] = np.array(SOLUTION["y"])
 
-# Plot time integrated time series
-plt.figure(figsize=(6, 9))
-y_labels = ["$u_x$ (m)", "$u_y$ (m)", "state"]
-for i, y_label in enumerate(y_labels):
-    plt.subplot(3, 1, i + 1)
-    plt.plot(solution["t"] / secs_per_year, solution["y"][:, i::3], linewidth=0.5)
-    plt.ylabel(y_label)
-plt.xlabel("$t$ (years)")
-plt.show(block=False)
+
+def plot_time_series():
+    """ Plot time integrated time series for each node """
+    plt.figure(figsize=(6, 9))
+    y_labels = ["$u_x$ (m)", "$u_y$ (m)", "state"]
+    for i, y_label in enumerate(y_labels):
+        plt.subplot(3, 1, i + 1)
+        plt.plot(SOLUTION["t"] / secs_per_year, SOLUTION["y"][:, i::3], linewidth=0.5)
+        plt.ylabel(y_label)
+    plt.xlabel("$t$ (years)")
+    plt.show(block=False)
+
+
+plot_time_series()
+
+
+def plot_slip_profile():
+    """ Plot time integrated time series for each node """
+    plot_times = np.floor(np.linspace(0, SOLUTION["y"].shape[0] - 1, 50)).astype(int)
+    plot_x = np.array([_["x_integration_points"] for _ in ELEMENTS_FAULT]).flatten()
+    plt.figure(figsize=(6, 9))
+    y_labels = ["$u_x$ (m)", "$u_y$ (m)", "state"]
+    for i, y_label in enumerate(y_labels):
+        plt.subplot(3, 1, i + 1)
+        for j in range(plot_times.size):
+            plt.plot(plot_x, SOLUTION["y"][plot_times[j], i::3], linewidth=0.5)
+        plt.ylabel(y_label)
+    plt.xlabel("$x$ (m)")
+    plt.show(block=False)
+
+
+plot_slip_profile()
