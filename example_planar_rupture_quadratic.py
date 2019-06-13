@@ -149,8 +149,8 @@ history = scipy.integrate.RK45(
     atol=1e-4,
 )
 
-history_t = []
-history_y = []
+history_t = [history.t]
+history_y = [history.y.copy()]
 while history.t <= time_interval.max():
     print(
         f"t = {history.t / secs_per_year:05.6f}"
