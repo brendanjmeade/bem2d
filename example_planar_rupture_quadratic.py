@@ -12,12 +12,12 @@ import bem2d.newton_rate_state
 bem2d = reload(bem2d)
 plt.close("all")
 
-# TODO: Remove extra "_quadratic"
 # TODO: Work through vector block motion for non planar
 # TODO: Try inclined fault
 # TODO: Material parameters for each fault element
 # TODO: Group other parameters into dictionary
 # TODO: Passing of element normals (Before loop)
+# TODO: Put as many functions as possible inside calc_derivatives
 
 elements_fault = []
 element = {}
@@ -70,7 +70,7 @@ def calc_state(velocity, state):
     return b * V0 / Dc * (np.exp((f0 - state) / b) - (velocity / V0))
 
 
-def current_velocity_quadratic(tau_qs, state, V_old):
+def current_velocity(tau_qs, state):
     """ Solve the algebraic part of the DAE system """
     # TODO: use correct element normals!! assemble element_normals vector of shape (n_elements, 2) but do it outside this function
     current_velocities = np.empty(6 * n_elements)
@@ -111,7 +111,7 @@ def steady_state(velocities):
     return steady_state_state
 
 
-def calc_derivatives_quadratic(x_and_state, t):
+def calc_derivatives(x_and_state, t):
     """ Derivatives to feed to ODE integrator """
     state = x_and_state[2::3]
     x = np.zeros(2 * state.size)
@@ -122,17 +122,12 @@ def calc_derivatives_quadratic(x_and_state, t):
     tau_qs = slip_to_traction @ x
 
     # Solve for the current velocity...This is the algebraic part
-    sliding_velocity_quadratic = current_velocity_quadratic(
-        tau_qs, state, calc_derivatives_quadratic.sliding_velocity_old
-    )
+    sliding_velocity = current_velocity(tau_qs, state)
 
-    # Store the velocity to use it next time for warm-start the velocity solver
-    calc_derivatives_quadratic.sliding_velocity_old = sliding_velocity_quadratic
-
-    dx_dt = -sliding_velocity_quadratic
+    dx_dt = -sliding_velocity
     dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
     # TODO: FIX TO USE VELOCITY MAGNITUDE
-    vel_mags = np.linalg.norm(sliding_velocity_quadratic.reshape((-1, 2)), axis=1)
+    vel_mags = np.linalg.norm(sliding_velocity.reshape((-1, 2)), axis=1)
     dstate_dt = calc_state(vel_mags, state)
     derivatives = np.zeros(dx_dt.size + dstate_dt.size)
     derivatives[0::3] = dx_dt[0::2]
@@ -141,15 +136,12 @@ def calc_derivatives_quadratic(x_and_state, t):
     return derivatives
 
 
-calc_derivatives_quadratic.sliding_velocity_old = initial_velocity
-
-
 # Set initial conditions and time integration
 initial_conditions = np.zeros(9 * n_elements)
 initial_conditions[2::3] = steady_state(initial_velocity) * np.ones(3 * n_elements)
 
 history = scipy.integrate.RK45(
-    lambda t, x_and_state: calc_derivatives_quadratic(x_and_state, t),
+    lambda t, x_and_state: calc_derivatives(x_and_state, t),
     0,
     initial_conditions,
     1e100,
