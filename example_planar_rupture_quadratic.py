@@ -35,7 +35,7 @@ Vp = 1e-9  # Rate of plate motion
 sigma_n = 50e6  # Normal stress (Pa)
 a = 0.015  # direct velocity strengthening effect
 b = 0.02  # state-based velocity weakening effect
-V0 = 1e-6  # when V = V0, f = f0, V is (m/s)
+v_0 = 1e-6  # when V = V0, f = f0, V is (m/s)
 secs_per_year = 365 * 24 * 60 * 60
 time_interval_yrs = np.linspace(0.0, 600.0, 5001)
 time_interval = time_interval_yrs * secs_per_year
@@ -80,20 +80,16 @@ _, _, SLIP_TO_TRACTION = bem2d.quadratic_partials_all(
 )
 
 
-def calc_state(velocity, state):
+def calc_state(state, velocity):
     """ State evolution law : aging law """
-    return b * V0 / Dc * (np.exp((f0 - state) / b) - (velocity / V0))
+    return b * v_0 / Dc * (np.exp((f0 - state) / b) - (velocity / v_0))
 
 
 def steady_state(velocities):
     """ Steady state for initial condition """
-
-    def f(state, v):  # Is this function neccsary?
-        return calc_state(v, state)
-
     steady_state_state = np.zeros(N_NODES)
     for i in range(N_NODES):
-        steady_state_state[i] = scipy.optimize.fsolve(f, 0.0, args=(velocities[i],))[0]
+        steady_state_state[i] = scipy.optimize.fsolve(calc_state, 0.0, args=(velocities[i]))[0]
     return steady_state_state
 
 
@@ -116,7 +112,7 @@ def calc_derivatives(t, x_and_state):
         current_velocity,  # Modified in place and returns velocity solution
         ELEMENTS_FAULT_ARRAYS["a"],
         eta,
-        V0,
+        v_0,
         0.0,
         ELEMENTS_FAULT_ARRAYS["additional_normal_stress"],
         TOL,
@@ -127,7 +123,7 @@ def calc_derivatives(t, x_and_state):
     dx_dt = -current_velocity  # Is the negative sign for slip deficit convention?
     dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
     vel_mags = np.linalg.norm(current_velocity.reshape((-1, 2)), axis=1)
-    dstate_dt = calc_state(vel_mags, state)
+    dstate_dt = calc_state(state, vel_mags)    
     derivatives = np.zeros(dx_dt.size + dstate_dt.size)
     derivatives[0::3] = dx_dt[0::2]
     derivatives[1::3] = dx_dt[1::2]
