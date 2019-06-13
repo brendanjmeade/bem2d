@@ -1,14 +1,14 @@
+from importlib import reload
 import time
 import numpy as np
-import bem2d
 import matplotlib.pyplot as plt
-# from scipy.optimize import fsolve
 import scipy.optimize
 import scipy.integrate
-from importlib import reload
 
 import cppimport.import_hook
+import bem2d
 import bem2d.newton_rate_state
+
 
 bem2d = reload(bem2d)
 plt.close("all")
@@ -61,13 +61,6 @@ _, _, slip_to_traction = bem2d.quadratic_partials_all(
 )
 
 
-def calc_frictional_stress(velocity, normal_stress, state):
-    """ Rate-state friction law w/ Rice et al. (2001) regularization so that
-    it is nonsingular at V = 0.  The frictional stress is equal to the
-    friction coefficient * the normal stress """
-    return normal_stress * a * np.arcsinh(velocity / (2 * V0) * np.exp(state / a))
-
-
 def calc_state(velocity, state):
     """ State evolution law : aging law """
     return b * V0 / Dc * (np.exp((f0 - state) / b) - (velocity / V0))
@@ -86,7 +79,6 @@ def steady_state(velocities):
 
 def calc_derivatives(t, x_and_state):
     """ Derivatives to feed to ODE integrator """
-
     state = x_and_state[2::3]
     x = np.zeros(2 * state.size)
     x[0::2] = x_and_state[0::3]
@@ -96,36 +88,32 @@ def calc_derivatives(t, x_and_state):
     tau_qs = slip_to_traction @ x
 
     # Solve for the current velocity...This is the algebraic part
-    def current_velocity(tau_qs, state):
-        """ Solve the algebraic part of the DAE system """
-        # TODO: use correct element normals!! assemble element_normals vector of shape (n_elements, 2) but do it outside this function
-        current_velocities = np.empty(6 * n_elements)
-        a_dofs = a * np.ones(3 * n_elements)
-        additional_normal_stress = sigma_n * np.ones(3 * n_elements)
-        element_normals = np.zeros((n_elements, 2))
-        element_normals[:, 1] = 1.0
+    # TODO: use correct element normals!! assemble element_normals vector of shape (n_elements, 2) but do it outside this function
+    current_velocity = np.empty(2 * n_nodes)
+    a_dofs = a * np.ones(3 * n_elements)
+    additional_normal_stress = sigma_n * np.ones(n_nodes)
+    element_normals = np.zeros((n_elements, 2))
+    element_normals[:, 1] = 1.0
 
-        bem2d.newton_rate_state.rate_state_solver(
-            element_normals,
-            tau_qs,
-            state,
-            current_velocities,
-            a_dofs,
-            eta,
-            V0,
-            0.0,
-            additional_normal_stress,
-            TOL,
-            MAXITER,
-            3,
-        )
-        return current_velocities
-    sliding_velocity = current_velocity(tau_qs, state)
+    bem2d.newton_rate_state.rate_state_solver(
+        element_normals,
+        tau_qs,
+        state,
+        current_velocity, # Modified in place 
+        a_dofs,
+        eta,
+        V0,
+        0.0,
+        additional_normal_stress,
+        TOL,
+        MAXITER,
+        3,
+    )
 
-    dx_dt = -sliding_velocity
+    dx_dt = -current_velocity # Is the negative sign for slip deficit convention?
     dx_dt[0::2] += Vp  # FIX TO USE Vp in the plate direction
     # TODO: FIX TO USE VELOCITY MAGNITUDE
-    vel_mags = np.linalg.norm(sliding_velocity.reshape((-1, 2)), axis=1)
+    vel_mags = np.linalg.norm(current_velocity.reshape((-1, 2)), axis=1)
     dstate_dt = calc_state(vel_mags, state)
     derivatives = np.zeros(dx_dt.size + dstate_dt.size)
     derivatives[0::3] = dx_dt[0::2]
@@ -142,8 +130,7 @@ initial_conditions[0::3] = initial_velocity_x
 initial_conditions[1::3] = initial_velocity_y
 initial_conditions[2::3] = steady_state(initial_velocity_x)
 
-
-history = scipy.integrate.RK45(
+solver = scipy.integrate.RK23(
     calc_derivatives,
     time_interval.min(),
     initial_conditions,
@@ -152,19 +139,22 @@ history = scipy.integrate.RK45(
     atol=1e-4,
 )
 
-history_t = [history.t]
-history_y = [history.y.copy()]
-while history.t < time_interval.max():
-    history.step()
+history_t = [solver.t]
+history_y = [solver.y.copy()]
+start_time = time.time()
+while solver.t < time_interval.max():
+    solver.step()
     print(
-        f"t = {history.t / secs_per_year:05.6f}"
+        f"t = {solver.t / secs_per_year:05.6f}"
         + " of "
         + f"{time_interval.max() / secs_per_year:05.6f}"
-        + f" ({100 * history.t / time_interval.max():.3f}"
+        + f" ({100 * solver.t / time_interval.max():.3f}"
         + "%)"
     )
-    history_t.append(history.t)
-    history_y.append(history.y.copy())
+    history_t.append(solver.t)
+    history_y.append(solver.y.copy())
+end_time = time.time()
+print(end_time - start_time)
 history_t = np.array(history_t)
 history_y = np.array(history_y)
 
