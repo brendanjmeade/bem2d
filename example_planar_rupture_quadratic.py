@@ -249,6 +249,8 @@ def plot_volume(time_idx, count):
         plt.ylabel("$y$ (m)")
 
     # Internal evaluation for fault
+    # TODO: displacement -> velocity
+    # TODO: stress -> stressing rate
     fault_slip = np.empty(2 * N_NODES)
     fault_slip[0::2] = SOLUTION["y"][time_idx, 0::3]
     fault_slip[1::2] = SOLUTION["y"][time_idx, 1::3]
