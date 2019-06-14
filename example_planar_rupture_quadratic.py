@@ -222,7 +222,7 @@ plot_slip_profile()
 # Observation points for internal evaluation and visualization
 n_pts = 50
 x_plot = np.linspace(-15e3, 15e3, n_pts)
-y_plot = np.linspace(-5e3, 5e3, n_pts)
+y_plot = np.linspace(-15e3, 15e3, n_pts)
 x_plot, y_plot = np.meshgrid(x_plot, y_plot)
 x_plot = x_plot.flatten()
 y_plot = y_plot.flatten()
@@ -251,7 +251,7 @@ J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
 s_plot_field = np.log10(np.abs(J2))
 
 n_contours = 5
-plt.figure(figsize=(6, 8))
+plt.figure(figsize=(5, 8))
 plt.subplot(2, 1, 1)
 plt.contourf(
     x_plot.reshape(n_pts, n_pts),
@@ -269,9 +269,7 @@ plt.contour(
     linewidths=0.25,
     colors="k",
 )
-
-
-
+plt.gca().set_aspect("equal")
 plt.title("displacement magnitude")
 
 plt.subplot(2, 1, 2)
@@ -295,4 +293,6 @@ plt.contour(
 )
 # common_plot_elements()
 plt.title("second stress invariant (deviatoric)")
+plt.gca().set_aspect("equal")
+
 plt.show(block=False)
