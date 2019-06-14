@@ -1,4 +1,5 @@
 from importlib import reload
+import os
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,6 +17,7 @@ plt.close("all")
 # TODO: Figure out how to enter boundary condition better?
 
 # Constants and model parameters
+OUTDIR = "/Users/meade/Desktop/output/"
 NEWTON_TOL = 1e-12
 MAXITER = 50
 ODE_ATOL = 1e-4
@@ -198,7 +200,7 @@ def plot_time_series():
     plt.show(block=False)
 
 
-plot_time_series()
+# plot_time_series()
 
 
 def plot_slip_profile():
@@ -216,83 +218,117 @@ def plot_slip_profile():
     plt.show(block=False)
 
 
-plot_slip_profile()
+# plot_slip_profile()
 
 
-# Observation points for internal evaluation and visualization
-n_pts = 50
-x_plot = np.linspace(-15e3, 15e3, n_pts)
-y_plot = np.linspace(-15e3, 15e3, n_pts)
-x_plot, y_plot = np.meshgrid(x_plot, y_plot)
-x_plot = x_plot.flatten()
-y_plot = y_plot.flatten()
-obs_pts = np.array([x_plot, y_plot]).T.copy()
+def plot_volume(time_idx, count):
+    # Observation points for internal evaluation and visualization
+    n_pts = 50
+    x_plot = np.linspace(-15e3, 15e3, n_pts)
+    y_plot = np.linspace(-15e3, 15e3, n_pts)
+    x_plot, y_plot = np.meshgrid(x_plot, y_plot)
+    x_plot = x_plot.flatten()
+    y_plot = y_plot.flatten()
+    obs_pts = np.array([x_plot, y_plot]).T.copy()
 
-# Internal evaluation for fault
-time_idx = 200
-fault_slip = np.empty(2 * N_NODES)
-fault_slip[0::2] = SOLUTION["y"][time_idx, 0::3]
-fault_slip[1::2] = SOLUTION["y"][time_idx, 1::3]
+    def common_plot_elements():
+        # Plot fault trace
+        for element in ELEMENTS_FAULT:
+            plt.plot(
+                [element["x1"], element["x2"]],
+                [element["y1"], element["y2"]],
+                "-k",
+                linewidth=1.0,
+                zorder=50,
+            )
+        x_lim = np.array([x_plot.min(), x_plot.max()])
+        y_lim = np.array([y_plot.min(), y_plot.max()])
+        plt.xticks([x_lim[0], 0, x_lim[1]])
+        plt.yticks([y_lim[0], 0, y_lim[1]])
+        plt.gca().set_aspect("equal")
+        plt.ylabel("$y$ (m)")
 
-displacement_from_fault, stress_from_fault = bem2d.integrate(
-    obs_pts, ELEMENTS_FAULT, PARAMETERS["mu"], PARAMETERS["nu"], "slip", fault_slip
-)
+    # Internal evaluation for fault
+    fault_slip = np.empty(2 * N_NODES)
+    fault_slip[0::2] = SOLUTION["y"][time_idx, 0::3]
+    fault_slip[1::2] = SOLUTION["y"][time_idx, 1::3]
 
-ux_plot = displacement_from_fault[0, :]
-uy_plot = displacement_from_fault[1, :]
-u_plot_field = np.sqrt(ux_plot ** 2 + uy_plot ** 2)  # displacement magnitude
+    displacement_from_fault, stress_from_fault = bem2d.integrate(
+        obs_pts, ELEMENTS_FAULT, PARAMETERS["mu"], PARAMETERS["nu"], "slip", fault_slip
+    )
 
-sxx_plot = stress_from_fault[0, :]
-syy_plot = stress_from_fault[1, :]
-sxy_plot = stress_from_fault[2, :]
-I1 = sxx_plot + syy_plot  # 1st invariant
-I2 = sxx_plot * syy_plot - sxy_plot ** 2  # 2nd invariant
-J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
-s_plot_field = np.log10(np.abs(J2))
+    ux_plot = displacement_from_fault[0, :]
+    uy_plot = displacement_from_fault[1, :]
+    u_plot_field = np.sqrt(ux_plot ** 2 + uy_plot ** 2)  # displacement magnitude
+    sxx_plot = stress_from_fault[0, :]
+    syy_plot = stress_from_fault[1, :]
+    sxy_plot = stress_from_fault[2, :]
+    I1 = sxx_plot + syy_plot  # 1st invariant
+    I2 = sxx_plot * syy_plot - sxy_plot ** 2  # 2nd invariant
+    J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
+    s_plot_field = np.log10(np.abs(J2))
 
-n_contours = 5
-plt.figure(figsize=(5, 8))
-plt.subplot(2, 1, 1)
-plt.contourf(
-    x_plot.reshape(n_pts, n_pts),
-    y_plot.reshape(n_pts, n_pts),
-    u_plot_field.reshape(n_pts, n_pts),
-    n_contours,
-    cmap=plt.get_cmap("plasma"),
-)
-plt.colorbar(fraction=0.046, pad=0.04, extend="both", label="$||u_i||$ (m)")
-plt.contour(
-    x_plot.reshape(n_pts, n_pts),
-    y_plot.reshape(n_pts, n_pts),
-    u_plot_field.reshape(n_pts, n_pts),
-    n_contours,
-    linewidths=0.25,
-    colors="k",
-)
-plt.gca().set_aspect("equal")
-plt.title("displacement magnitude")
+    contour_vec_1 =  np.arange(0, 8, 1)
+    plt.figure(figsize=(5, 8))
+    plt.subplot(2, 1, 1)
+    plt.contourf(
+        x_plot.reshape(n_pts, n_pts),
+        y_plot.reshape(n_pts, n_pts),
+        u_plot_field.reshape(n_pts, n_pts),
+        contour_vec_1,
+        cmap=plt.get_cmap("plasma"),
+    )
+    plt.colorbar(fraction=0.046, pad=0.04, extend="both", label="$||u_i||$ (m)")
+    plt.contour(
+        x_plot.reshape(n_pts, n_pts),
+        y_plot.reshape(n_pts, n_pts),
+        u_plot_field.reshape(n_pts, n_pts),
+        contour_vec_1,
+        linewidths=0.25,
+        colors="k",
+    )
+    common_plot_elements()
+    plt.gca().set_aspect("equal")
 
-plt.subplot(2, 1, 2)
-plt.contourf(
-    x_plot.reshape(n_pts, n_pts),
-    y_plot.reshape(n_pts, n_pts),
-    s_plot_field.reshape(n_pts, n_pts),
-    n_contours,
-    cmap=plt.get_cmap("hot_r"),
-)
-plt.colorbar(
-    fraction=0.046, pad=0.04, extend="both", label="$log_{10}|\mathrm{J}_2|$ (Pa$^2$)"
-)
-plt.contour(
-    x_plot.reshape(n_pts, n_pts),
-    y_plot.reshape(n_pts, n_pts),
-    s_plot_field.reshape(n_pts, n_pts),
-    n_contours,
-    linewidths=0.25,
-    colors="k",
-)
-# common_plot_elements()
-plt.title("second stress invariant (deviatoric)")
-plt.gca().set_aspect("equal")
+    contour_vec_2 =  np.arange(10, 17, 1)
+    plt.subplot(2, 1, 2)
+    plt.contourf(
+        x_plot.reshape(n_pts, n_pts),
+        y_plot.reshape(n_pts, n_pts),
+        s_plot_field.reshape(n_pts, n_pts),
+        contour_vec_2,
+        cmap=plt.get_cmap("hot_r"),
+    )
+    plt.colorbar(
+        fraction=0.046, pad=0.04, extend="both", label="$log_{10}|\mathrm{J}_2|$ (Pa$^2$)"
+    )
+    plt.contour(
+        x_plot.reshape(n_pts, n_pts),
+        y_plot.reshape(n_pts, n_pts),
+        s_plot_field.reshape(n_pts, n_pts),
+        contour_vec_2,
+        linewidths=0.25,
+        colors="k",
+    )
+    common_plot_elements()
+    plt.gca().set_aspect("equal")
+    plt.xlabel("$x$ (m)")
+    current_time = SOLUTION["t"][time_idx] / SPY
+    plt.suptitle("t = " + f"{current_time}" + " (years)")
 
-plt.show(block=False)
+    plt.show(block=False)
+    print("Writing: " + OUTDIR + str(count).zfill(7) + ".png")
+    plt.savefig(OUTDIR + str(count).zfill(7) + ".png")
+    plt.close("all")
+
+
+plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, 3)).astype(int)
+for i in range(0, plot_idx.size):
+    plot_volume(plot_idx[i], i)
+
+# Convert .pngs to .mp4
+# TODO: make Quicktime compatible
+mp4_name = OUTDIR + str(time.time()) + ".mp4"
+png_name = OUTDIR + "%07d.png"
+convert_command = "ffmpeg -framerate 10 -i " + png_name + " -c:v libx264 -r 30 -y -v 32 " + mp4_name
+os.system(convert_command)
