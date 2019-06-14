@@ -217,3 +217,82 @@ def plot_slip_profile():
 
 
 plot_slip_profile()
+
+
+# Observation points for internal evaluation and visualization
+n_pts = 50
+x_plot = np.linspace(-15e3, 15e3, n_pts)
+y_plot = np.linspace(-5e3, 5e3, n_pts)
+x_plot, y_plot = np.meshgrid(x_plot, y_plot)
+x_plot = x_plot.flatten()
+y_plot = y_plot.flatten()
+obs_pts = np.array([x_plot, y_plot]).T.copy()
+
+# Internal evaluation for fault
+time_idx = 200
+fault_slip = np.empty(2 * N_NODES)
+fault_slip[0::2] = SOLUTION["y"][time_idx, 0::3]
+fault_slip[1::2] = SOLUTION["y"][time_idx, 1::3]
+
+displacement_from_fault, stress_from_fault = bem2d.integrate(
+    obs_pts, ELEMENTS_FAULT, PARAMETERS["mu"], PARAMETERS["nu"], "slip", fault_slip
+)
+
+ux_plot = displacement_from_fault[0, :]
+uy_plot = displacement_from_fault[1, :]
+u_plot_field = np.sqrt(ux_plot ** 2 + uy_plot ** 2)  # displacement magnitude
+
+sxx_plot = stress_from_fault[0, :]
+syy_plot = stress_from_fault[1, :]
+sxy_plot = stress_from_fault[2, :]
+I1 = sxx_plot + syy_plot  # 1st invariant
+I2 = sxx_plot * syy_plot - sxy_plot ** 2  # 2nd invariant
+J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
+s_plot_field = np.log10(np.abs(J2))
+
+n_contours = 5
+plt.figure(figsize=(6, 8))
+plt.subplot(2, 1, 1)
+plt.contourf(
+    x_plot.reshape(n_pts, n_pts),
+    y_plot.reshape(n_pts, n_pts),
+    u_plot_field.reshape(n_pts, n_pts),
+    n_contours,
+    cmap=plt.get_cmap("plasma"),
+)
+plt.colorbar(fraction=0.046, pad=0.04, extend="both", label="$||u_i||$ (m)")
+plt.contour(
+    x_plot.reshape(n_pts, n_pts),
+    y_plot.reshape(n_pts, n_pts),
+    u_plot_field.reshape(n_pts, n_pts),
+    n_contours,
+    linewidths=0.25,
+    colors="k",
+)
+
+
+
+plt.title("displacement magnitude")
+
+plt.subplot(2, 1, 2)
+plt.contourf(
+    x_plot.reshape(n_pts, n_pts),
+    y_plot.reshape(n_pts, n_pts),
+    s_plot_field.reshape(n_pts, n_pts),
+    n_contours,
+    cmap=plt.get_cmap("hot_r"),
+)
+plt.colorbar(
+    fraction=0.046, pad=0.04, extend="both", label="$log_{10}|\mathrm{J}_2|$ (Pa$^2$)"
+)
+plt.contour(
+    x_plot.reshape(n_pts, n_pts),
+    y_plot.reshape(n_pts, n_pts),
+    s_plot_field.reshape(n_pts, n_pts),
+    n_contours,
+    linewidths=0.25,
+    colors="k",
+)
+# common_plot_elements()
+plt.title("second stress invariant (deviatoric)")
+plt.show(block=False)

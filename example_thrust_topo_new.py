@@ -36,7 +36,7 @@ displacement_free_surface = np.linalg.inv(traction_partials_surface_from_surface
 )
 
 # Observation points for internal evaluation and visualization
-n_pts = 50
+n_pts = 200
 x_plot = np.linspace(-10e3, 10e3, n_pts)
 y_plot = np.linspace(-5e3, 5e3, n_pts)
 x_plot, y_plot = np.meshgrid(x_plot, y_plot)
