@@ -39,7 +39,7 @@ PARAMETERS["d_c"] = 0.05  # state evolution length scale (m)
 PARAMETERS["f_0"] = 0.6  # baseline coefficient of friction
 PARAMETERS["block_velocity_x"] = 1e-9
 PARAMETERS["block_velocity_y"] = 0
-PARAMETERS["v_0"] = 1e-6 # reference velocity
+PARAMETERS["v_0"] = 1e-6  # reference velocity
 
 # Create fault elements
 N_ELEMENTS = 50
@@ -151,7 +151,9 @@ initial_velocity_y = 1e-3 * PARAMETERS["block_velocity_y"] * np.ones(N_NODES)
 INITIAL_CONDITIONS = np.empty(3 * N_NODES)
 INITIAL_CONDITIONS[0::3] = initial_velocity_x
 INITIAL_CONDITIONS[1::3] = initial_velocity_y
-INITIAL_CONDITIONS[2::3] = steady_state(initial_velocity_x) # Change to velocity magnitude
+INITIAL_CONDITIONS[2::3] = steady_state(
+    initial_velocity_x
+)  # Change to velocity magnitude
 
 
 SOLVER = scipy.integrate.RK23(
@@ -262,12 +264,19 @@ def plot_volume(time_idx, count):
     fault_slip_prev[0::2] = SOLUTION["y"][time_idx - 1, 0::3]
     fault_slip_prev[1::2] = SOLUTION["y"][time_idx - 1, 1::3]
     displacement_from_fault_prev, stress_from_fault_prev = bem2d.integrate(
-        obs_pts, ELEMENTS_FAULT, PARAMETERS["mu"], PARAMETERS["nu"], "slip", fault_slip_prev
+        obs_pts,
+        ELEMENTS_FAULT,
+        PARAMETERS["mu"],
+        PARAMETERS["nu"],
+        "slip",
+        fault_slip_prev,
     )
 
     # Backward difference to get velocities
     dt = SOLUTION["t"][time_idx - 1] - SOLUTION["t"][time_idx]
-    displacement_from_fault = (displacement_from_fault_prev - displacement_from_fault) / dt
+    displacement_from_fault = (
+        displacement_from_fault_prev - displacement_from_fault
+    ) / dt
     stress_from_fault_ = (stress_from_fault_prev - stress_from_fault) / dt
 
     ux_plot = displacement_from_fault[0, :]
@@ -283,7 +292,7 @@ def plot_volume(time_idx, count):
     J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
     s_plot_field = np.log10(np.abs(J2))
 
-    contour_vec_1 =  np.arange(-10, -2, 0.25)
+    contour_vec_1 = np.arange(-10, -2, 0.25)
     plt.figure(figsize=(5, 8))
     plt.subplot(2, 1, 1)
     plt.contourf(
@@ -308,7 +317,7 @@ def plot_volume(time_idx, count):
     plt.gca().set_aspect("equal")
 
     n_contours = 20
-    contour_vec_2 =  np.arange(10, 17, 0.25)
+    contour_vec_2 = np.arange(10, 17, 0.25)
     plt.subplot(2, 1, 2)
     plt.contourf(
         x_plot.reshape(n_pts, n_pts),
@@ -318,7 +327,10 @@ def plot_volume(time_idx, count):
         cmap=plt.get_cmap("hot_r"),
     )
     plt.colorbar(
-        fraction=0.046, pad=0.04, extend="both", label="$log_{10}|\mathrm{J}_2|$ (Pa$^2$)"
+        fraction=0.046,
+        pad=0.04,
+        extend="both",
+        label="$log_{10}|\mathrm{J}_2|$ (Pa$^2$)",
     )
     plt.contour(
         x_plot.reshape(n_pts, n_pts),
@@ -339,6 +351,7 @@ def plot_volume(time_idx, count):
     plt.savefig(OUTDIR + str(count).zfill(7) + ".png")
     plt.close("all")
 
+
 n_frames = 50
 plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
 plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
@@ -350,5 +363,10 @@ for i in range(0, plot_idx.size):
 # TODO: make Quicktime compatible
 mp4_name = OUTDIR + str(time.time()) + ".mp4"
 png_name = OUTDIR + "%07d.png"
-convert_command = "ffmpeg -framerate 10 -i " + png_name + " -c:v libx264 -r 30 -y -v 32 -loglevel panic " + mp4_name
+convert_command = (
+    "ffmpeg -framerate 10 -i "
+    + png_name
+    + " -c:v libx264 -r 30 -y -v 32 -loglevel panic "
+    + mp4_name
+)
 os.system(convert_command)
