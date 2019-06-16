@@ -20,11 +20,11 @@ plt.close("all")
 OUTDIR = "/Users/meade/Desktop/output/"
 NEWTON_TOL = 1e-12
 MAXITER = 50
-ODE_ATOL = 1e-4
-ODE_RTOL = 1e-4
+ODE_ATOL = 1e-6
+ODE_RTOL = 1e-6
 N_NODES_PER_ELEMENT = 3
 SPY = 365 * 24 * 60 * 60  # Seconds per year
-TIME_INTERVAL = SPY * np.array([0.0, 600.0])
+TIME_INTERVAL = SPY * np.array([0.0, 1200.0])
 PARAMETERS = {}
 PARAMETERS["mu"] = 3e10
 PARAMETERS["nu"] = 0.25
@@ -202,7 +202,28 @@ def plot_time_series():
     plt.show(block=False)
 
 
-# plot_time_series()
+plot_time_series()
+
+
+def plot_time_series_velocity():
+    """ Plot time integrated time series for each node """
+    plt.figure(figsize=(6, 9))
+    y_labels = ["$u_x$ (m/s)", "$u_y$ (m/s)", "state (/s)"]
+    t_diff = SOLUTION["t"][0:-1] # WHAAA???
+    dt = np.diff(SOLUTION["t"])
+    solution_diff = np.diff(SOLUTION["y"], axis = 0) / dt[:, None]
+    solution_diff = np.log10(np.abs(solution_diff))
+    # import ipdb; ipdb.set_trace()
+
+    for i, y_label in enumerate(y_labels):
+        plt.subplot(3, 1, i + 1)
+        plt.plot(t_diff, solution_diff[:, i::3], linewidth=0.5)
+        plt.ylabel(y_label)
+    plt.xlabel("$t$ (years)")
+    plt.show(block=False)
+
+
+plot_time_series_velocity()
 
 
 def plot_slip_profile():
@@ -251,8 +272,6 @@ def plot_volume(time_idx, count):
         plt.ylabel("$y$ (m)")
 
     # Internal evaluation for fault
-    # TODO: displacement -> velocity
-    # TODO: stress -> stressing rate
     fault_slip = np.empty(2 * N_NODES)
     fault_slip[0::2] = SOLUTION["y"][time_idx, 0::3]
     fault_slip[1::2] = SOLUTION["y"][time_idx, 1::3]
@@ -352,21 +371,21 @@ def plot_volume(time_idx, count):
     plt.close("all")
 
 
-n_frames = 50
-plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
-plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
-plot_idx = np.arange(1, SOLUTION["t"].size, 2)
-for i in range(0, plot_idx.size):
-    plot_volume(plot_idx[i], i)
+# n_frames = 50
+# plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
+# plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
+# plot_idx = np.arange(1, SOLUTION["t"].size, 2)
+# for i in range(0, plot_idx.size):
+#     plot_volume(plot_idx[i], i)
 
-# Convert .pngs to .mp4
-# TODO: make Quicktime compatible
-mp4_name = OUTDIR + str(time.time()) + ".mp4"
-png_name = OUTDIR + "%07d.png"
-convert_command = (
-    "ffmpeg -framerate 10 -i "
-    + png_name
-    + " -c:v libx264 -r 30 -y -v 32 -loglevel panic "
-    + mp4_name
-)
-os.system(convert_command)
+# # Convert .pngs to .mp4
+# # TODO: make Quicktime compatible
+# mp4_name = OUTDIR + str(time.time()) + ".mp4"
+# png_name = OUTDIR + "%07d.png"
+# convert_command = (
+#     "ffmpeg -framerate 10 -i "
+#     + png_name
+#     + " -c:v libx264 -r 30 -y -v 32 -loglevel panic "
+#     + mp4_name
+# )
+# os.system(convert_command)
