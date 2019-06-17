@@ -146,15 +146,13 @@ def calc_derivatives(t, x_and_state):
 
 
 # Set initial conditions and time integrate
-initial_velocity_x = 1e-3 * PARAMETERS["block_velocity_x"] * np.ones(N_NODES)
-initial_velocity_y = 1e-3 * PARAMETERS["block_velocity_y"] * np.ones(N_NODES)
+INITIAL_VELOCITY_X = 1e-3 * PARAMETERS["block_velocity_x"] * np.ones(N_NODES)
+INITIAL_VELOCITY_Y = 1e-3 * PARAMETERS["block_velocity_y"] * np.ones(N_NODES)
+INITIAL_VELOCITY_MAGNITUDE = np.sqrt(INITIAL_VELOCITY_X ** 2 + INITIAL_VELOCITY_Y **2)
 INITIAL_CONDITIONS = np.empty(3 * N_NODES)
-INITIAL_CONDITIONS[0::3] = initial_velocity_x
-INITIAL_CONDITIONS[1::3] = initial_velocity_y
-INITIAL_CONDITIONS[2::3] = steady_state(
-    initial_velocity_x
-)  # Change to velocity magnitude
-
+INITIAL_CONDITIONS[0::3] = INITIAL_VELOCITY_X
+INITIAL_CONDITIONS[1::3] = INITIAL_VELOCITY_Y
+INITIAL_CONDITIONS[2::3] = steady_state(INITIAL_VELOCITY_MAGNITUDE)
 
 SOLVER = scipy.integrate.RK23(
     calc_derivatives,
@@ -183,6 +181,9 @@ while SOLVER.t < TIME_INTERVAL.max():
     )
     SOLUTION["t"].append(SOLVER.t)
     SOLUTION["y"].append(SOLVER.y.copy())
+
+    # Calculate on fault stresses too
+
 SOLUTION["t"] = np.array(SOLUTION["t"])
 SOLUTION["y"] = np.array(SOLUTION["y"])
 SOLVER_TIME = time.time() - START_TIME
