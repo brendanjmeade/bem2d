@@ -207,19 +207,39 @@ plot_time_series()
 
 def plot_time_series_velocity():
     """ Plot time integrated time series for each node """
-    plt.figure(figsize=(6, 9))
-    y_labels = ["$u_x$ (m/s)", "$u_y$ (m/s)", "state (/s)"]
+    plt.figure(figsize=(12, 9))
+    # y_labels = [, , "state (/s)"]
     t_diff = SOLUTION["t"][0:-1] # WHAAA???
     dt = np.diff(SOLUTION["t"])
     solution_diff = np.diff(SOLUTION["y"], axis = 0) / dt[:, None]
     solution_diff = np.log10(np.abs(solution_diff))
-    # import ipdb; ipdb.set_trace()
 
-    for i, y_label in enumerate(y_labels):
-        plt.subplot(3, 1, i + 1)
-        plt.plot(t_diff, solution_diff[:, i::3], linewidth=0.5)
-        plt.ylabel(y_label)
+    plt.subplot(3, 2, 1)
+    plt.plot(t_diff / SPY, solution_diff[:, 0::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}v_x$ (m/s)")
+
+    plt.subplot(3, 2, 2)
+    plt.plot(solution_diff[:, 0::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}v_x$ (m/s)")
+
+    plt.subplot(3, 2, 3)
+    plt.plot(t_diff / SPY, solution_diff[:, 1::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}v_y$ (m/s)")
+
+    plt.subplot(3, 2, 4)
+    plt.plot(solution_diff[:, 1::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}v_y$ (m/s)")
+
+    plt.subplot(3, 2, 5)
+    plt.plot(t_diff / SPY, solution_diff[:, 2::3], linewidth=0.5)
+    plt.ylabel(r"$\log_{10}\dot{\theta}$ (1/s)")
     plt.xlabel("$t$ (years)")
+
+    plt.subplot(3, 2, 6)
+    plt.plot(solution_diff[:, 2::3], linewidth=0.5)
+    plt.ylabel(r"$\log_{10}\dot{\theta}$ (1/s)")
+    plt.xlabel("step")
+
     plt.show(block=False)
 
 
