@@ -80,7 +80,7 @@ ELEMENTS_FAULT_ARRAYS["element_normals"][:, 1] = np.array(
 
 # Calculate slip to traction partials on the fault
 START_TIME = time.time()
-_, _, SLIP_TO_TRACTION = bem2d.quadratic_partials_all(
+_, SLIP_TO_STRESS, SLIP_TO_TRACTION = bem2d.quadratic_partials_all(
     ELEMENTS_FAULT, ELEMENTS_FAULT, PARAMETERS["mu"], PARAMETERS["nu"]
 )
 PARTIALS_TIME = time.time() - START_TIME
@@ -192,13 +192,32 @@ print("Solver time: " + f"{SOLVER_TIME:.2f}" + " (seconds)")
 
 def plot_time_series():
     """ Plot time integrated time series for each node """
-    plt.figure(figsize=(6, 9))
-    y_labels = ["$u_x$ (m)", "$u_y$ (m)", "state"]
-    for i, y_label in enumerate(y_labels):
-        plt.subplot(3, 1, i + 1)
-        plt.plot(SOLUTION["t"] / SPY, SOLUTION["y"][:, i::3], linewidth=0.5)
-        plt.ylabel(y_label)
-    plt.xlabel("$t$ (years)")
+    plt.figure(figsize=(12, 9))
+    plt.subplot(3, 2, 1)
+    plt.plot(SOLUTION["t"] / SPY, SOLUTION["y"][:, 0::3], linewidth=0.5)
+    plt.ylabel("$u_x$ (m)")
+
+    plt.subplot(3, 2, 2)
+    plt.plot(SOLUTION["y"][:, 0::3], linewidth=0.5)
+    plt.ylabel("$u_x$ (m)")
+
+    plt.subplot(3, 2, 3)
+    plt.plot(SOLUTION["t"] / SPY, SOLUTION["y"][:, 1::3], linewidth=0.5)
+    plt.ylabel("$u_y$ (m)")
+
+    plt.subplot(3, 2, 4)
+    plt.plot(SOLUTION["y"][:, 1::3], linewidth=0.5)
+    plt.ylabel("$u_y$ (m)")
+
+    plt.subplot(3, 2, 5)
+    plt.plot(SOLUTION["t"] / SPY, SOLUTION["y"][:, 2::3], linewidth=0.5)
+    plt.xlabel("time (years)")
+    plt.ylabel("state")
+
+    plt.subplot(3, 2, 6)
+    plt.plot(SOLUTION["y"][:, 2::3], linewidth=0.5)
+    plt.xlabel("steps")
+    plt.ylabel("state")
     plt.show(block=False)
 
 
@@ -239,7 +258,6 @@ def plot_time_series_velocity():
     plt.plot(solution_diff[:, 2::3], linewidth=0.5)
     plt.ylabel(r"$\log_{10}\dot{\theta}$ (1/s)")
     plt.xlabel("step")
-
     plt.show(block=False)
 
 
