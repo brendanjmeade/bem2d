@@ -1,4 +1,5 @@
 from importlib import reload
+import copy
 import os
 import time
 import numpy as np
@@ -168,6 +169,8 @@ START_TIME = time.time()
 SOLUTION = {}
 SOLUTION["t"] = [SOLVER.t]
 SOLUTION["y"] = [SOLVER.y.copy()]
+SOLUTION["stress"] = [np.zeros(3 * N_NODES)]
+
 while SOLVER.t < TIME_INTERVAL.max():
     SOLVER.step()
     N_STEP = len(SOLUTION["t"])
@@ -183,9 +186,15 @@ while SOLVER.t < TIME_INTERVAL.max():
     SOLUTION["y"].append(SOLVER.y.copy())
 
     # Calculate on fault stresses too
+    x = np.empty(2 * N_NODES)
+    x[0::2] = SOLVER.y[0::3]
+    x[1::2] = SOLVER.y[1::3]
+    stresses = SLIP_TO_STRESS @ x
+    SOLUTION["stress"].append(stresses.copy())
 
 SOLUTION["t"] = np.array(SOLUTION["t"])
 SOLUTION["y"] = np.array(SOLUTION["y"])
+SOLUTION["stress"] = np.array(SOLUTION["stress"])
 SOLVER_TIME = time.time() - START_TIME
 print("Partials time: " + f"{PARTIALS_TIME:.2f}" + " (seconds)")
 print("Solver time: " + f"{SOLVER_TIME:.2f}" + " (seconds)")
@@ -219,16 +228,85 @@ def plot_time_series():
     plt.plot(SOLUTION["y"][:, 2::3], linewidth=0.5)
     plt.xlabel("steps")
     plt.ylabel("state")
+    plt.suptitle("Displacement and state")
     plt.show(block=False)
-
-
 plot_time_series()
+
+
+def plot_stress_time_series():
+    """ Plot time integrated time series for each node """
+    plt.figure(figsize=(12, 9))
+    plt.subplot(3, 2, 1)
+    plt.plot(SOLUTION["t"] / SPY, SOLUTION["stress"][:, 0::3], linewidth=0.5)
+    plt.ylabel("$\sigma_{xx}$ (Pa)")
+
+    plt.subplot(3, 2, 2)
+    plt.plot(SOLUTION["stress"][:, 0::3], linewidth=0.5)
+    plt.ylabel("$\sigma_{xx}$ (Pa)")
+
+    plt.subplot(3, 2, 3)
+    plt.plot(SOLUTION["t"] / SPY, SOLUTION["stress"][:, 1::3], linewidth=0.5)
+    plt.ylabel("$\sigma_{yy}$ (Pa)")
+
+    plt.subplot(3, 2, 4)
+    plt.plot(SOLUTION["stress"][:, 1::3], linewidth=0.5)
+    plt.ylabel("$\sigma_{yy}$ (Pa)")
+
+    plt.subplot(3, 2, 5)
+    plt.plot(SOLUTION["t"] / SPY, SOLUTION["stress"][:, 2::3], linewidth=0.5)
+    plt.xlabel("time (years)")
+    plt.ylabel("$\sigma_{xy}$ (Pa)")
+
+    plt.subplot(3, 2, 6)
+    plt.plot(SOLUTION["stress"][:, 2::3], linewidth=0.5)
+    plt.xlabel("steps")
+    plt.ylabel("$\sigma_{xy}$ (Pa)")
+    plt.suptitle("Stresses")
+    plt.show(block=False)
+plot_stress_time_series()
+
+
+def plot_stress_time_series_velocity():
+    """ Plot time integrated time series for each node """
+    t_diff = SOLUTION["t"][0:-1] # WHAAA???
+    dt = np.diff(SOLUTION["t"])
+    solution_diff = np.diff(SOLUTION["stress"], axis = 0) / dt[:, None]
+    solution_diff = np.log10(np.abs(solution_diff))
+
+    plt.figure(figsize=(12, 9))
+    plt.subplot(3, 2, 1)
+    plt.plot(t_diff / SPY, solution_diff[:, 0::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}\dot{\sigma}_{xx}$ (Pa)")
+
+    plt.subplot(3, 2, 2)
+    plt.plot(solution_diff[:, 0::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}\dot{\sigma}_{xx}$ (Pa)")
+
+    plt.subplot(3, 2, 3)
+    plt.plot(t_diff / SPY, solution_diff[:, 1::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}\dot{\sigma}_{yy}$ (Pa)")
+
+    plt.subplot(3, 2, 4)
+    plt.plot(solution_diff[:, 1::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}\dot{\sigma}_{yy}$ (Pa)")
+
+    plt.subplot(3, 2, 5)
+    plt.plot(t_diff / SPY, solution_diff[:, 2::3], linewidth=0.5)
+    plt.xlabel("time (years)")
+    plt.ylabel("$\log_{10}\dot{\sigma}_{xy}$ (Pa)")
+
+    plt.subplot(3, 2, 6)
+    plt.plot(solution_diff[:, 2::3], linewidth=0.5)
+    plt.xlabel("steps")
+    plt.ylabel("$\log_{10}\dot{\sigma}_{xy}$ (Pa)")
+    plt.suptitle("Stress rate changes")
+    plt.show(block=False)
+plot_stress_time_series_velocity()
 
 
 def plot_time_series_velocity():
     """ Plot time integrated time series for each node """
     plt.figure(figsize=(12, 9))
-    # y_labels = [, , "state (/s)"]
     t_diff = SOLUTION["t"][0:-1] # WHAAA???
     dt = np.diff(SOLUTION["t"])
     solution_diff = np.diff(SOLUTION["y"], axis = 0) / dt[:, None]
@@ -259,6 +337,7 @@ def plot_time_series_velocity():
     plt.plot(solution_diff[:, 2::3], linewidth=0.5)
     plt.ylabel(r"$\log_{10}\dot{\theta}$ (1/s)")
     plt.xlabel("step")
+    plt.suptitle("Displacement and state rate changes")
     plt.show(block=False)
 
 
