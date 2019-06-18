@@ -304,6 +304,53 @@ def plot_stress_time_series_velocity():
 plot_stress_time_series_velocity()
 
 
+def plot_invariants_time_series_velocity():
+    """ Plot time integrated time series for each node """
+    t_diff = SOLUTION["t"][0:-1] # WHAAA???
+    dt = np.diff(SOLUTION["t"])
+    solution_diff = np.diff(SOLUTION["stress"], axis = 0) / dt[:, None]
+
+    # import ipdb; ipdb.set_trace()
+
+    # Calculate a few stress invariants
+    I1 = solution_diff[:, 0::3] + solution_diff[:, 1::3]
+    I2 = solution_diff[:, 0::3] * solution_diff[:, 1::3] - solution_diff[:, 2::3] ** 2  # 2nd invariant
+    J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
+    I1 = np.log(np.abs(I1))
+    I2 = np.log(np.abs(I2))
+    J2 = np.log(np.abs(J2))
+    
+    plt.figure(figsize=(12, 9))
+    plt.subplot(3, 2, 1)
+    plt.plot(t_diff / SPY, I1, linewidth=0.5)
+    plt.ylabel("I_1 (Pa)")
+
+    plt.subplot(3, 2, 2)
+    plt.plot(I1, linewidth=0.5)
+    plt.ylabel("I_1 (Pa)")
+
+    plt.subplot(3, 2, 3)
+    plt.plot(t_diff / SPY, I2, linewidth=0.5)
+    plt.ylabel("I_2 (Pa^2)")
+
+    plt.subplot(3, 2, 4)
+    plt.plot(I2, linewidth=0.5)
+    plt.ylabel("I_2 (Pa^2)")
+
+    plt.subplot(3, 2, 5)
+    plt.plot(t_diff / SPY, J2, linewidth=0.5)
+    plt.xlabel("time (years)")
+    plt.ylabel("J_2 (Pa^2)")
+
+    plt.subplot(3, 2, 6)
+    plt.plot(J2, linewidth=0.5)
+    plt.xlabel("steps")
+    plt.ylabel("J_2 (Pa^2)")
+    plt.suptitle("Stress invariants")
+    plt.show(block=False)
+plot_invariants_time_series_velocity()
+
+
 def plot_time_series_velocity():
     """ Plot time integrated time series for each node """
     plt.figure(figsize=(12, 9))
