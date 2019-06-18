@@ -149,7 +149,7 @@ def calc_derivatives(t, x_and_state):
 # Set initial conditions and time integrate
 INITIAL_VELOCITY_X = 1e-3 * PARAMETERS["block_velocity_x"] * np.ones(N_NODES)
 INITIAL_VELOCITY_Y = 1e-3 * PARAMETERS["block_velocity_y"] * np.ones(N_NODES)
-INITIAL_VELOCITY_MAGNITUDE = np.sqrt(INITIAL_VELOCITY_X ** 2 + INITIAL_VELOCITY_Y **2)
+INITIAL_VELOCITY_MAGNITUDE = np.sqrt(INITIAL_VELOCITY_X ** 2 + INITIAL_VELOCITY_Y ** 2)
 INITIAL_CONDITIONS = np.empty(3 * N_NODES)
 INITIAL_CONDITIONS[0::3] = INITIAL_VELOCITY_X
 INITIAL_CONDITIONS[1::3] = INITIAL_VELOCITY_Y
@@ -230,6 +230,8 @@ def plot_time_series():
     plt.ylabel("state")
     plt.suptitle("Displacement and state")
     plt.show(block=False)
+
+
 plot_time_series()
 
 
@@ -263,14 +265,16 @@ def plot_stress_time_series():
     plt.ylabel("$\sigma_{xy}$ (Pa)")
     plt.suptitle("Stresses")
     plt.show(block=False)
+
+
 plot_stress_time_series()
 
 
 def plot_stress_time_series_velocity():
     """ Plot time integrated time series for each node """
-    t_diff = SOLUTION["t"][0:-1] # WHAAA???
+    t_diff = SOLUTION["t"][0:-1]  # WHAAA???
     dt = np.diff(SOLUTION["t"])
-    solution_diff = np.diff(SOLUTION["stress"], axis = 0) / dt[:, None]
+    solution_diff = np.diff(SOLUTION["stress"], axis=0) / dt[:, None]
     solution_diff = np.log10(np.abs(solution_diff))
 
     plt.figure(figsize=(12, 9))
@@ -301,25 +305,27 @@ def plot_stress_time_series_velocity():
     plt.ylabel("$\log_{10}\dot{\sigma}_{xy}$ (Pa)")
     plt.suptitle("Stress rate changes")
     plt.show(block=False)
+
+
 plot_stress_time_series_velocity()
 
 
 def plot_invariants_time_series_velocity():
     """ Plot time integrated time series for each node """
-    t_diff = SOLUTION["t"][0:-1] # WHAAA???
+    t_diff = SOLUTION["t"][0:-1]  # WHAAA???
     dt = np.diff(SOLUTION["t"])
-    solution_diff = np.diff(SOLUTION["stress"], axis = 0) / dt[:, None]
-
-    # import ipdb; ipdb.set_trace()
+    solution_diff = np.diff(SOLUTION["stress"], axis=0) / dt[:, None]
 
     # Calculate a few stress invariants
     I1 = solution_diff[:, 0::3] + solution_diff[:, 1::3]
-    I2 = solution_diff[:, 0::3] * solution_diff[:, 1::3] - solution_diff[:, 2::3] ** 2  # 2nd invariant
+    I2 = (
+        solution_diff[:, 0::3] * solution_diff[:, 1::3] - solution_diff[:, 2::3] ** 2
+    )  # 2nd invariant
     J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
     I1 = np.log(np.abs(I1))
     I2 = np.log(np.abs(I2))
     J2 = np.log(np.abs(J2))
-    
+
     plt.figure(figsize=(12, 9))
     plt.subplot(3, 2, 1)
     plt.plot(t_diff / SPY, I1, linewidth=0.5)
@@ -348,15 +354,17 @@ def plot_invariants_time_series_velocity():
     plt.ylabel("J_2 (Pa^2)")
     plt.suptitle("Stress invariants")
     plt.show(block=False)
+
+
 plot_invariants_time_series_velocity()
 
 
 def plot_time_series_velocity():
     """ Plot time integrated time series for each node """
     plt.figure(figsize=(12, 9))
-    t_diff = SOLUTION["t"][0:-1] # WHAAA???
+    t_diff = SOLUTION["t"][0:-1]  # WHAAA???
     dt = np.diff(SOLUTION["t"])
-    solution_diff = np.diff(SOLUTION["y"], axis = 0) / dt[:, None]
+    solution_diff = np.diff(SOLUTION["y"], axis=0) / dt[:, None]
     solution_diff = np.log10(np.abs(solution_diff))
 
     plt.subplot(3, 2, 1)
