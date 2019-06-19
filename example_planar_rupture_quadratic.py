@@ -235,6 +235,46 @@ def plot_time_series():
 plot_time_series()
 
 
+def plot_time_series_velocity():
+    """ Plot time integrated time series for each node """
+    plt.figure(figsize=(12, 9))
+    t_diff = SOLUTION["t"][0:-1]  # WHAAA???
+    dt = np.diff(SOLUTION["t"])
+    solution_diff = np.diff(SOLUTION["y"], axis=0) / dt[:, None]
+    solution_diff = np.log10(np.abs(solution_diff))
+
+    plt.subplot(3, 2, 1)
+    plt.plot(t_diff / SPY, solution_diff[:, 0::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}v_x$ (m/s)")
+
+    plt.subplot(3, 2, 2)
+    plt.plot(solution_diff[:, 0::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}v_x$ (m/s)")
+
+    plt.subplot(3, 2, 3)
+    plt.plot(t_diff / SPY, solution_diff[:, 1::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}v_y$ (m/s)")
+
+    plt.subplot(3, 2, 4)
+    plt.plot(solution_diff[:, 1::3], linewidth=0.5)
+    plt.ylabel("$\log_{10}v_y$ (m/s)")
+
+    plt.subplot(3, 2, 5)
+    plt.plot(t_diff / SPY, solution_diff[:, 2::3], linewidth=0.5)
+    plt.ylabel(r"$\log_{10}\dot{\theta}$ (1/s)")
+    plt.xlabel("$t$ (years)")
+
+    plt.subplot(3, 2, 6)
+    plt.plot(solution_diff[:, 2::3], linewidth=0.5)
+    plt.ylabel(r"$\log_{10}\dot{\theta}$ (1/s)")
+    plt.xlabel("step")
+    plt.suptitle("Displacement and state rate changes")
+    plt.show(block=False)
+
+
+plot_time_series_velocity()
+
+
 def plot_stress_time_series():
     """ Plot time integrated time series for each node """
     plt.figure(figsize=(12, 9))
@@ -329,74 +369,35 @@ def plot_invariants_time_series_velocity():
     plt.figure(figsize=(12, 9))
     plt.subplot(3, 2, 1)
     plt.plot(t_diff / SPY, I1, linewidth=0.5)
-    plt.ylabel("I_1 (Pa)")
+    plt.ylabel("$\log_{10} \, |\dot{\mathrm{I}}_1|$ (Pa)")
 
     plt.subplot(3, 2, 2)
     plt.plot(I1, linewidth=0.5)
-    plt.ylabel("I_1 (Pa)")
+    plt.ylabel("$\log_{10}|\dot{\mathrm{I}}_1|$ (Pa)")
 
     plt.subplot(3, 2, 3)
     plt.plot(t_diff / SPY, I2, linewidth=0.5)
-    plt.ylabel("I_2 (Pa^2)")
+    plt.ylabel("$\log_{10} \, |\dot{\mathrm{I}}_2|$ (Pa$^2$)")
 
     plt.subplot(3, 2, 4)
     plt.plot(I2, linewidth=0.5)
-    plt.ylabel("I_2 (Pa^2)")
+    plt.ylabel("$\log_{10} \, |\dot{\mathrm{I}}_2|$ (Pa$^2$)")
 
     plt.subplot(3, 2, 5)
     plt.plot(t_diff / SPY, J2, linewidth=0.5)
     plt.xlabel("time (years)")
-    plt.ylabel("J_2 (Pa^2)")
+    plt.ylabel("$\log_{10} \, |\dot{\mathrm{J}}_2|$ (Pa$^2$)")
 
     plt.subplot(3, 2, 6)
     plt.plot(J2, linewidth=0.5)
     plt.xlabel("steps")
-    plt.ylabel("J_2 (Pa^2)")
-    plt.suptitle("Stress invariants")
+    plt.ylabel("$\log_{10} \, |\mathrm{\dot{J}}_2|$ (Pa$^2$)")
+    plt.suptitle("Some stress invariant rate changes")
     plt.show(block=False)
 
 
 plot_invariants_time_series_velocity()
 
-
-def plot_time_series_velocity():
-    """ Plot time integrated time series for each node """
-    plt.figure(figsize=(12, 9))
-    t_diff = SOLUTION["t"][0:-1]  # WHAAA???
-    dt = np.diff(SOLUTION["t"])
-    solution_diff = np.diff(SOLUTION["y"], axis=0) / dt[:, None]
-    solution_diff = np.log10(np.abs(solution_diff))
-
-    plt.subplot(3, 2, 1)
-    plt.plot(t_diff / SPY, solution_diff[:, 0::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}v_x$ (m/s)")
-
-    plt.subplot(3, 2, 2)
-    plt.plot(solution_diff[:, 0::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}v_x$ (m/s)")
-
-    plt.subplot(3, 2, 3)
-    plt.plot(t_diff / SPY, solution_diff[:, 1::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}v_y$ (m/s)")
-
-    plt.subplot(3, 2, 4)
-    plt.plot(solution_diff[:, 1::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}v_y$ (m/s)")
-
-    plt.subplot(3, 2, 5)
-    plt.plot(t_diff / SPY, solution_diff[:, 2::3], linewidth=0.5)
-    plt.ylabel(r"$\log_{10}\dot{\theta}$ (1/s)")
-    plt.xlabel("$t$ (years)")
-
-    plt.subplot(3, 2, 6)
-    plt.plot(solution_diff[:, 2::3], linewidth=0.5)
-    plt.ylabel(r"$\log_{10}\dot{\theta}$ (1/s)")
-    plt.xlabel("step")
-    plt.suptitle("Displacement and state rate changes")
-    plt.show(block=False)
-
-
-plot_time_series_velocity()
 
 
 def plot_slip_profile():
@@ -414,7 +415,7 @@ def plot_slip_profile():
     plt.show(block=False)
 
 
-# plot_slip_profile()
+plot_slip_profile()
 
 
 def plot_volume(time_idx, count):
@@ -465,7 +466,7 @@ def plot_volume(time_idx, count):
     )
 
     # Backward difference to get velocities
-    dt = SOLUTION["t"][time_idx - 1] - SOLUTION["t"][time_idx]
+    dt = SOLUTION["t"][time_idx] - SOLUTION["t"][time_idx - 1]
     displacement_from_fault = (
         displacement_from_fault_prev - displacement_from_fault
     ) / dt
@@ -476,16 +477,16 @@ def plot_volume(time_idx, count):
     u_plot_field = np.sqrt(ux_plot ** 2 + uy_plot ** 2)  # displacement magnitude
     u_plot_field = np.log10(u_plot_field)
 
-    sxx_plot = stress_from_fault[0, :]
-    syy_plot = stress_from_fault[1, :]
-    sxy_plot = stress_from_fault[2, :]
+    sxx_plot = stress_from_fault_[0, :]
+    syy_plot = stress_from_fault_[1, :]
+    sxy_plot = stress_from_fault_[2, :]
     I1 = sxx_plot + syy_plot  # 1st invariant
     I2 = sxx_plot * syy_plot - sxy_plot ** 2  # 2nd invariant
     J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
     s_plot_field = np.log10(np.abs(J2))
 
     contour_vec_1 = np.arange(-10, -2, 0.25)
-    plt.figure(figsize=(5, 8))
+    plt.figure(figsize=(8, 8))
     plt.subplot(2, 1, 1)
     plt.contourf(
         x_plot.reshape(n_pts, n_pts),
@@ -493,6 +494,7 @@ def plot_volume(time_idx, count):
         u_plot_field.reshape(n_pts, n_pts),
         # n_contours,
         contour_vec_1,
+        extend="both",
         cmap=plt.get_cmap("plasma"),
     )
     plt.colorbar(fraction=0.046, pad=0.04, extend="both", label="$||v_i||$ (m)")
@@ -502,6 +504,7 @@ def plot_volume(time_idx, count):
         u_plot_field.reshape(n_pts, n_pts),
         # n_contours,
         contour_vec_1,
+        extend="both",
         linewidths=0.25,
         colors="k",
     )
@@ -509,26 +512,30 @@ def plot_volume(time_idx, count):
     plt.gca().set_aspect("equal")
 
     n_contours = 20
-    contour_vec_2 = np.arange(10, 17, 0.25)
+    contour_vec_2 = np.arange(-10, 11, 1)
     plt.subplot(2, 1, 2)
     plt.contourf(
         x_plot.reshape(n_pts, n_pts),
         y_plot.reshape(n_pts, n_pts),
         s_plot_field.reshape(n_pts, n_pts),
         contour_vec_2,
+        # n_contours,
+        extend="both",
         cmap=plt.get_cmap("hot_r"),
     )
     plt.colorbar(
         fraction=0.046,
         pad=0.04,
         extend="both",
-        label="$log_{10}|\mathrm{J}_2|$ (Pa$^2$)",
+        label="$\log_{10} \, |\dot{\mathrm{J}}_2|$ (Pa$^2$)",
     )
     plt.contour(
         x_plot.reshape(n_pts, n_pts),
         y_plot.reshape(n_pts, n_pts),
         s_plot_field.reshape(n_pts, n_pts),
         contour_vec_2,
+        # n_contours,
+        extend="both",
         linewidths=0.25,
         colors="k",
     )
@@ -536,7 +543,8 @@ def plot_volume(time_idx, count):
     plt.gca().set_aspect("equal")
     plt.xlabel("$x$ (m)")
     current_time = SOLUTION["t"][time_idx] / SPY
-    plt.suptitle("t = " + f"{current_time}" + " (years)")
+    plt.suptitle("t = " + f"{current_time:.4f}" + " (years)")
+    # f"{SOLVER_TIME:.2f}" + " (seconds)")
 
     plt.show(block=False)
     print("Writing: " + OUTDIR + str(count).zfill(7) + ".png")
@@ -548,17 +556,18 @@ def plot_volume(time_idx, count):
 # plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
 # plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
 # plot_idx = np.arange(1, SOLUTION["t"].size, 2)
-# for i in range(0, plot_idx.size):
-#     plot_volume(plot_idx[i], i)
+plot_idx = np.arange(4000, 4800, 50)
+for i in range(0, plot_idx.size):
+    plot_volume(plot_idx[i], i)
 
-# # Convert .pngs to .mp4
-# # TODO: make Quicktime compatible
-# mp4_name = OUTDIR + str(time.time()) + ".mp4"
-# png_name = OUTDIR + "%07d.png"
-# convert_command = (
-#     "ffmpeg -framerate 10 -i "
-#     + png_name
-#     + " -c:v libx264 -r 30 -y -v 32 -loglevel panic "
-#     + mp4_name
-# )
-# os.system(convert_command)
+# Convert .pngs to .mp4
+# TODO: make Quicktime compatible
+mp4_name = OUTDIR + str(time.time()) + ".mp4"
+png_name = OUTDIR + "%07d.png"
+convert_command = (
+    "ffmpeg -framerate 10 -i "
+    + png_name
+    + " -c:v libx264 -r 30 -y -v 32 -loglevel panic "
+    + mp4_name
+)
+os.system(convert_command)
