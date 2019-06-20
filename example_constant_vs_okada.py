@@ -5,7 +5,7 @@ import bem2d
 from okada_wrapper import dc3dwrapper
 import matplotlib.pyplot as plt
 
-bem2d = reload(bem2d)
+bem2d.reload()
 
 plt.close("all")
 
@@ -88,7 +88,7 @@ for i in range(0, x.size):
     #     0,
     #     [-1e10, 1e10],
     #     [-L, L],
-    #     [0.0, -1.0, 0.0],
+    #     [0.0, 1.0, 0.0],
     # )
     # Horizontal fault
     _, u, s = dc3dwrapper(

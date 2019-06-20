@@ -11,7 +11,7 @@ import cppimport.import_hook
 import bem2d
 import bem2d.newton_rate_state
 
-bem2d = reload(bem2d)
+bem2d.reload()
 plt.close("all")
 
 # TODO: Try inclined fault
@@ -21,11 +21,11 @@ plt.close("all")
 OUTDIR = "/Users/meade/Desktop/output/"
 NEWTON_TOL = 1e-12
 MAXITER = 5000
-ODE_ATOL = 1e-12
-ODE_RTOL = 1e-12
+ODE_ATOL = 1e-6
+ODE_RTOL = 1e-6
 N_NODES_PER_ELEMENT = 3
 SPY = 365 * 24 * 60 * 60  # Seconds per year
-TIME_INTERVAL = SPY * np.array([0.0, 5000.0])
+TIME_INTERVAL = SPY * np.array([0.0, 30000.0])
 PARAMETERS = {}
 PARAMETERS["mu"] = 3e10
 PARAMETERS["nu"] = 0.25
@@ -51,9 +51,9 @@ L = 10000
 x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
 
 # Modify y1, and y2 for a sinusoidal fault
-amplitude = 1000.0
-y1 = amplitude * np.cos(2 * np.pi * x1 / L)
-y2 = amplitude * np.cos(2 * np.pi * x2 / L)
+amplitude = 20.0
+y1 = amplitude * np.sin(2 * np.pi * x1 / L)
+y2 = amplitude * np.sin(2 * np.pi * x2 / L)
 
 for i in range(0, x1.size):
     ELEMENT["x1"] = x1[i]
@@ -114,11 +114,21 @@ def steady_state(velocities):  # Should I eliminate this since its only called o
 
 
 def calc_derivatives(t, x_and_state):
+    # if t >= 12058011842.710436:
+    #     import ipdb;ipdb.set_trace()
     """ Derivatives to feed to ODE integrator """
     state = x_and_state[2::3]
     x = np.empty(2 * N_NODES)
     x[0::2] = x_and_state[0::3]
     x[1::2] = x_and_state[1::3]
+
+    # TODO: Add checks for Nans and Infs and bad state values
+    # Return Inf * x_and_state
+    # print(np.max(x), np.min(x))
+    # print(np.any(np.isinf(x)), np.any(np.isnan(x)))
+
+    # print(np.max(state), np.min(state))
+    # print(np.any(np.isinf(state)), np.any(np.isnan(state)))
 
     # Current shear stress on fault (slip->traction)
     tractions = SLIP_TO_TRACTION @ x
@@ -139,6 +149,8 @@ def calc_derivatives(t, x_and_state):
         MAXITER,
         N_NODES_PER_ELEMENT,
     )
+
+
 
     dx_dt = -current_velocity  # Is the negative sign for slip deficit convention?
     dx_dt[0::2] += PARAMETERS["block_velocity_x"]

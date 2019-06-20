@@ -1,3 +1,6 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 def plot_fields(elements, x, y, displacement, stress, sup_title):
     """ Contour 2 displacement fields, 3 stress fields, and quiver displacements """

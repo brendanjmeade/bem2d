@@ -20,12 +20,12 @@ plt.close("all")
 # Constants and model parameters
 OUTDIR = "/Users/meade/Desktop/output/"
 NEWTON_TOL = 1e-12
-MAXITER = 500
-ODE_ATOL = 1e-10
-ODE_RTOL = 1e-10
+MAXITER = 5000
+ODE_ATOL = 1e-12
+ODE_RTOL = 1e-12
 N_NODES_PER_ELEMENT = 3
 SPY = 365 * 24 * 60 * 60  # Seconds per year
-TIME_INTERVAL = SPY * np.array([0.0, 1200.0])
+TIME_INTERVAL = SPY * np.array([0.0, 5000.0])
 PARAMETERS = {}
 PARAMETERS["mu"] = 3e10
 PARAMETERS["nu"] = 0.25
@@ -51,9 +51,9 @@ L = 10000
 x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
 
 # Modify y1, and y2 for a sinusoidal fault
-amplitude = 100.0
-y1 = amplitude * np.sin(2 * np.pi * x1 / L)
-y2 = amplitude * np.sin(2 * np.pi * x2 / L)
+amplitude = 1000.0
+y1 = amplitude * np.cos(2 * np.pi * x1 / L)
+y2 = amplitude * np.cos(2 * np.pi * x2 / L)
 
 for i in range(0, x1.size):
     ELEMENT["x1"] = x1[i]
