@@ -20,9 +20,9 @@ plt.close("all")
 # Constants and model parameters
 OUTDIR = "/Users/meade/Desktop/output/"
 NEWTON_TOL = 1e-12
-MAXITER = 50
-ODE_ATOL = 1e-6
-ODE_RTOL = 1e-6
+MAXITER = 500
+ODE_ATOL = 1e-10
+ODE_RTOL = 1e-10
 N_NODES_PER_ELEMENT = 3
 SPY = 365 * 24 * 60 * 60  # Seconds per year
 TIME_INTERVAL = SPY * np.array([0.0, 1200.0])
@@ -43,12 +43,18 @@ PARAMETERS["block_velocity_y"] = 0
 PARAMETERS["v_0"] = 1e-6  # reference velocity
 
 # Create fault elements
-N_ELEMENTS = 50
+N_ELEMENTS = 100
 N_NODES = 3 * N_ELEMENTS
 ELEMENTS_FAULT = []
 ELEMENT = {}
 L = 10000
 x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
+
+# Modify y1, and y2 for a sinusoidal fault
+amplitude = 100.0
+y1 = amplitude * np.sin(2 * np.pi * x1 / L)
+y2 = amplitude * np.sin(2 * np.pi * x2 / L)
+
 for i in range(0, x1.size):
     ELEMENT["x1"] = x1[i]
     ELEMENT["y1"] = y1[i]
@@ -420,9 +426,9 @@ plot_slip_profile()
 
 def plot_volume(time_idx, count):
     # Observation points for internal evaluation and visualization
-    n_pts = 50
-    x_plot = np.linspace(-15e3, 15e3, n_pts)
-    y_plot = np.linspace(-15e3, 15e3, n_pts)
+    n_pts = 100
+    x_plot = np.linspace(-25e3, 25e3, n_pts)
+    y_plot = np.linspace(-25e3, 25e3, n_pts)
     x_plot, y_plot = np.meshgrid(x_plot, y_plot)
     x_plot = x_plot.flatten()
     y_plot = y_plot.flatten()
@@ -556,18 +562,18 @@ def plot_volume(time_idx, count):
 # plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
 # plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
 # plot_idx = np.arange(1, SOLUTION["t"].size, 2)
-plot_idx = np.arange(4000, 4800, 50)
-for i in range(0, plot_idx.size):
-    plot_volume(plot_idx[i], i)
+# plot_idx = np.arange(4000, 4800, 5)
+# for i in range(0, plot_idx.size):
+#     plot_volume(plot_idx[i], i)
 
-# Convert .pngs to .mp4
-# TODO: make Quicktime compatible
-mp4_name = OUTDIR + str(time.time()) + ".mp4"
-png_name = OUTDIR + "%07d.png"
-convert_command = (
-    "ffmpeg -framerate 10 -i "
-    + png_name
-    + " -c:v libx264 -r 30 -y -v 32 -loglevel panic "
-    + mp4_name
-)
-os.system(convert_command)
+# # Convert .pngs to .mp4
+# # TODO: make Quicktime compatible
+# mp4_name = OUTDIR + str(time.time()) + ".mp4"
+# png_name = OUTDIR + "%07d.png"
+# convert_command = (
+#     "ffmpeg -framerate 10 -i "
+#     + png_name
+#     + " -c:v libx264 -r 30 -y -v 32 -loglevel panic "
+#     + mp4_name
+# )
+# os.system(convert_command)
