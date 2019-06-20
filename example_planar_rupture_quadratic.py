@@ -50,11 +50,6 @@ ELEMENT = {}
 L = 10000
 x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
 
-# Modify y1, and y2 for a sinusoidal fault
-amplitude = 1000.0
-y1 = amplitude * np.cos(2 * np.pi * x1 / L)
-y2 = amplitude * np.cos(2 * np.pi * x2 / L)
-
 for i in range(0, x1.size):
     ELEMENT["x1"] = x1[i]
     ELEMENT["y1"] = y1[i]
@@ -200,6 +195,7 @@ while SOLVER.t < TIME_INTERVAL.max():
 
 SOLUTION["t"] = np.array(SOLUTION["t"])
 SOLUTION["y"] = np.array(SOLUTION["y"])
+# SOLUTION['u_x'] = SOLUTION['y'][:,0::2]
 SOLUTION["stress"] = np.array(SOLUTION["stress"])
 SOLVER_TIME = time.time() - START_TIME
 print("Partials time: " + f"{PARTIALS_TIME:.2f}" + " (seconds)")
