@@ -43,7 +43,7 @@ PARAMETERS["block_velocity_y"] = 0
 PARAMETERS["v_0"] = 1e-6  # reference velocity
 
 # Create fault elements
-N_ELEMENTS = 100
+N_ELEMENTS = 50
 N_NODES = 3 * N_ELEMENTS
 ELEMENTS_FAULT = []
 ELEMENT = {}
@@ -491,7 +491,7 @@ def plot_volume(time_idx, count):
     J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
     s_plot_field = np.log10(np.abs(J2))
 
-    contour_vec_1 = np.arange(-10, -2, 0.25)
+    contour_vec_1 = np.arange(-10, 2, 0.25)
     plt.figure(figsize=(8, 8))
     plt.subplot(2, 1, 1)
     plt.contourf(
@@ -518,7 +518,9 @@ def plot_volume(time_idx, count):
     plt.gca().set_aspect("equal")
 
     n_contours = 20
-    contour_vec_2 = np.arange(-10, 11, 1)
+    # contour_vec_2 = np.arange(-10, 11, 1)
+    contour_vec_2 = np.arange(-20, 41, 1)
+    
     plt.subplot(2, 1, 2)
     plt.contourf(
         x_plot.reshape(n_pts, n_pts),
@@ -562,7 +564,7 @@ def plot_volume(time_idx, count):
 # plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
 # plot_idx = np.floor(np.linspace(1, SOLUTION["y"].shape[0] - 1, n_frames)).astype(int)
 # plot_idx = np.arange(1, SOLUTION["t"].size, 2)
-# plot_idx = np.arange(4000, 4800, 5)
+# plot_idx = np.arange(10000, 29000, 100)
 # for i in range(0, plot_idx.size):
 #     plot_volume(plot_idx[i], i)
 
