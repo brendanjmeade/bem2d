@@ -1,9 +1,19 @@
 /*cppimport
 <%
+
 import os
+
+from sys import platform
+if platform == "linux" or platform == "linux2":
+    extra_flags = []
+elif platform == "darwin":
+    extra_flags = ['-stdlib=libc++']
+elif platform == "win32":
+    extra_flags = []
+
 setup_pybind11(cfg)
-cfg['compiler_args'] += ['-std=c++14', '-O3', '-stdlib=libc++']
-cfg['linker_args'] += ['-stdlib=libc++']
+cfg['compiler_args'] += ['-std=c++14', '-O3'] + extra_flags
+cfg['linker_args'] += extra_flags
 %>
 */
 
