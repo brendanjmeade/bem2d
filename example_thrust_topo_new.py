@@ -28,7 +28,7 @@ _, _, traction_partials_surface_from_surface = bem2d.matrix_integral(
 
 # Remove and separate BCs, local to global transform here?
 fault_slip = np.zeros(6 * len(elements_fault))
-fault_slip[0::2] = 1.0
+fault_slip[0::2] = 1.0 # TODO: This is in global not local!!!
 
 # Solve the BEM problem
 displacement_free_surface = np.linalg.inv(traction_partials_surface_from_surface) @ (
@@ -36,7 +36,7 @@ displacement_free_surface = np.linalg.inv(traction_partials_surface_from_surface
 )
 
 # Observation points for internal evaluation and visualization
-n_pts = 200
+n_pts = 50
 x_plot = np.linspace(-10e3, 10e3, n_pts)
 y_plot = np.linspace(-5e3, 5e3, n_pts)
 x_plot, y_plot = np.meshgrid(x_plot, y_plot)
@@ -96,6 +96,7 @@ I2 = sxx_plot * syy_plot - sxy_plot ** 2  # 2nd invariant
 J2 = (I1 ** 2) / 3.0 - I2  # 2nd invariant (deviatoric)
 s_plot_field = np.log10(np.abs(J2))
 
+
 n_contours = 5
 plt.figure(figsize=(6, 8))
 plt.subplot(2, 1, 1)
@@ -140,3 +141,31 @@ plt.contour(
 common_plot_elements()
 plt.title("second stress invariant (deviatoric)")
 plt.show(block=False)
+
+
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x_plot.reshape(n_pts, n_pts),
+    y_plot.reshape(n_pts, n_pts),
+    displacement_from_fault,
+    stress_from_fault,
+    "Fault",
+)
+
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x_plot.reshape(n_pts, n_pts),
+    y_plot.reshape(n_pts, n_pts),
+    displacement_from_topo,
+    stress_from_topo,
+    "Topography",
+)
+
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x_plot.reshape(n_pts, n_pts),
+    y_plot.reshape(n_pts, n_pts),
+    displacement_from_topo + displacement_from_fault,
+    stress_from_topo + stress_from_fault,
+    "Topography + fault",
+)
