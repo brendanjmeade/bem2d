@@ -217,8 +217,8 @@ for i, element in enumerate(elements_fault):
         nu,
         "constant",
         "slip",
-        -fault_slip_ss[i],  # TODO: Don't like these negative signs
-        -fault_slip_ts[i],  # TODO: Don't like these negative signs
+        fault_slip_ss[i].copy(),
+        fault_slip_ts[i].copy(),
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -227,14 +227,14 @@ for i, element in enumerate(elements_fault):
     displacement_full_space += displacement
     stress_full_space += stress
 
-# bem2d.plot_fields(
-#     elements_surface + elements_fault,
-#     x.reshape(n_pts, n_pts),
-#     y.reshape(n_pts, n_pts),
-#     displacement_full_space,
-#     stress_full_space,
-#     "constant BEM: fault full space",
-# )
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_full_space,
+    stress_full_space,
+    "constant BEM: fault full space",
+)
 
 # Free surface
 fault_slip_x = disp_free_surface[0::2]
@@ -250,8 +250,8 @@ for i, element in enumerate(elements_surface):
         nu,
         "constant",
         "slip",
-        fault_slip_x[i],
-        fault_slip_y[i],
+        fault_slip_x[i].copy(),
+        fault_slip_y[i].copy(),
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -260,14 +260,14 @@ for i, element in enumerate(elements_surface):
     displacement_free_surface += displacement
     stress_free_surface += stress
 
-# bem2d.plot_fields(
-#     elements_surface + elements_fault,
-#     x.reshape(n_pts, n_pts),
-#     y.reshape(n_pts, n_pts),
-#     displacement_free_surface,
-#     stress_free_surface,
-#     "constant BEM: free surface",
-# )
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_free_surface,
+    stress_free_surface,
+    "constant BEM: free surface",
+)
 
 bem2d.plot_fields(
     elements_surface + elements_fault,
@@ -303,7 +303,7 @@ for i, element in enumerate(elements_fault):
         mu,
         nu,
         "slip",
-        -fault_slip_ss_quadratic[i * 3 : (i + 1) * 3],
+        fault_slip_ss_quadratic[i * 3 : (i + 1) * 3],
         -fault_slip_ts_quadratic[i * 3 : (i + 1) * 3],
         element["x_center"],
         element["y_center"],
@@ -363,11 +363,11 @@ bem2d.plot_fields(
     "quadratic BEM: fault + free surface",
 )
 
-# bem2d.plot_fields(
-#     elements_surface + elements_fault,
-#     x.reshape(n_pts, n_pts),
-#     y.reshape(n_pts, n_pts),
-#     displacement_free_surface + displacement_full_space - displacement_okada,
-#     stress_free_surface + stress_full_space - stress_okada,
-#     "quadratic BEM - Okada",
-# )
+bem2d.plot_fields(
+    elements_surface + elements_fault,
+    x.reshape(n_pts, n_pts),
+    y.reshape(n_pts, n_pts),
+    displacement_free_surface + displacement_full_space - displacement_okada,
+    stress_free_surface + stress_full_space - stress_okada,
+    "quadratic BEM - Okada",
+)
