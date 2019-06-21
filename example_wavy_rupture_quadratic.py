@@ -25,7 +25,8 @@ ODE_ATOL = 1e-6
 ODE_RTOL = 1e-6
 N_NODES_PER_ELEMENT = 3
 SPY = 365 * 24 * 60 * 60  # Seconds per year
-TIME_INTERVAL = SPY * np.array([0.0, 30000.0])
+TIME_INTERVAL = SPY * np.array([0.0, 5000.0])
+
 PARAMETERS = {}
 PARAMETERS["mu"] = 3e10
 PARAMETERS["nu"] = 0.25
@@ -120,7 +121,7 @@ def calc_derivatives(t, x_and_state):
     state = x_and_state[2::3]
     x = np.empty(2 * N_NODES)
     x[0::2] = x_and_state[0::3]
-    x[1::2] = x_and_state[1::3]
+    x[1::2] = -x_and_state[1::3] # TODO: Quick hack to see if y-dir sign change works???
 
     # TODO: Add checks for Nans and Infs and bad state values
     # Return Inf * x_and_state
@@ -149,8 +150,6 @@ def calc_derivatives(t, x_and_state):
         MAXITER,
         N_NODES_PER_ELEMENT,
     )
-
-
 
     dx_dt = -current_velocity  # Is the negative sign for slip deficit convention?
     dx_dt[0::2] += PARAMETERS["block_velocity_x"]
