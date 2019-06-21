@@ -335,8 +335,8 @@ for i, element in enumerate(elements_surface):
         mu,
         nu,
         "slip",
-        -surface_slip_x_quadratic[i * 3 : (i + 1) * 3].copy(),
-        -surface_slip_y_quadratic[i * 3 : (i + 1) * 3].copy(),
+        -surface_slip_x_quadratic[i * 3 : (i + 1) * 3].copy(), # TODO: Negative signs produce the right answer
+        -surface_slip_y_quadratic[i * 3 : (i + 1) * 3].copy(), # TODO: Negative signs produce the right answer
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
