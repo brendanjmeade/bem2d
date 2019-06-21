@@ -60,9 +60,7 @@ d2_quadratic, s2_quadratic, t2_quadratic = bem2d.quadratic_partials_all(
 x_center = np.array([_["x_center"] for _ in elements_surface])
 fault_slip = np.zeros(2 * len(elements_fault))
 fault_slip[0::2] = np.sqrt(2) / 2
-fault_slip[1::2] = (
-    -np.sqrt(2) / 2
-)  # TODO: I still don't liek this sign here.  Check or correct elsewhere?
+fault_slip[1::2] = np.sqrt(2) / 2
 disp_full_space = d1 @ fault_slip
 disp_free_surface = np.linalg.inv(t2) @ (t1 @ fault_slip)
 
@@ -72,7 +70,7 @@ x_center_quadratic = np.array(
 ).flatten()
 fault_slip_quadratic = np.zeros(6 * len(elements_fault))
 fault_slip_quadratic[0::2] = np.sqrt(2) / 2
-fault_slip_quadratic[1::2] = -np.sqrt(2) / 2
+fault_slip_quadratic[1::2] = -np.sqrt(2) / 2 # TODO: Why is this sign here?
 disp_full_space_quadratic = d1_quadratic @ fault_slip_quadratic
 disp_free_surface_quadratic = np.linalg.inv(t2_quadratic) @ (
     t1_quadratic @ fault_slip_quadratic
