@@ -17,7 +17,6 @@ elements = []
 element = {}
 L = 10000
 
-# x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, n_elements)
 x1, y1, x2, y2 = bem2d.discretized_line(-L, -L, L, L, n_elements)
 for i in range(0, x1.size):
     element["x1"] = x1[i]
@@ -53,7 +52,7 @@ for i, element in enumerate(elements):
         "slip",
         # 1,
         # 0,
-        np.sqrt(2) / 2,
+        -np.sqrt(2) / 2,
         np.sqrt(2) / 2,
         element["x_center"],
         element["y_center"],
@@ -100,7 +99,7 @@ for i in range(0, x.size):
         45,
         [-1e10, 1e10],
         [-L * np.sqrt(2), L * np.sqrt(2)],
-        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
     )
 
     disp_okada_x[i] = u[1]

@@ -13,7 +13,9 @@ nu = np.array([0.25])
 elements = []
 element = {}
 L = 10000
-x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, n_elements)
+# x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, n_elements)
+x1, y1, x2, y2 = bem2d.discretized_line(-L, -L, L, L, n_elements)
+
 
 for i in range(0, x1.size):
     element["x1"] = x1[i]
@@ -70,16 +72,16 @@ bem2d.plot_fields(
 
 for element in elements:
     quadratic_coefficients = np.array([1, 1, 1])  # constant slip quadratic element
-    displacement, stress = bem2d.displacements_stresses_quadratic_farfield_coefficients(
-        quadratic_coefficients,
+    # displacement, stress = bem2d.displacements_stresses_quadratic_farfield_coefficients(
+    displacement, stress = bem2d.displacements_stresses_quadratic_NEW(
         x,
         y,
         element["half_length"],
         mu,
         nu,
         "slip",
-        0,
-        1,
+        [0, 0, 0],
+        [1, 1, 1],
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
