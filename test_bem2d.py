@@ -4,9 +4,9 @@ import bem2d
 
 bem2d.reload()
 
-def test_abc():
-    # TODO: TEST FOR deep OKADA vs. full space
-    assert(2 == 1 + 1)
+def test_constant_vs_okada():
+    """ TODO: TEST FOR deep OKADA vs. full space """
+    np.testing.assert_almost_equal(2, 1 + 1)
 
 
 def test_constant_vs_quadratic_strike_slip():
