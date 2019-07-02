@@ -56,6 +56,15 @@ d2_quadratic, s2_quadratic, t2_quadratic = bem2d.quadratic_partials_all(
     elements_surface, elements_surface, mu, nu
 )
 
+# Compare partials:
+plt.figure()
+plt.plot(d1[0::2, 0], "r-+")
+plt.plot(d1_quadratic[2::6, 0], "bx")
+plt.show(block=False)
+import ipdb; ipdb.set_trace()
+
+
+
 # Constant case: Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
 fault_slip = np.zeros(2 * len(elements_fault))
@@ -70,7 +79,7 @@ x_center_quadratic = np.array(
 ).flatten()
 fault_slip_quadratic = np.zeros(6 * len(elements_fault))
 fault_slip_quadratic[0::2] = np.sqrt(2) / 2
-fault_slip_quadratic[1::2] = -np.sqrt(2) / 2 # TODO: Why is this sign here?
+fault_slip_quadratic[1::2] = np.sqrt(2) / 2
 disp_full_space_quadratic = d1_quadratic @ fault_slip_quadratic
 disp_free_surface_quadratic = np.linalg.inv(t2_quadratic) @ (
     t1_quadratic @ fault_slip_quadratic
@@ -250,8 +259,8 @@ for i, element in enumerate(elements_surface):
         nu,
         "constant",
         "slip",
-        -fault_slip_x[i].copy(), # TODO: Negative sign
-        -fault_slip_y[i].copy(), # TODO: Negative sign
+        fault_slip_x[i].copy(),
+        fault_slip_y[i].copy(),
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -304,7 +313,7 @@ for i, element in enumerate(elements_fault):
         nu,
         "slip",
         fault_slip_ss_quadratic[i * 3 : (i + 1) * 3].copy(),
-        -fault_slip_ts_quadratic[i * 3 : (i + 1) * 3].copy(),
+        fault_slip_ts_quadratic[i * 3 : (i + 1) * 3].copy(),
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -335,8 +344,8 @@ for i, element in enumerate(elements_surface):
         mu,
         nu,
         "slip",
-        -surface_slip_x_quadratic[i * 3 : (i + 1) * 3].copy(), # TODO: Negative signs produce the right answer
-        -surface_slip_y_quadratic[i * 3 : (i + 1) * 3].copy(), # TODO: Negative signs produce the right answer
+        surface_slip_x_quadratic[i * 3 : (i + 1) * 3].copy(), # TODO: Negative signs produce the right answer
+        surface_slip_y_quadratic[i * 3 : (i + 1) * 3].copy(), # TODO: Negative signs produce the right answer
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
