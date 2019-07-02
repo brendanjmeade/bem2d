@@ -58,8 +58,9 @@ d2_quadratic, s2_quadratic, t2_quadratic = bem2d.quadratic_partials_all(
 
 # Compare partials:
 plt.figure()
-plt.plot(d1[0::2, 0], "r-+")
-plt.plot(d1_quadratic[2::6, 0], "bx")
+plt.plot(np.arange(0, 60, 3), d1[0::2, 0], "r-", linewidth=1)
+plt.plot(d1_quadratic[0::2, 0::2], "b-", linewidth=1)
+
 plt.show(block=False)
 import ipdb; ipdb.set_trace()
 
