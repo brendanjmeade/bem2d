@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
 import bem2d
 from importlib import reload
-from okada_wrapper import dc3d0wrapper, dc3dwrapper
+from okada_wrapper import dc3dwrapper
 
 bem2d = reload(bem2d)
 
