@@ -27,8 +27,8 @@ def displacements_stresses_quadratic(
     x = rotated_coords[:, 0]
     y = rotated_coords[:, 1]
 
-    # Convert to global coordinates here.  Should this be elsewhere?
-    global_components = rotation_matrix @ np.array([x_component, y_component])
+    # Convert to global coordinates here.
+    global_components = inverse_rotation_matrix @ np.array([x_component, y_component])
     x_component = global_components[0]
     y_component = global_components[1]
 
@@ -1333,9 +1333,11 @@ def quadratic_partials_single(element_obs, element_src, mu, nu):
         element_src["rotation_matrix"],
         element_src["inverse_rotation_matrix"],
     )
+
     partials_displacement = np.zeros((6, 6))
     partials_displacement[:, 0::2] = displacement_strike_slip
     partials_displacement[:, 1::2] = displacement_tensile_slip
+
     partials_stress = np.zeros((9, 6))
     partials_stress[:, 0::2] = stress_strike_slip
     partials_stress[:, 1::2] = stress_tensile_slip
@@ -1356,8 +1358,7 @@ def quadratic_partials_single(element_obs, element_src, mu, nu):
 
 
 def quadratic_partials_all(elements_obs, elements_src, mu, nu):
-    """ Partial derivatives with quadratic shape functions
-    for all element pairs """
+    """ Partial derivatives with quadratic shape functions for all element pairs """
     n_elements_obs = len(elements_obs)
     n_elements_src = len(elements_src)
     stride = 6  # number of columns per element
@@ -1483,7 +1484,8 @@ def displacements_stresses_quadratic_farfield_coefficients(
     y = rotated_coords[:, 1]
 
     # Convert to global coordinates here.  Should this be elsewhere?
-    global_components = rotation_matrix @ np.array([x_component, y_component])
+    # TODO: doesn't work yet :()
+    global_components = inverse_rotation_matrix @ np.array([x_component, y_component])
     x_component = global_components[0]
     y_component = global_components[1]
 
