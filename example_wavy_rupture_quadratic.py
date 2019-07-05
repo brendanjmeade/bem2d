@@ -44,17 +44,18 @@ PARAMETERS["block_velocity_y"] = 0
 PARAMETERS["v_0"] = 1e-6  # reference velocity
 
 # Create fault elements
-N_ELEMENTS = 50
+N_ELEMENTS = 100
 N_NODES = 3 * N_ELEMENTS
 ELEMENTS_FAULT = []
 ELEMENT = {}
 L = 10000
-x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
+# x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
+x1, y1, x2, y2 = bem2d.discretized_line(-L, -100, L, 100, N_ELEMENTS)
 
 # Modify y1, and y2 for a sinusoidal fault
-amplitude = 20.0
-y1 = amplitude * np.sin(2 * np.pi * x1 / L)
-y2 = amplitude * np.sin(2 * np.pi * x2 / L)
+# amplitude = 1.0
+# y1 = amplitude * np.sin(2 * np.pi * x1 / L)
+# y2 = amplitude * np.sin(2 * np.pi * x2 / L)
 
 for i in range(0, x1.size):
     ELEMENT["x1"] = x1[i]
@@ -115,13 +116,11 @@ def steady_state(velocities):  # Should I eliminate this since its only called o
 
 
 def calc_derivatives(t, x_and_state):
-    # if t >= 12058011842.710436:
-    #     import ipdb;ipdb.set_trace()
     """ Derivatives to feed to ODE integrator """
     state = x_and_state[2::3]
     x = np.empty(2 * N_NODES)
     x[0::2] = x_and_state[0::3]
-    x[1::2] = -x_and_state[1::3] # TODO: Quick hack to see if y-dir sign change works???
+    x[1::2] = x_and_state[1::3]
 
     # TODO: Add checks for Nans and Infs and bad state values
     # Return Inf * x_and_state
@@ -151,7 +150,13 @@ def calc_derivatives(t, x_and_state):
         N_NODES_PER_ELEMENT,
     )
 
+    # TODO: Is current velocit correct for non-planar faults?
+    # Is there some block constraint missing?
     dx_dt = -current_velocity  # Is the negative sign for slip deficit convention?
+
+    # TODO: I think this might be the problem.
+    # Does block velocity need to be resolved on each segment?
+    # Maybe not with global coordinates?
     dx_dt[0::2] += PARAMETERS["block_velocity_x"]
     dx_dt[1::2] += PARAMETERS["block_velocity_y"]
     velocity_magnitude = np.linalg.norm(current_velocity.reshape((-1, 2)), axis=1)
