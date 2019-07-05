@@ -9,6 +9,7 @@ bem2d = reload(bem2d)
 plt.close("all")
 
 # Material properties and observation grid
+SURFACE_SIGN_FLIP = True
 mu = 30e9
 nu = 0.25
 n_pts = 102
@@ -54,16 +55,6 @@ d1_quadratic, s1_quadratic, t1_quadratic = bem2d.quadratic_partials_all(
 d2_quadratic, s2_quadratic, t2_quadratic = bem2d.quadratic_partials_all(
     elements_surface, elements_surface, mu, nu
 )
-
-# # Compare partials:
-# plt.figure()
-# plt.plot(np.arange(0, 60, 3), d1[0::2, 0], "r-", linewidth=1)
-# plt.plot(d1_quadratic[0::2, 0::2], "b-", linewidth=1)
-
-# plt.show(block=False)
-# import ipdb; ipdb.set_trace()
-
-
 
 # Constant case: Predict surface displacements from unit strike slip forcing
 x_center = np.array([_["x_center"] for _ in elements_surface])
@@ -269,6 +260,10 @@ for i, element in enumerate(elements_surface):
     displacement_free_surface += displacement
     stress_free_surface += stress
 
+if SURFACE_SIGN_FLIP:
+    displacement_free_surface *= -1
+    stress_free_surface *= -1
+
 bem2d.plot_fields(
     elements_surface + elements_fault,
     x.reshape(n_pts, n_pts),
@@ -344,8 +339,8 @@ for i, element in enumerate(elements_surface):
         mu,
         nu,
         "slip",
-        surface_slip_x_quadratic[i * 3 : (i + 1) * 3].copy(), # TODO: Negative signs produce the right answer
-        surface_slip_y_quadratic[i * 3 : (i + 1) * 3].copy(), # TODO: Negative signs produce the right answer
+        surface_slip_x_quadratic[i * 3 : (i + 1) * 3].copy(),
+        surface_slip_y_quadratic[i * 3 : (i + 1) * 3].copy(),
         element["x_center"],
         element["y_center"],
         element["rotation_matrix"],
@@ -353,6 +348,10 @@ for i, element in enumerate(elements_surface):
     )
     displacement_free_surface_quadratic += displacement
     stress_free_surface_quadratic += stress
+
+if SURFACE_SIGN_FLIP:
+    displacement_free_surface_quadratic *= -1
+    stress_free_surface_quadratic *= -1
 
 bem2d.plot_fields(
     elements_surface + elements_fault,
