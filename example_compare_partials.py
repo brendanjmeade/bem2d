@@ -31,7 +31,6 @@ partials_displacement_quadratic, partials_stress_quadratic, partials_traction_qu
     elements, elements, mu, nu,
 )
 
-
 # Evaluation points and slip
 x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()
 y_eval = np.array([_["y_integration_points"] for _ in elements]).flatten()
