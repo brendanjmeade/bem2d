@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 bem2d = reload(bem2d)
 
 # Material and geometric constants
+SLIP_TYPE = "strike_slip"
 mu = 3e10
 nu = 0.25
 n_elements = 10
@@ -36,8 +37,15 @@ x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()
 y_eval = np.array([_["y_integration_points"] for _ in elements]).flatten()
 slip_quadratic = np.zeros(6 * n_elements)
 slip_constant = np.zeros(2 * n_elements)
-slip_quadratic[0::2] = 1  # constant x-slip global
-slip_constant[0::2] = 1  # constant x-slip global
+
+# Strike-slip
+if SLIP_TYPE == "strike_slip":
+    slip_quadratic[0::2] = 1  # constant x-slip global
+    slip_constant[0::2] = 1  # constant x-slip global
+elif SLIP_TYPE == "tensile_slip":
+    slip_quadratic[1::2] = 1  # constant x-slip global
+    slip_constant[1::2] = 1  # constant x-slip global
+
 
 # Predict displacements, stresses, and tractions
 displacement_quadratic = partials_displacement_quadratic @ slip_quadratic

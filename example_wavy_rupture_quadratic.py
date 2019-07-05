@@ -50,7 +50,9 @@ ELEMENTS_FAULT = []
 ELEMENT = {}
 L = 10000
 # x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
-x1, y1, x2, y2 = bem2d.discretized_line(-L, -100, L, 100, N_ELEMENTS)
+x1, y1, x2, y2 = bem2d.discretized_line(0, -L, 0, L, N_ELEMENTS)
+
+# x1, y1, x2, y2 = bem2d.discretized_line(-L, -100, L, 100, N_ELEMENTS)
 
 # Modify y1, and y2 for a sinusoidal fault
 # amplitude = 1.0
