@@ -6,6 +6,7 @@ bem2d.reload()
 
 plt.close("all")
 
+TOPO_SIGN_FLIP = True
 mu = 30e9
 nu = 0.25
 
@@ -82,6 +83,10 @@ def common_plot_elements():
     plt.gca().set_aspect("equal")
     plt.xlabel("$x$ (m)")
     plt.ylabel("$y$ (m)")
+
+if TOPO_SIGN_FLIP:
+    displacement_from_topo *= -1
+    stress_from_topo *= -1
 
 
 ux_plot = (displacement_from_topo + displacement_from_fault)[0, :]

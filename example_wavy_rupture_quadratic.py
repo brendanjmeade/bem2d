@@ -41,16 +41,19 @@ PARAMETERS["d_c"] = 0.05  # state evolution length scale (m)
 PARAMETERS["f_0"] = 0.6  # baseline coefficient of friction
 PARAMETERS["block_velocity_x"] = 1e-9
 PARAMETERS["block_velocity_y"] = 0
+# PARAMETERS["block_velocity_x"] = 0
+# PARAMETERS["block_velocity_y"] = 1e-9
+
 PARAMETERS["v_0"] = 1e-6  # reference velocity
 
 # Create fault elements
-N_ELEMENTS = 100
+N_ELEMENTS = 50
 N_NODES = 3 * N_ELEMENTS
 ELEMENTS_FAULT = []
 ELEMENT = {}
 L = 10000
-# x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
-x1, y1, x2, y2 = bem2d.discretized_line(0, -L, 0, L, N_ELEMENTS)
+x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
+# x1, y1, x2, y2 = bem2d.discretized_line(L, -L, 0, L, N_ELEMENTS)
 
 # x1, y1, x2, y2 = bem2d.discretized_line(-L, -100, L, 100, N_ELEMENTS)
 
@@ -151,6 +154,7 @@ def calc_derivatives(t, x_and_state):
         MAXITER,
         N_NODES_PER_ELEMENT,
     )
+    print(current_velocity)
 
     # TODO: Is current velocit correct for non-planar faults?
     # Is there some block constraint missing?
