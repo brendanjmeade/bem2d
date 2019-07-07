@@ -29,7 +29,7 @@ _, _, traction_partials_surface_from_surface = bem2d.matrix_integral(
 
 # Remove and separate BCs, local to global transform here?
 fault_slip = np.zeros(6 * len(elements_fault))
-fault_slip[0::2] = 1.0 # TODO: This is in global not local!!!
+fault_slip[0::2] = 1.0  # TODO: This is in global not local!!!
 
 # Solve the BEM problem
 displacement_free_surface = np.linalg.inv(traction_partials_surface_from_surface) @ (
@@ -83,6 +83,7 @@ def common_plot_elements():
     plt.gca().set_aspect("equal")
     plt.xlabel("$x$ (m)")
     plt.ylabel("$y$ (m)")
+
 
 if TOPO_SIGN_FLIP:
     displacement_from_topo *= -1

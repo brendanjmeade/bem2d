@@ -30,7 +30,7 @@ bem2d.reload()
 #     # x = np.linspace(-width, width, n_pts)
 #     # y = np.linspace(-width, width, n_pts)
 #     x = 2 * width * np.random.rand(n_pts) - width
-#     y = 2 * width * np.random.rand(n_pts) - width 
+#     y = 2 * width * np.random.rand(n_pts) - width
 #     x, y = np.meshgrid(x, y)
 #     x = x.flatten()
 #     y = y.flatten()
@@ -175,8 +175,12 @@ def test_constant_vs_quadratic_strike_slip():
         displacement_quadratic_slip += displacement
         stress_quadratic_slip += stress
 
-    np.testing.assert_almost_equal(displacement_constant_slip, displacement_quadratic_slip)
-    np.testing.assert_almost_equal(stress_constant_slip, stress_quadratic_slip, decimal=1)
+    np.testing.assert_almost_equal(
+        displacement_constant_slip, displacement_quadratic_slip
+    )
+    np.testing.assert_almost_equal(
+        stress_constant_slip, stress_quadratic_slip, decimal=1
+    )
 
 
 def test_constant_vs_quadratic_tensile_slip():
@@ -251,5 +255,9 @@ def test_constant_vs_quadratic_tensile_slip():
         displacement_quadratic_slip += displacement
         stress_quadratic_slip += stress
 
-    np.testing.assert_almost_equal(displacement_constant_slip, displacement_quadratic_slip)
-    np.testing.assert_almost_equal(stress_constant_slip, stress_quadratic_slip, decimal=1)
+    np.testing.assert_almost_equal(
+        displacement_constant_slip, displacement_quadratic_slip
+    )
+    np.testing.assert_almost_equal(
+        stress_constant_slip, stress_quadratic_slip, decimal=1
+    )

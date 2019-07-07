@@ -25,11 +25,11 @@ for i in range(0, x1.size):
 elements = bem2d.standardize_elements(elements)
 
 partials_displacement_constant, partials_stress_constant, partials_traction_constant = bem2d.constant_partials_all(
-    elements, elements, mu, nu,
+    elements, elements, mu, nu
 )
 
 partials_displacement_quadratic, partials_stress_quadratic, partials_traction_quadratic = bem2d.quadratic_partials_all(
-    elements, elements, mu, nu,
+    elements, elements, mu, nu
 )
 
 # Evaluation points and slip

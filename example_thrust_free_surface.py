@@ -375,7 +375,9 @@ bem2d.plot_fields(
     elements_surface + elements_fault,
     x.reshape(n_pts, n_pts),
     y.reshape(n_pts, n_pts),
-    displacement_free_surface_quadratic + displacement_quadratic_elements - displacement_okada,
+    displacement_free_surface_quadratic
+    + displacement_quadratic_elements
+    - displacement_okada,
     stress_free_surface_quadratic + stress_quadratic_elements - stress_okada,
     "quadratic BEM - Okada",
 )

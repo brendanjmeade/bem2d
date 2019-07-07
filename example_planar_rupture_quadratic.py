@@ -401,7 +401,6 @@ def plot_invariants_time_series_velocity():
 plot_invariants_time_series_velocity()
 
 
-
 def plot_slip_profile():
     """ Plot time integrated time series for each node """
     plot_times = np.floor(np.linspace(0, SOLUTION["y"].shape[0] - 1, 50)).astype(int)
@@ -516,7 +515,7 @@ def plot_volume(time_idx, count):
     n_contours = 20
     # contour_vec_2 = np.arange(-10, 11, 1)
     contour_vec_2 = np.arange(-20, 41, 1)
-    
+
     plt.subplot(2, 1, 2)
     plt.contourf(
         x_plot.reshape(n_pts, n_pts),
