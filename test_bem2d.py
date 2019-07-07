@@ -25,10 +25,12 @@ bem2d.reload()
 #     elements = bem2d.standardize_elements(elements)
 
 #     # Observation coordinates for far-field calculation
-#     n_pts = 30
+#     n_pts = 11
 #     width = 20000
-#     x = np.linspace(-width, width, n_pts)
-#     y = np.linspace(-width, width, n_pts)
+#     # x = np.linspace(-width, width, n_pts)
+#     # y = np.linspace(-width, width, n_pts)
+#     x = 2 * width * np.random.rand(n_pts) - width
+#     y = 2 * width * np.random.rand(n_pts) - width 
 #     x, y = np.meshgrid(x, y)
 #     x = x.flatten()
 #     y = y.flatten()
