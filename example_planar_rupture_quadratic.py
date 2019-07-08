@@ -25,7 +25,7 @@ ODE_ATOL = 1e-12
 ODE_RTOL = 1e-12
 N_NODES_PER_ELEMENT = 3
 SPY = 365 * 24 * 60 * 60  # Seconds per year
-TIME_INTERVAL = SPY * np.array([0.0, 5000.0])
+TIME_INTERVAL = SPY * np.array([0.0, 1000.0])
 PARAMETERS = {}
 PARAMETERS["mu"] = 3e10
 PARAMETERS["nu"] = 0.25
@@ -90,7 +90,7 @@ PARTIALS_TIME = time.time() - START_TIME
 
 def calc_state(state, velocity):
     """ State evolution law : aging law """
-    state = (
+    dstate_dt = (
         ELEMENTS_FAULT_ARRAYS["b"]
         * PARAMETERS["v_0"]
         / PARAMETERS["d_c"]
@@ -99,7 +99,7 @@ def calc_state(state, velocity):
             - (velocity / PARAMETERS["v_0"])
         )
     )
-    return state
+    return dstate_dt
 
 
 def steady_state(velocities):  # Should I eliminate this since its only called once?

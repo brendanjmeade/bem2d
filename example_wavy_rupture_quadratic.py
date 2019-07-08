@@ -25,7 +25,7 @@ ODE_ATOL = 1e-6
 ODE_RTOL = 1e-6
 N_NODES_PER_ELEMENT = 3
 SPY = 365 * 24 * 60 * 60  # Seconds per year
-TIME_INTERVAL = SPY * np.array([0.0, 5000.0])
+TIME_INTERVAL = SPY * np.array([0.0, 10000.0])
 
 PARAMETERS = {}
 PARAMETERS["mu"] = 3e10
@@ -41,9 +41,6 @@ PARAMETERS["d_c"] = 0.05  # state evolution length scale (m)
 PARAMETERS["f_0"] = 0.6  # baseline coefficient of friction
 PARAMETERS["block_velocity_x"] = 1e-9
 PARAMETERS["block_velocity_y"] = 0
-# PARAMETERS["block_velocity_x"] = 0
-# PARAMETERS["block_velocity_y"] = 1e-9
-
 PARAMETERS["v_0"] = 1e-6  # reference velocity
 
 # Create fault elements
@@ -53,14 +50,11 @@ ELEMENTS_FAULT = []
 ELEMENT = {}
 L = 10000
 x1, y1, x2, y2 = bem2d.discretized_line(-L, 0, L, 0, N_ELEMENTS)
-# x1, y1, x2, y2 = bem2d.discretized_line(L, -L, 0, L, N_ELEMENTS)
-
-# x1, y1, x2, y2 = bem2d.discretized_line(-L, -100, L, 100, N_ELEMENTS)
 
 # Modify y1, and y2 for a sinusoidal fault
-# amplitude = 1.0
-# y1 = amplitude * np.sin(2 * np.pi * x1 / L)
-# y2 = amplitude * np.sin(2 * np.pi * x2 / L)
+amplitude = 0.0
+y1 = amplitude * np.sin(2 * np.pi * x1 / L)
+y2 = amplitude * np.sin(2 * np.pi * x2 / L)
 
 for i in range(0, x1.size):
     ELEMENT["x1"] = x1[i]
@@ -102,7 +96,7 @@ PARTIALS_TIME = time.time() - START_TIME
 
 def calc_state(state, velocity):
     """ State evolution law : aging law """
-    state = (
+    dstate_dt = (
         ELEMENTS_FAULT_ARRAYS["b"]
         * PARAMETERS["v_0"]
         / PARAMETERS["d_c"]
@@ -111,7 +105,7 @@ def calc_state(state, velocity):
             - (velocity / PARAMETERS["v_0"])
         )
     )
-    return state
+    return dstate_dt
 
 
 def steady_state(velocities):  # Should I eliminate this since its only called once?
@@ -154,7 +148,6 @@ def calc_derivatives(t, x_and_state):
         MAXITER,
         N_NODES_PER_ELEMENT,
     )
-    print(current_velocity)
 
     # TODO: Is current velocit correct for non-planar faults?
     # Is there some block constraint missing?
