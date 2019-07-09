@@ -21,10 +21,10 @@ plt.close("all")
 OUTDIR = "/Users/meade/Desktop/output/"
 NEWTON_TOL = 1e-12
 MAXITER = 5000
-ODE_ATOL = 1e-12
-ODE_RTOL = 1e-12
+ODE_ATOL = 1e-6
+ODE_RTOL = 1e-6
 N_NODES_PER_ELEMENT = 3
-SPY = 365 * 24 * 60 * 60  # Seconds per year
+SPY = 365.25 * 24 * 60 * 60  # Seconds per year
 TIME_INTERVAL = SPY * np.array([0.0, 1000.0])
 PARAMETERS = {}
 PARAMETERS["mu"] = 3e10
@@ -247,19 +247,19 @@ def plot_time_series_velocity():
 
     plt.subplot(3, 2, 1)
     plt.plot(t_diff / SPY, solution_diff[:, 0::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}v_x$ (m/s)")
+    plt.ylabel(r"$\log_{10}v_x$ (m/s)")
 
     plt.subplot(3, 2, 2)
     plt.plot(solution_diff[:, 0::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}v_x$ (m/s)")
+    plt.ylabel(r"$\log_{10}v_x$ (m/s)")
 
     plt.subplot(3, 2, 3)
     plt.plot(t_diff / SPY, solution_diff[:, 1::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}v_y$ (m/s)")
+    plt.ylabel(r"$\log_{10}v_y$ (m/s)")
 
     plt.subplot(3, 2, 4)
     plt.plot(solution_diff[:, 1::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}v_y$ (m/s)")
+    plt.ylabel(r"$\log_{10}v_y$ (m/s)")
 
     plt.subplot(3, 2, 5)
     plt.plot(t_diff / SPY, solution_diff[:, 2::3], linewidth=0.5)
@@ -282,29 +282,29 @@ def plot_stress_time_series():
     plt.figure(figsize=(12, 9))
     plt.subplot(3, 2, 1)
     plt.plot(SOLUTION["t"] / SPY, SOLUTION["stress"][:, 0::3], linewidth=0.5)
-    plt.ylabel("$\sigma_{xx}$ (Pa)")
+    plt.ylabel(r"$\sigma_{xx}$ (Pa)")
 
     plt.subplot(3, 2, 2)
     plt.plot(SOLUTION["stress"][:, 0::3], linewidth=0.5)
-    plt.ylabel("$\sigma_{xx}$ (Pa)")
+    plt.ylabel(r"$\sigma_{xx}$ (Pa)")
 
     plt.subplot(3, 2, 3)
     plt.plot(SOLUTION["t"] / SPY, SOLUTION["stress"][:, 1::3], linewidth=0.5)
-    plt.ylabel("$\sigma_{yy}$ (Pa)")
+    plt.ylabel(r"$\sigma_{yy}$ (Pa)")
 
     plt.subplot(3, 2, 4)
     plt.plot(SOLUTION["stress"][:, 1::3], linewidth=0.5)
-    plt.ylabel("$\sigma_{yy}$ (Pa)")
+    plt.ylabel(r"$\sigma_{yy}$ (Pa)")
 
     plt.subplot(3, 2, 5)
     plt.plot(SOLUTION["t"] / SPY, SOLUTION["stress"][:, 2::3], linewidth=0.5)
     plt.xlabel("time (years)")
-    plt.ylabel("$\sigma_{xy}$ (Pa)")
+    plt.ylabel(r"$\sigma_{xy}$ (Pa)")
 
     plt.subplot(3, 2, 6)
     plt.plot(SOLUTION["stress"][:, 2::3], linewidth=0.5)
     plt.xlabel("steps")
-    plt.ylabel("$\sigma_{xy}$ (Pa)")
+    plt.ylabel(r"$\sigma_{xy}$ (Pa)")
     plt.suptitle("Stresses")
     plt.show(block=False)
 
@@ -322,29 +322,29 @@ def plot_stress_time_series_velocity():
     plt.figure(figsize=(12, 9))
     plt.subplot(3, 2, 1)
     plt.plot(t_diff / SPY, solution_diff[:, 0::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}\dot{\sigma}_{xx}$ (Pa)")
+    plt.ylabel(r"$\log_{10}\dot{\sigma}_{xx}$ (Pa)")
 
     plt.subplot(3, 2, 2)
     plt.plot(solution_diff[:, 0::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}\dot{\sigma}_{xx}$ (Pa)")
+    plt.ylabel(r"$\log_{10}\dot{\sigma}_{xx}$ (Pa)")
 
     plt.subplot(3, 2, 3)
     plt.plot(t_diff / SPY, solution_diff[:, 1::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}\dot{\sigma}_{yy}$ (Pa)")
+    plt.ylabel(r"$\log_{10}\dot{\sigma}_{yy}$ (Pa)")
 
     plt.subplot(3, 2, 4)
     plt.plot(solution_diff[:, 1::3], linewidth=0.5)
-    plt.ylabel("$\log_{10}\dot{\sigma}_{yy}$ (Pa)")
+    plt.ylabel(r"$\log_{10}\dot{\sigma}_{yy}$ (Pa)")
 
     plt.subplot(3, 2, 5)
     plt.plot(t_diff / SPY, solution_diff[:, 2::3], linewidth=0.5)
     plt.xlabel("time (years)")
-    plt.ylabel("$\log_{10}\dot{\sigma}_{xy}$ (Pa)")
+    plt.ylabel(r"$\log_{10}\dot{\sigma}_{xy}$ (Pa)")
 
     plt.subplot(3, 2, 6)
     plt.plot(solution_diff[:, 2::3], linewidth=0.5)
     plt.xlabel("steps")
-    plt.ylabel("$\log_{10}\dot{\sigma}_{xy}$ (Pa)")
+    plt.ylabel(r"$\log_{10}\dot{\sigma}_{xy}$ (Pa)")
     plt.suptitle("Stress rate changes")
     plt.show(block=False)
 
@@ -371,30 +371,30 @@ def plot_invariants_time_series_velocity():
     plt.figure(figsize=(12, 9))
     plt.subplot(3, 2, 1)
     plt.plot(t_diff / SPY, I1, linewidth=0.5)
-    plt.ylabel("$\log_{10} \, |\dot{\mathrm{I}}_1|$ (Pa)")
+    plt.ylabel(r"$\log_{10} \, |\dot{\mathrm{I}}_1|$ (Pa)")
 
     plt.subplot(3, 2, 2)
     plt.plot(I1, linewidth=0.5)
-    plt.ylabel("$\log_{10}|\dot{\mathrm{I}}_1|$ (Pa)")
+    plt.ylabel(r"$\log_{10}|\dot{\mathrm{I}}_1|$ (Pa)")
 
     plt.subplot(3, 2, 3)
     plt.plot(t_diff / SPY, I2, linewidth=0.5)
-    plt.ylabel("$\log_{10} \, |\dot{\mathrm{I}}_2|$ (Pa$^2$)")
+    plt.ylabel(r"$\log_{10} \, |\dot{\mathrm{I}}_2|$ (Pa$^2$)")
 
     plt.subplot(3, 2, 4)
     plt.plot(I2, linewidth=0.5)
-    plt.ylabel("$\log_{10} \, |\dot{\mathrm{I}}_2|$ (Pa$^2$)")
+    plt.ylabel(r"$\log_{10} \, |\dot{\mathrm{I}}_2|$ (Pa$^2$)")
 
     plt.subplot(3, 2, 5)
     plt.plot(t_diff / SPY, J2, linewidth=0.5)
     plt.xlabel("time (years)")
-    plt.ylabel("$\log_{10} \, |\dot{\mathrm{J}}_2|$ (Pa$^2$)")
+    plt.ylabel(r"$\log_{10} \, |\dot{\mathrm{J}}_2|$ (Pa$^2$)")
 
     plt.subplot(3, 2, 6)
     plt.plot(J2, linewidth=0.5)
     plt.xlabel("steps")
     plt.ylabel("$\log_{10} \, |\mathrm{\dot{J}}_2|$ (Pa$^2$)")
-    plt.suptitle("Some stress invariant rate changes")
+    plt.suptitle(r"Some stress invariant rate changes")
     plt.show(block=False)
 
 
