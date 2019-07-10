@@ -117,7 +117,7 @@ def calc_derivatives(t, x_and_state):
 
     # Current shear stress on fault (slip->traction)
     tractions = SLIP_TO_TRACTION @ x
-    tractions = np.roll(tractions, 1) # Swap x and y to tensile vs. strike slip testing
+    # tractions = np.roll(tractions, 1) # Swap x and y to tensile vs. strike slip testing
 
     # Solve for the current velocity...This is the algebraic part
     current_velocity = np.empty(2 * N_NODES)
