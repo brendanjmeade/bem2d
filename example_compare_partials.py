@@ -8,7 +8,7 @@ bem2d = reload(bem2d)
 
 # Material and geometric constants
 plt.close("all")
-SLIP_TYPE = "strike_slip"
+SLIP_TYPE = "tensile_slip"
 mu = 3e10
 nu = 0.25
 n_elements = 10
@@ -67,6 +67,7 @@ PARTIALS_DISPLACEMENT_QUADRATIC, PARTIALS_STRESS_QUADRATIC, PARTIALS_TRACTION_QU
 # plt.matshow(PARTIALS_TRACTION_QUADRATIC[1::2, :])
 # plt.colorbar()
 
+# Try some internal evaluation
 
 
 # Evaluation points and slip

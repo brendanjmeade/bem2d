@@ -117,6 +117,7 @@ def calc_derivatives(t, x_and_state):
 
     # Current shear stress on fault (slip->traction)
     tractions = SLIP_TO_TRACTION @ x
+    tractions = np.roll(tractions, 1) # Swap x and y to tensile vs. strike slip testing
 
     # Solve for the current velocity...This is the algebraic part
     current_velocity = np.empty(2 * N_NODES)
@@ -134,6 +135,9 @@ def calc_derivatives(t, x_and_state):
         MAXITER,
         N_NODES_PER_ELEMENT,
     )
+
+    import ipdb; ipdb.set_trace()
+
 
     dx_dt = -current_velocity  # Is the negative sign for slip deficit convention?
     dx_dt[0::2] += PARAMETERS["block_velocity_x"]
@@ -155,9 +159,6 @@ INITIAL_CONDITIONS = np.empty(3 * N_NODES)
 INITIAL_CONDITIONS[0::3] = INITIAL_VELOCITY_X
 INITIAL_CONDITIONS[1::3] = INITIAL_VELOCITY_Y
 INITIAL_CONDITIONS[2::3] = steady_state(INITIAL_VELOCITY_MAGNITUDE)
-
-print(INITIAL_CONDITIONS)
-import ipdb; ipdb.set_trace()
 
 SOLVER = scipy.integrate.RK23(
     calc_derivatives,
