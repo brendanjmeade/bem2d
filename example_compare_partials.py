@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 bem2d = reload(bem2d)
 
 # Material and geometric constants
+plt.close("all")
 SLIP_TYPE = "strike_slip"
 mu = 3e10
 nu = 0.25
@@ -46,9 +47,9 @@ for i in range(0, x1.size):
     ELEMENT["y1"] = y1[i]
     ELEMENT["x2"] = x2[i]
     ELEMENT["y2"] = y2[i]
-    # ELEMENT["a"] = 0.015  # frictional a parameter ()
-    # ELEMENT["b"] = 0.020  # frictional b parameter ()
-    # ELEMENT["sigma_n"] = 50e6  # normal stress (Pa)
+    ELEMENT["a"] = 0.015  # frictional a parameter ()
+    ELEMENT["b"] = 0.020  # frictional b parameter ()
+    ELEMENT["sigma_n"] = 50e6  # normal stress (Pa)
     ELEMENTS_FAULT.append(ELEMENT.copy())
 ELEMENTS_FAULT = bem2d.standardize_elements(ELEMENTS_FAULT)
 
@@ -59,6 +60,13 @@ PARTIALS_DISPLACEMENT_CONSTANT, PARTIALS_STRESS_CONSTANT, PARTIALS_TRACTION_CONS
 PARTIALS_DISPLACEMENT_QUADRATIC, PARTIALS_STRESS_QUADRATIC, PARTIALS_TRACTION_QUADRATIC = bem2d.quadratic_partials_all(
     ELEMENTS_FAULT, ELEMENTS_FAULT, mu, nu
 )
+
+# Plot matrices split by strike- and tensile slip
+# plt.matshow(PARTIALS_TRACTION_QUADRATIC[0::2, :])
+# plt.colorbar()
+# plt.matshow(PARTIALS_TRACTION_QUADRATIC[1::2, :])
+# plt.colorbar()
+
 
 
 # Evaluation points and slip
@@ -85,7 +93,6 @@ stress_constant = partials_stress_constant @ slip_constant
 traction_constant = partials_traction_constant @ slip_constant
 
 # Plot geometry of elements
-plt.close("all")
 plt.figure(figsize=(12, 8))
 plt.subplot(2, 2, 1)
 for element in elements:
