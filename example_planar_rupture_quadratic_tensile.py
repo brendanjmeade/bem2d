@@ -136,8 +136,9 @@ def calc_derivatives(t, x_and_state):
         N_NODES_PER_ELEMENT,
     )
 
-    import ipdb; ipdb.set_trace()
+    import ipdb
 
+    ipdb.set_trace()
 
     dx_dt = -current_velocity  # Is the negative sign for slip deficit convention?
     dx_dt[0::2] += PARAMETERS["block_velocity_x"]
