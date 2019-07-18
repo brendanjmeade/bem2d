@@ -9,6 +9,7 @@ bem2d = reload(bem2d)
 # Material and geometric constants
 plt.close("all")
 SLIP_TYPE = "tensile_slip"
+print(SLIP_TYPE)
 mu = 3e10
 nu = 0.25
 n_elements = 10
@@ -35,7 +36,6 @@ partials_displacement_quadratic, partials_stress_quadratic, partials_traction_qu
 
 # Create fault elements
 N_ELEMENTS = 10
-print(N_ELEMENTS)
 N_NODES = 3 * N_ELEMENTS
 ELEMENTS_FAULT = []
 ELEMENT = {}
@@ -61,15 +61,6 @@ PARTIALS_DISPLACEMENT_QUADRATIC, PARTIALS_STRESS_QUADRATIC, PARTIALS_TRACTION_QU
     ELEMENTS_FAULT, ELEMENTS_FAULT, mu, nu
 )
 
-# Plot matrices split by strike- and tensile slip
-# plt.matshow(PARTIALS_TRACTION_QUADRATIC[0::2, :])
-# plt.colorbar()
-# plt.matshow(PARTIALS_TRACTION_QUADRATIC[1::2, :])
-# plt.colorbar()
-
-# Try some internal evaluation
-
-
 # Evaluation points and slip
 x_eval = np.array([_["x_integration_points"] for _ in elements]).flatten()
 y_eval = np.array([_["y_integration_points"] for _ in elements]).flatten()
@@ -83,7 +74,6 @@ if SLIP_TYPE == "strike_slip":
 elif SLIP_TYPE == "tensile_slip":
     slip_quadratic[1::2] = 1  # constant x-slip global
     slip_constant[1::2] = 1  # constant x-slip global
-
 
 # Predict displacements, stresses, and tractions
 displacement_quadratic = partials_displacement_quadratic @ slip_quadratic
