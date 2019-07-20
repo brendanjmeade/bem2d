@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import pandas as pd
 from importlib import reload
 import bem2d
 import matplotlib.pyplot as plt
@@ -25,6 +26,13 @@ for i in range(0, x1.size):
     element["y2"] = y2[i]
     elements.append(element.copy())
 elements = bem2d.standardize_elements(elements)
+
+
+# Convert to dictionary of lists
+elements_DL = pd.DataFrame(elements).to_dict("list")
+# Convert back to list of dictionaries
+elements_LD = pd.DataFrame(elements_DL).to_dict("records")
+print(elements == elements_LD)
 
 partials_displacement_constant, partials_stress_constant, partials_traction_constant = bem2d.constant_partials_all(
     elements, elements, mu, nu
